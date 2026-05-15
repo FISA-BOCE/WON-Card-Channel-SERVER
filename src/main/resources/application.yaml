@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: won-card-channel-server

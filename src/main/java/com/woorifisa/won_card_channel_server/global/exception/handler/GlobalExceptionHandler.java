@@ -43,8 +43,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
         log.warn("method not supported: {}", e.getMessage());
         return ResponseEntity
-                .status(405)
-                .body(ErrorResponse.of(CommonErrorCode.INVALID_REQUEST, "지원하지 않는 HTTP 메서드입니다."));
+                .status(CommonErrorCode.METHOD_NOT_ALLOWED.getHttpStatus())
+                .body(ErrorResponse.of(CommonErrorCode.METHOD_NOT_ALLOWED));
     }
 
     @ExceptionHandler(Exception.class)

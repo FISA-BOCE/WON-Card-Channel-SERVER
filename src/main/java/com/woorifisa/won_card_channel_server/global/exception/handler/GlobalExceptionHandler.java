@@ -29,7 +29,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             MethodArgumentNotValidException.class,
             HttpMessageNotReadableException.class,
-            IllegalArgumentException.class,
             ServletRequestBindingException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {

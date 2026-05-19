@@ -1,6 +1,7 @@
 package com.woorifisa.won_card_channel_server.global.exception.handler;
 
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
+import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
 import com.woorifisa.won_card_channel_server.global.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+        ErrorCode errorCode = e.getErrorCode();
+        log.warn("business exception: code={}, message={}", errorCode.getCode(), e.getMessage());
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ErrorResponse.of(errorCode, e.getMessage()));
+    }
 
     @ExceptionHandler({
             MethodArgumentNotValidException.class,

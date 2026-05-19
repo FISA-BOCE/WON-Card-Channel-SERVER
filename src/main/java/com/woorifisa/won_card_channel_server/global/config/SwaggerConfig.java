@@ -19,7 +19,7 @@ public class SwaggerConfig {
                 .description("카드 채널계 Swagger UI입니다.")
                 .version("0.0.1");
 
-        String securityScheme = "JWT TOKEN";
+        String securityScheme = "JWT_TOKEN";
 
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(securityScheme);
 

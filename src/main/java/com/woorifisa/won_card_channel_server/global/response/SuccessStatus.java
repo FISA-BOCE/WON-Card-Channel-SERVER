@@ -15,7 +15,7 @@ public enum SuccessStatus {
     LOGIN_SUCCESS(HttpStatus.OK, "AUTH_200_002", "로그인이 완료되었습니다."),
     TOKEN_REISSUE_SUCCESS(HttpStatus.OK, "AUTH_200_003", "토큰 재발급이 완료되었습니다."),
     LOGOUT_SUCCESS(HttpStatus.OK, "AUTH_200_004", "로그아웃이 완료되었습니다."),
-    USER_ME_SUCCESS(HttpStatus.OK, "USER_200_001", "사용자 정보 조회가 완료되었습니다."),
+    USER_ME_SUCCESS(HttpStatus.OK, "USER_200_001", "회원 정보 조회가 완료되었습니다."),
     USER_WITHDRAW_SUCCESS(HttpStatus.OK, "USER_200_002", "회원 탈퇴가 완료되었습니다."),
     USER_UPDATE_SUCCESS(HttpStatus.OK, "USER_200_003", "회원 정보 수정이 완료되었습니다.");
 

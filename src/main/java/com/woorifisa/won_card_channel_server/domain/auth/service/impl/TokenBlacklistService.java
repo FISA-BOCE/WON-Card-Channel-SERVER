@@ -2,14 +2,15 @@ package com.woorifisa.won_card_channel_server.domain.auth.service.impl;
 
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnTokenBlacklist;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnTokenBlacklistRepository;
-import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class InMemoryTokenBlacklistService implements TokenBlacklistService {
+public class TokenBlacklistService implements com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService {
 
     private final CardChnTokenBlacklistRepository tokenBlacklistRepository;
 
@@ -21,7 +22,7 @@ public class InMemoryTokenBlacklistService implements TokenBlacklistService {
 
         tokenBlacklistRepository.save(CardChnTokenBlacklist.builder()
                 .accessTokenJti(jti)
-                .expiredAt(LocalDateTime.now().plusNanos(ttlMillis * 1_000_000))
+                .expiredAt(LocalDateTime.now().plus(Duration.ofMillis(ttlMillis)))
                 .build());
     }
 

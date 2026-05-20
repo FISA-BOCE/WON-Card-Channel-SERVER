@@ -45,9 +45,11 @@ public class JwtTokenProvider {
             Claims claims = Jwts.parser().verifyWith(signingKey).build()
                     .parseSignedClaims(token)
                     .getPayload();
+            String authUserUuid = claims.get("authUserUuid", String.class);
+            String userUuid = claims.getSubject();
             return new AuthenticatedUser(
-                    UUID.fromString(claims.get("authUserUuid", String.class)),
-                    UUID.fromString(claims.getSubject()),
+                    parseRequiredUuid(authUserUuid, "authUserUuid"),
+                    parseRequiredUuid(userUuid, "subject"),
                     claims.getId(),
                     token
             );
@@ -77,5 +79,16 @@ public class JwtTokenProvider {
 
     public long getAccessTokenExpirationMillis() {
         return securityProperties.getAccessTokenExpirationSeconds() * 1000;
+    }
+
+    private UUID parseRequiredUuid(String value, String claimName) {
+        if (value == null || value.isBlank()) {
+            throw new JwtException("Missing required JWT claim: " + claimName);
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            throw new JwtException("Invalid UUID claim: " + claimName, e);
+        }
     }
 }

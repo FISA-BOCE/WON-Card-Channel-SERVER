@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
@@ -25,13 +26,13 @@ public class JwtTokenProvider {
         this.signingKey = Keys.hmacShaKeyFor(securityProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(String userUuid, String authUserUuid, String jti) {
+    public String generateAccessToken(UUID userUuid, UUID authUserUuid, String jti) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(securityProperties.getAccessTokenExpirationSeconds());
 
         return Jwts.builder()
-                .subject(userUuid)
-                .claim("authUserUuid", authUserUuid)
+                .subject(userUuid.toString())
+                .claim("authUserUuid", authUserUuid.toString())
                 .id(jti)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
@@ -44,11 +45,13 @@ public class JwtTokenProvider {
             Claims claims = Jwts.parser().verifyWith(signingKey).build()
                     .parseSignedClaims(token)
                     .getPayload();
+            String authUserUuid = claims.get("authUserUuid", String.class);
+            String userUuid = claims.getSubject();
+            String jti = claims.getId();
             return new AuthenticatedUser(
-                    claims.get("authUserUuid", String.class),
-                    claims.getSubject(),
-                    claims.getId(),
-                    token
+                    parseRequiredUuid(authUserUuid, "authUserUuid"),
+                    parseRequiredUuid(userUuid, "subject"),
+                    parseRequiredClaim(jti, "jti")
             );
         } catch (ExpiredJwtException e) {
             throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED);
@@ -76,5 +79,23 @@ public class JwtTokenProvider {
 
     public long getAccessTokenExpirationMillis() {
         return securityProperties.getAccessTokenExpirationSeconds() * 1000;
+    }
+
+    private UUID parseRequiredUuid(String value, String claimName) {
+        if (value == null || value.isBlank()) {
+            throw new JwtException("Missing required JWT claim: " + claimName);
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            throw new JwtException("Invalid UUID claim: " + claimName, e);
+        }
+    }
+
+    private String parseRequiredClaim(String value, String claimName) {
+        if (value == null || value.isBlank()) {
+            throw new JwtException("Missing required JWT claim: " + claimName);
+        }
+        return value;
     }
 }

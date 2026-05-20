@@ -55,9 +55,9 @@ public class AuthServiceImpl implements AuthService {
         }
 
         CardChnAuthUser user = CardChnAuthUser.builder()
-                .authUserUuid(UUID.randomUUID().toString())
-                .cardUserUuid(UUID.randomUUID().toString())
-                .userUuid(UUID.randomUUID().toString())
+                .authUserUuid(UUID.randomUUID())
+                .cardUserUuid(UUID.randomUUID())
+                .userUuid(UUID.randomUUID())
                 .loginId(telHash)
                 .userName(request.userName().trim())
                 .emailEnc(textEncryptor.encrypt(request.email().trim()))

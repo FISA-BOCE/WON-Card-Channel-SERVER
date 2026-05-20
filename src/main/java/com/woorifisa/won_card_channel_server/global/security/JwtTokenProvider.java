@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
@@ -25,13 +26,13 @@ public class JwtTokenProvider {
         this.signingKey = Keys.hmacShaKeyFor(securityProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(String userUuid, String authUserUuid, String jti) {
+    public String generateAccessToken(UUID userUuid, UUID authUserUuid, String jti) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(securityProperties.getAccessTokenExpirationSeconds());
 
         return Jwts.builder()
-                .subject(userUuid)
-                .claim("authUserUuid", authUserUuid)
+                .subject(userUuid.toString())
+                .claim("authUserUuid", authUserUuid.toString())
                 .id(jti)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
@@ -45,8 +46,8 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token)
                     .getPayload();
             return new AuthenticatedUser(
-                    claims.get("authUserUuid", String.class),
-                    claims.getSubject(),
+                    UUID.fromString(claims.get("authUserUuid", String.class)),
+                    UUID.fromString(claims.getSubject()),
                     claims.getId(),
                     token
             );

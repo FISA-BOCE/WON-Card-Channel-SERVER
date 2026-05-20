@@ -8,11 +8,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Builder
@@ -23,14 +26,17 @@ import lombok.NoArgsConstructor;
 public class CardChnAuthUser extends BaseTimeEntity {
 
     @Id
-    @Column(name = "auth_user_uuid", nullable = false, length = 36)
-    private String authUserUuid;
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "auth_user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
+    private UUID authUserUuid;
 
-    @Column(name = "card_user_uuid", length = 36)
-    private String cardUserUuid;
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "card_user_uuid", columnDefinition = "VARCHAR(36)")
+    private UUID cardUserUuid;
 
-    @Column(name = "user_uuid", nullable = false, length = 36, unique = true)
-    private String userUuid;
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "user_uuid", nullable = false, columnDefinition = "VARCHAR(36)", unique = true)
+    private UUID userUuid;
 
     @Column(name = "login_id", nullable = false, unique = true)
     private String loginId;

@@ -2,6 +2,7 @@ package com.woorifisa.won_card_channel_server.domain.auth.repository;
 
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthSession;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -18,5 +19,5 @@ public interface CardChnAuthSessionRepository extends JpaRepository<CardChnAuthS
 
     Optional<CardChnAuthSession> findByAccessTokenJti(String accessTokenJti);
 
-    Optional<CardChnAuthSession> findByAuthUser_AuthUserUuid(String authUserUuid);
+    Optional<CardChnAuthSession> findByAuthUser_AuthUserUuid(UUID authUserUuid);
 }

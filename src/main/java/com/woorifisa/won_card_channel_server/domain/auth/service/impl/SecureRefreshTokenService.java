@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class Sha256RefreshTokenService implements RefreshTokenService {
+public class SecureRefreshTokenService implements RefreshTokenService {
 
     private final SecurityProperties securityProperties;
     private final SecureRandom secureRandom = new SecureRandom();

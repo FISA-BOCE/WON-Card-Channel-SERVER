@@ -4,10 +4,10 @@ import com.woorifisa.won_card_channel_server.global.config.SecurityProperties;
 import jakarta.annotation.PostConstruct;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
@@ -18,10 +18,12 @@ public class AesGcmTextEncryptor implements TextEncryptor {
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
     private static final int IV_LENGTH_BYTES = 12;
+    private static final int AES_KEY_LENGTH_BYTES = 32;
+    private static final String ENCRYPTED_PREFIX = "enc:";
 
     private final SecurityProperties securityProperties;
     private final SecureRandom secureRandom = new SecureRandom();
-    private SecretKeySpec secretKeySpec;
+    private SecretKey secretKey;
 
     public AesGcmTextEncryptor(SecurityProperties securityProperties) {
         this.securityProperties = securityProperties;
@@ -31,11 +33,11 @@ public class AesGcmTextEncryptor implements TextEncryptor {
     void initialize() {
         try {
             String secret = securityProperties.getCryptoSecret();
-            if (secret == null || secret.isBlank()) {
-                throw new IllegalStateException("app.security.crypto-secret must not be blank");
+            byte[] decodedKey = Base64.getDecoder().decode(secret);
+            if (decodedKey.length != AES_KEY_LENGTH_BYTES) {
+                throw new IllegalStateException("app.security.crypto-secret must be a Base64-encoded 32-byte key");
             }
-            byte[] key = MessageDigest.getInstance("SHA-256").digest(secret.getBytes(StandardCharsets.UTF_8));
-            this.secretKeySpec = new SecretKeySpec(key, "AES");
+            this.secretKey = new SecretKeySpec(decodedKey, "AES");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize text encryptor", e);
         }
@@ -51,13 +53,13 @@ public class AesGcmTextEncryptor implements TextEncryptor {
             secureRandom.nextBytes(iv);
 
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
             byte[] encrypted = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
 
             ByteBuffer buffer = ByteBuffer.allocate(iv.length + encrypted.length);
             buffer.put(iv);
             buffer.put(encrypted);
-            return Base64.getEncoder().encodeToString(buffer.array());
+            return ENCRYPTED_PREFIX + Base64.getEncoder().encodeToString(buffer.array());
         } catch (Exception e) {
             throw new IllegalStateException("Failed to encrypt text", e);
         }
@@ -77,7 +79,7 @@ public class AesGcmTextEncryptor implements TextEncryptor {
             buffer.get(encrypted);
 
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to decrypt text", e);
@@ -89,10 +91,9 @@ public class AesGcmTextEncryptor implements TextEncryptor {
         if (value == null) {
             return null;
         }
-        try {
-            return decrypt(value);
-        } catch (IllegalStateException e) {
+        if (!value.startsWith(ENCRYPTED_PREFIX)) {
             return value;
         }
+        return decrypt(value.substring(ENCRYPTED_PREFIX.length()));
     }
 }

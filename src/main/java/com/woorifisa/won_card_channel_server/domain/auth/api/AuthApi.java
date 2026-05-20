@@ -58,7 +58,7 @@ public class AuthApi {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> deleteUserLogout(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @RequestBody DeleteLogoutRequest request
+            @Valid @RequestBody DeleteLogoutRequest request
     ) {
         authService.logoutUser(authenticatedUser, request);
         return ResponseEntity

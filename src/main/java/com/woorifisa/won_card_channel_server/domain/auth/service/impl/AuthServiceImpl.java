@@ -20,6 +20,7 @@ import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistS
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
+import com.woorifisa.won_card_channel_server.global.security.RequestAccessTokenHolder;
 import com.woorifisa.won_card_channel_server.global.security.TextEncryptor;
 import com.woorifisa.won_card_channel_server.global.util.HashUtils;
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RequestAccessTokenHolder requestAccessTokenHolder;
     private final TextEncryptor textEncryptor;
 
     @Override
@@ -141,7 +143,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         sessionRepository.delete(session);
-        tokenBlacklistService.saveBlacklistedToken(authenticatedUser.jti(), jwtTokenProvider.getRemainingValidityMillis(authenticatedUser.token()));
+        tokenBlacklistService.saveBlacklistedToken(
+                authenticatedUser.jti(),
+                jwtTokenProvider.getRemainingValidityMillis(requestAccessTokenHolder.getRequiredToken())
+        );
     }
 
     private void validateActiveUser(CardChnAuthUser user) {

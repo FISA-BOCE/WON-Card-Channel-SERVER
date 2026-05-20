@@ -71,7 +71,10 @@ public class AesGcmTextEncryptor implements TextEncryptor {
             return null;
         }
         try {
-            byte[] decoded = Base64.getDecoder().decode(cipherText);
+            String normalizedCipherText = cipherText.startsWith(ENCRYPTED_PREFIX)
+                    ? cipherText.substring(ENCRYPTED_PREFIX.length())
+                    : cipherText;
+            byte[] decoded = Base64.getDecoder().decode(normalizedCipherText);
             ByteBuffer buffer = ByteBuffer.wrap(decoded);
             byte[] iv = new byte[IV_LENGTH_BYTES];
             buffer.get(iv);
@@ -94,6 +97,6 @@ public class AesGcmTextEncryptor implements TextEncryptor {
         if (!value.startsWith(ENCRYPTED_PREFIX)) {
             return value;
         }
-        return decrypt(value.substring(ENCRYPTED_PREFIX.length()));
+        return decrypt(value);
     }
 }

@@ -1,18 +1,19 @@
 package com.woorifisa.won_card_channel_server.domain.auth.api;
 
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateLoginRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateLoginResponse;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateTokenReissueRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateTokenReissueResponse;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.DeleteLogoutRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.RegisterUserRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.RegisterUserResponse;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateLoginRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateLoginResponse;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateTokenReissueRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateTokenReissueResponse;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.DeleteLogoutRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.RegisterUserRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.response.RegisterUserResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.service.AuthService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
 @Tag(name = "Auth", description = "인증 관련 API")
-public class AuthController {
+public class AuthApi {
 
     private final AuthService authService;
 

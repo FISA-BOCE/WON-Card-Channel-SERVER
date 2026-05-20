@@ -32,7 +32,7 @@ public class AuthApi {
 
     @Operation(summary = "회원가입", description = "회원가입 API입니다.    \n비밀번호는 8자 이상이어야 합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<RegisterUserResponse>> createUserRegistration(@RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<RegisterUserResponse>> createUserRegistration(@Valid @RequestBody RegisterUserRequest request) {
         return ResponseEntity
                 .status(SuccessStatus.SIGNUP_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.SIGNUP_SUCCESS, authService.registerUser(request)));
@@ -40,7 +40,7 @@ public class AuthApi {
 
     @Operation(summary = "로그인", description = "로그인 API입니다.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<CreateLoginResponse>> createUserLogin(@RequestBody CreateLoginRequest request) {
+    public ResponseEntity<ApiResponse<CreateLoginResponse>> createUserLogin(@Valid @RequestBody CreateLoginRequest request) {
         return ResponseEntity
                 .status(SuccessStatus.LOGIN_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.LOGIN_SUCCESS, authService.authenticateUser(request)));
@@ -48,7 +48,7 @@ public class AuthApi {
 
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다.    \nRefresh Token을 통해 Access Token을 재발급합니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<CreateTokenReissueResponse>> createTokenReissue(@RequestBody CreateTokenReissueRequest request) {
+    public ResponseEntity<ApiResponse<CreateTokenReissueResponse>> createTokenReissue(@Valid @RequestBody CreateTokenReissueRequest request) {
         return ResponseEntity
                 .status(SuccessStatus.TOKEN_REISSUE_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.TOKEN_REISSUE_SUCCESS, authService.reissueToken(request)));

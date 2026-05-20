@@ -195,20 +195,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private TokenBundle issueSession(CardChnAuthUser user) {
-        sessionRepository.findByAuthUser_AuthUserUuid(user.getAuthUserUuid())
-                .ifPresent(sessionRepository::delete);
-
         String jti = UUID.randomUUID().toString();
         String accessToken = jwtTokenProvider.generateAccessToken(user.getUserUuid(), user.getAuthUserUuid(), jti);
         String refreshToken = refreshTokenService.createRefreshToken();
+        String refreshTokenHash = refreshTokenService.createTokenHash(refreshToken);
+        LocalDateTime refreshTokenExpiryAt = refreshTokenService.getRefreshTokenExpiryAt();
 
-        CardChnAuthSession session = CardChnAuthSession.builder()
-                .authUser(user)
-                .refreshTokenHash(refreshTokenService.createTokenHash(refreshToken))
-                .accessTokenJti(jti)
-                .expiredAt(refreshTokenService.getRefreshTokenExpiryAt())
-                .build();
-        sessionRepository.save(session);
+        sessionRepository.findByAuthUser_AuthUserUuid(user.getAuthUserUuid())
+                .ifPresentOrElse(
+                        session -> session.rotate(refreshTokenHash, jti, refreshTokenExpiryAt),
+                        () -> sessionRepository.save(CardChnAuthSession.builder()
+                                .authUser(user)
+                                .refreshTokenHash(refreshTokenHash)
+                                .accessTokenJti(jti)
+                                .expiredAt(refreshTokenExpiryAt)
+                                .build())
+                );
 
         return new TokenBundle(accessToken, refreshToken);
     }

@@ -30,6 +30,7 @@ public class CardChnAuthUser extends BaseTimeEntity {
     @Column(name = "auth_user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
     private UUID authUserUuid;
 
+    // TODO: 추후 FK로 연결
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "card_user_uuid", columnDefinition = "VARCHAR(36)")
     private UUID cardUserUuid;

@@ -7,8 +7,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class TokenBlacklistService implements com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService {
 

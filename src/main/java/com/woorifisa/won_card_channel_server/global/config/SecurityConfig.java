@@ -48,7 +48,7 @@ public class SecurityConfig {
                         new JwtAuthenticationFilter(
                                 jwtTokenProvider,
                                 tokenBlacklistService,
-                                List.of("/api/auth/logout", "/api/users/")
+                                List.of("/api/auth/logout", "/api/users")
                         ),
                         UsernamePasswordAuthenticationFilter.class
                 )

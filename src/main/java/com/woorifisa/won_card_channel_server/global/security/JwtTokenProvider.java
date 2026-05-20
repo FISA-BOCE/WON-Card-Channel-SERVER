@@ -47,11 +47,11 @@ public class JwtTokenProvider {
                     .getPayload();
             String authUserUuid = claims.get("authUserUuid", String.class);
             String userUuid = claims.getSubject();
+            String jti = claims.getId();
             return new AuthenticatedUser(
                     parseRequiredUuid(authUserUuid, "authUserUuid"),
                     parseRequiredUuid(userUuid, "subject"),
-                    claims.getId(),
-                    token
+                    parseRequiredClaim(jti, "jti")
             );
         } catch (ExpiredJwtException e) {
             throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED);
@@ -90,5 +90,12 @@ public class JwtTokenProvider {
         } catch (IllegalArgumentException e) {
             throw new JwtException("Invalid UUID claim: " + claimName, e);
         }
+    }
+
+    private String parseRequiredClaim(String value, String claimName) {
+        if (value == null || value.isBlank()) {
+            throw new JwtException("Missing required JWT claim: " + claimName);
+        }
+        return value;
     }
 }

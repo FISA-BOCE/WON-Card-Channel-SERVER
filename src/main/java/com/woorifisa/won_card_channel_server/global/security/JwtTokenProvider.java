@@ -9,15 +9,15 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenProvider {
 
-    private final Key signingKey;
+    private final SecretKey signingKey;
     private final SecurityProperties securityProperties;
 
     public JwtTokenProvider(SecurityProperties securityProperties) {
@@ -41,7 +41,7 @@ public class JwtTokenProvider {
 
     public AuthenticatedUser parse(String token) {
         try {
-            Claims claims = Jwts.parser().verifyWith((javax.crypto.SecretKey) signingKey).build()
+            Claims claims = Jwts.parser().verifyWith(signingKey).build()
                     .parseSignedClaims(token)
                     .getPayload();
             return new AuthenticatedUser(
@@ -59,7 +59,7 @@ public class JwtTokenProvider {
 
     public long getRemainingValidityMillis(String token) {
         try {
-            Claims claims = Jwts.parser().verifyWith((javax.crypto.SecretKey) signingKey).build()
+            Claims claims = Jwts.parser().verifyWith(signingKey).build()
                     .parseSignedClaims(token)
                     .getPayload();
             return claims.getExpiration().getTime() - System.currentTimeMillis();

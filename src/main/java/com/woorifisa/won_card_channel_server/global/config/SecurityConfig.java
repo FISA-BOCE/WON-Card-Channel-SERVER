@@ -37,8 +37,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/reissue").permitAll()
-                        .requestMatchers("/api/v1/auth/logout", "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/logout", "/api/users/**").authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
@@ -47,7 +47,7 @@ public class SecurityConfig {
                         new JwtAuthenticationFilter(
                                 jwtTokenProvider,
                                 tokenBlacklistService,
-                                List.of("/api/v1/auth/logout", "/api/v1/users")
+                                List.of("/api/auth/logout", "/api/users/")
                         ),
                         UsernamePasswordAuthenticationFilter.class
                 )

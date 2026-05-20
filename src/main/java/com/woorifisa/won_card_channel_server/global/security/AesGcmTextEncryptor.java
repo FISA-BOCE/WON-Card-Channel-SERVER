@@ -92,7 +92,6 @@ public class AesGcmTextEncryptor implements TextEncryptor {
         try {
             return decrypt(value);
         } catch (IllegalStateException e) {
-            // Legacy rows may still contain plaintext or pre-encryption placeholder values.
             return value;
         }
     }

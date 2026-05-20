@@ -1,7 +1,6 @@
 package com.woorifisa.won_card_channel_server.global.exception.handler;
 
 import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
-import com.woorifisa.won_card_channel_server.global.util.ValidationUtils;
 import lombok.Getter;
 
 @Getter
@@ -22,12 +21,15 @@ public class BusinessException extends RuntimeException {
         this.message = resolveMessage(errorCode, message);
     }
 
+
     @Override
     public String getMessage() {
         return message;
     }
 
     private static String resolveMessage(ErrorCode errorCode, String message) {
-        return ValidationUtils.isBlank(message) ? errorCode.getMessage() : message;
+        return message == null || message.isBlank()
+                ? errorCode.getMessage()
+                : message;
     }
 }

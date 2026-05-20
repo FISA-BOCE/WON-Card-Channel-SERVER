@@ -6,7 +6,6 @@ import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateToken
 import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateTokenReissueResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.dto.request.DeleteLogoutRequest;
 import com.woorifisa.won_card_channel_server.domain.auth.dto.request.RegisterUserRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.response.RegisterUserResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthSession;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.model.UserStatus;
@@ -48,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public RegisterUserResponse registerUser(RegisterUserRequest request) {
+    public void registerUser(RegisterUserRequest request) {
         String phoneNumber = request.phoneNumber();
         String telHash = HashUtils.sha256(phoneNumber);
         if (userRepository.findByTelHash(telHash).isPresent()) {
@@ -68,7 +67,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
-        return new RegisterUserResponse();
     }
 
     @Override

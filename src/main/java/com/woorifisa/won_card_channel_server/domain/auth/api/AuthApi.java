@@ -6,7 +6,6 @@ import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateToken
 import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateTokenReissueResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.dto.request.DeleteLogoutRequest;
 import com.woorifisa.won_card_channel_server.domain.auth.dto.request.RegisterUserRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.response.RegisterUserResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.service.AuthService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -32,10 +31,11 @@ public class AuthApi {
 
     @Operation(summary = "회원가입", description = "회원가입 API입니다.    \n비밀번호는 8자 이상이어야 합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<RegisterUserResponse>> createUserRegistration(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<Void>> createUserRegistration(@Valid @RequestBody RegisterUserRequest request) {
+        authService.registerUser(request);
         return ResponseEntity
                 .status(SuccessStatus.SIGNUP_SUCCESS.getHttpStatus())
-                .body(ApiResponse.of(SuccessStatus.SIGNUP_SUCCESS, authService.registerUser(request)));
+                .body(ApiResponse.of(SuccessStatus.SIGNUP_SUCCESS));
     }
 
     @Operation(summary = "로그인", description = "로그인 API입니다.")

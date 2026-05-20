@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server.domain.user.dto;
+package com.woorifisa.won_card_channel_server.domain.user.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

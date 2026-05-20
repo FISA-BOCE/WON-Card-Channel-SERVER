@@ -19,5 +19,5 @@ public interface AuthService {
 
     CreateTokenReissueResponse reissueToken(@NotNull @Valid CreateTokenReissueRequest request);
 
-    void logoutUser(AuthenticatedUser authenticatedUser, @NotNull @Valid DeleteLogoutRequest request);
+    void logoutUser(@NotNull AuthenticatedUser authenticatedUser, @NotNull @Valid DeleteLogoutRequest request);
 }

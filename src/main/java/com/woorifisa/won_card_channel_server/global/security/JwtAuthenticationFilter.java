@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,22 +22,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
-    private final List<String> protectedPrefixes;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public JwtAuthenticationFilter(
             JwtTokenProvider jwtTokenProvider,
-            TokenBlacklistService tokenBlacklistService,
-            List<String> protectedPrefixes
+            TokenBlacklistService tokenBlacklistService
     ) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenBlacklistService = tokenBlacklistService;
-        this.protectedPrefixes = protectedPrefixes;
-    }
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return protectedPrefixes.stream().noneMatch(prefix -> request.getRequestURI().startsWith(prefix));
     }
 
     @Override
@@ -47,7 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
             if (authorization == null || !authorization.startsWith("Bearer ")) {
-                throw new BusinessException(AuthErrorCode.AUTHENTICATION_REQUIRED);
+                filterChain.doFilter(request, response);
+                return;
             }
 
             String token = authorization.substring(7);

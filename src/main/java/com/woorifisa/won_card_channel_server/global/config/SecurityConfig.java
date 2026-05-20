@@ -5,7 +5,6 @@ import com.woorifisa.won_card_channel_server.global.security.JwtAuthenticationFi
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
 import com.woorifisa.won_card_channel_server.global.security.RestAccessDeniedHandler;
 import com.woorifisa.won_card_channel_server.global.security.RestAuthenticationEntryPoint;
-import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,8 +46,7 @@ public class SecurityConfig {
                 .addFilterAfter(
                         new JwtAuthenticationFilter(
                                 jwtTokenProvider,
-                                tokenBlacklistService,
-                                List.of("/api/auth/logout", "/api/users")
+                                tokenBlacklistService
                         ),
                         UsernamePasswordAuthenticationFilter.class
                 )

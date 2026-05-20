@@ -1,12 +1,12 @@
 package com.woorifisa.won_card_channel_server.domain.auth.service.impl;
 
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateLoginRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateLoginResponse;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateTokenReissueRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.CreateTokenReissueResponse;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.DeleteLogoutRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.RegisterUserRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.RegisterUserResponse;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateLoginRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateLoginResponse;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateTokenReissueRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateTokenReissueResponse;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.DeleteLogoutRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.request.RegisterUserRequest;
+import com.woorifisa.won_card_channel_server.domain.auth.dto.response.RegisterUserResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthSession;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.model.UserStatus;
@@ -22,15 +22,16 @@ import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
 import com.woorifisa.won_card_channel_server.global.security.TextEncryptor;
 import com.woorifisa.won_card_channel_server.global.util.HashUtils;
-import com.woorifisa.won_card_channel_server.global.util.ValidationUtils;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 @Service
+@Validated
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
@@ -46,8 +47,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public RegisterUserResponse registerUser(RegisterUserRequest request) {
-        validateRegisterUserRequest(request);
-
         String phoneNumber = request.phoneNumber();
         String telHash = HashUtils.sha256(phoneNumber);
         if (userRepository.findByTelHash(telHash).isPresent()) {
@@ -74,8 +73,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public CreateLoginResponse authenticateUser(CreateLoginRequest request) {
-        validateCreateLoginRequest(request);
-
         String telHash = HashUtils.sha256(request.userId());
         CardChnAuthUser user = userRepository.findByTelHashForUpdate(telHash)
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_CREDENTIALS));
@@ -103,10 +100,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public CreateTokenReissueResponse reissueToken(CreateTokenReissueRequest request) {
-        if (request == null || ValidationUtils.isBlank(request.refreshToken())) {
-            throw new BusinessException(AuthErrorCode.INVALID_INPUT);
-        }
-
         String refreshTokenHash = refreshTokenService.createTokenHash(request.refreshToken());
         CardChnAuthSession session = sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash)
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
@@ -140,10 +133,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logoutUser(AuthenticatedUser authenticatedUser, DeleteLogoutRequest request) {
-        if (request == null || ValidationUtils.isBlank(request.refreshToken())) {
-            throw new BusinessException(AuthErrorCode.INVALID_INPUT);
-        }
-
         String refreshTokenHash = refreshTokenService.createTokenHash(request.refreshToken());
         CardChnAuthSession session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.TOKEN_EXPIRED, "이미 만료되었거나 유효하지 않은 토큰입니다."));
@@ -154,30 +143,6 @@ public class AuthServiceImpl implements AuthService {
 
         sessionRepository.delete(session);
         tokenBlacklistService.saveBlacklistedToken(authenticatedUser.jti(), jwtTokenProvider.getRemainingValidityMillis(authenticatedUser.token()));
-    }
-
-    private void validateCreateLoginRequest(CreateLoginRequest request) {
-        if (request == null
-                || ValidationUtils.isBlank(request.userId())
-                || ValidationUtils.isBlank(request.userPw())
-                || !ValidationUtils.isValidUserId(request.userId())
-                || !ValidationUtils.isValidPassword(request.userPw())) {
-            throw new BusinessException(AuthErrorCode.INVALID_INPUT);
-        }
-    }
-
-    private void validateRegisterUserRequest(RegisterUserRequest request) {
-        if (request == null
-                || !ValidationUtils.isValidUserId(request.phoneNumber())
-                || ValidationUtils.isBlank(request.userName())
-                || request.userName().trim().length() > 100
-                || !ValidationUtils.isValidPassword(request.password())
-                || !ValidationUtils.isValidEmail(request.email())
-                || request.termsAgreed() == null
-                || !request.termsAgreed()
-                || !request.password().equals(request.passwordConfirm())) {
-            throw new BusinessException(AuthErrorCode.INVALID_INPUT);
-        }
     }
 
     private void validateActiveUser(CardChnAuthUser user) {

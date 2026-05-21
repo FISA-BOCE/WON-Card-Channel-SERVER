@@ -1,9 +1,7 @@
 package com.woorifisa.won_card_channel_server.domain.reward.api;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,11 +47,19 @@ class RewardLedgerApiTest {
     @MockitoBean
     private RewardLedgerService rewardLedgerService;
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("자동투자 리워드 내역을 조회한다")
     void getRewardLedger() throws Exception {
         // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(toAuthentication(authenticatedUser));
 
         RewardLedgerResponse response = new RewardLedgerResponse(
                 2026,
@@ -67,14 +75,13 @@ class RewardLedgerApiTest {
                 )
         );
 
-        given(rewardLedgerService.getRewardLedger(any(AuthenticatedUser.class), anyString()))
+        given(rewardLedgerService.getRewardLedger(any(AuthenticatedUser.class), eq("EARN")))
                 .willReturn(response);
 
         // when & then
         mockMvc.perform(
                         get("/api/cards/rewards/ledger")
                                 .param("type", "EARN")
-                                .with(authentication(toAuthentication(authenticatedUser)))
                                 .header("Authorization", "Bearer test-token")
                                 .header("X-Service-ID", "WOORI-FISA-APP-01")
                                 .header("X-Transaction-ID", "TX-20260512-RWD02")
@@ -96,19 +103,22 @@ class RewardLedgerApiTest {
         // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
 
+        SecurityContextHolder.getContext()
+                .setAuthentication(toAuthentication(authenticatedUser));
+
         RewardLedgerResponse response = new RewardLedgerResponse(
                 2026,
                 1245000L,
                 List.of()
         );
 
-        given(rewardLedgerService.getRewardLedger(any(AuthenticatedUser.class), any()))
+        given(rewardLedgerService.getRewardLedger(any(AuthenticatedUser.class), isNull()))
                 .willReturn(response);
 
         // when & then
         mockMvc.perform(
                         get("/api/cards/rewards/ledger")
-                                .with(authentication(toAuthentication(authenticatedUser))).header("Authorization", "Bearer test-token")
+                                .header("Authorization", "Bearer test-token")
                                 .header("X-Service-ID", "WOORI-FISA-APP-01")
                                 .header("X-Transaction-ID", "TX-20260512-RWD02")
                 )

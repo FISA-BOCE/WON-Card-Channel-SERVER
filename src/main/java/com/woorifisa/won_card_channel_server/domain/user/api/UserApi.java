@@ -7,6 +7,8 @@ import com.woorifisa.won_card_channel_server.domain.user.dto.request.DeleteUserR
 import com.woorifisa.won_card_channel_server.domain.user.dto.response.GetMyUserResponse;
 import com.woorifisa.won_card_channel_server.domain.user.dto.request.UpdateUserRequest;
 import com.woorifisa.won_card_channel_server.domain.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
+@Tag(name = "User", description = "앱 유저 관련 API")
 public class UserApi {
 
     private final UserService userService;
 
+    @Operation(summary = "내 정보 조회", description = "마이페이지 내 정보 조회를 위한 API입니다.")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<GetMyUserResponse>> getMyUser(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         return ResponseEntity
@@ -32,6 +36,7 @@ public class UserApi {
                 .body(ApiResponse.of(SuccessStatus.USER_ME_SUCCESS, userService.getMyUser(authenticatedUser)));
     }
 
+    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴 API입니다.")
     @PostMapping("/me/withdraw")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
@@ -43,6 +48,7 @@ public class UserApi {
                 .body(ApiResponse.of(SuccessStatus.USER_WITHDRAW_SUCCESS));
     }
 
+    @Operation(summary = "내 정보 수정", description = "마이페이지 내 정보 수정을 위한 API입니다.")
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,

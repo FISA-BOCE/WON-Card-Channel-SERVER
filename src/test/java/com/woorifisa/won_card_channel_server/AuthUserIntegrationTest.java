@@ -280,6 +280,9 @@ class AuthUserIntegrationTest {
     @Test
     void updateEmailStoresEncryptedValue() throws Exception {
         TokenBundle tokenBundle = login();
+        String oldEnc = userRepository.findByUserUuid(USER_UUID_1)
+                .orElseThrow()
+                .getEmailEnc();
 
         mockMvc.perform(patch("/api/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -290,6 +293,7 @@ class AuthUserIntegrationTest {
                 .andExpect(status().isOk());
 
         CardChnAuthUser updatedUser = userRepository.findByUserUuid(USER_UUID_1).orElseThrow();
+        assertThat(updatedUser.getEmailEnc()).isNotEqualTo(oldEnc);
         assertThat(updatedUser.getEmailEnc()).isNotEqualTo("plain@mail.com");
     }
 

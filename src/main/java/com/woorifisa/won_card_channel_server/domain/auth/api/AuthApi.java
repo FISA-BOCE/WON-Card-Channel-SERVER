@@ -29,7 +29,7 @@ public class AuthApi {
 
     private final AuthService authService;
 
-    @Operation(summary = "회원가입", description = "회원가입 API입니다.    \n비밀번호는 8자 이상이어야 합니다.")
+    @Operation(summary = "회원가입", description = "회원가입 API입니다.    \n비밀번호는 8자 이상, 16자 이하여야 합니다.")
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> createUserRegistration(@Valid @RequestBody RegisterUserRequest request) {
         authService.registerUser(request);

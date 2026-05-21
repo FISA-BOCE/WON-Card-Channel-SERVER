@@ -6,7 +6,6 @@ import com.woorifisa.won_card_channel_server.domain.auth.dto.request.CreateToken
 import com.woorifisa.won_card_channel_server.domain.auth.dto.response.CreateTokenReissueResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.dto.request.DeleteLogoutRequest;
 import com.woorifisa.won_card_channel_server.domain.auth.dto.request.RegisterUserRequest;
-import com.woorifisa.won_card_channel_server.domain.auth.dto.response.RegisterUserResponse;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthSession;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.model.UserStatus;
@@ -14,7 +13,7 @@ import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErro
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthSessionRepository;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
 import com.woorifisa.won_card_channel_server.domain.auth.service.AuthService;
-import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClient;
+import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClientService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.RefreshTokenService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
@@ -39,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final CardChnAuthUserRepository userRepository;
     private final CardChnAuthSessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
-    private final LedgerAuthClient ledgerAuthClient;
+    private final LedgerAuthClientService ledgerAuthClientService;
     private final RefreshTokenService refreshTokenService;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -48,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public RegisterUserResponse registerUser(RegisterUserRequest request) {
+    public void registerUser(RegisterUserRequest request) {
         String phoneNumber = request.phoneNumber();
         String telHash = HashUtils.sha256(phoneNumber);
         if (userRepository.findByTelHash(telHash).isPresent()) {
@@ -68,7 +67,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
-        return new RegisterUserResponse();
     }
 
     @Override
@@ -80,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
 
         validateActiveUser(user);
 
-        if (!ledgerAuthClient.fetchAuthenticationResult(request.userId(), request.userPw()).authenticated()) {
+        if (!ledgerAuthClientService.fetchAuthenticationResult(request.userId(), request.userPw()).authenticated()) {
             throw new BusinessException(AuthErrorCode.INVALID_CREDENTIALS);
         }
 
@@ -136,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
     public void logoutUser(AuthenticatedUser authenticatedUser, DeleteLogoutRequest request) {
         String refreshTokenHash = refreshTokenService.createTokenHash(request.refreshToken());
         CardChnAuthSession session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
-                .orElseThrow(() -> new BusinessException(AuthErrorCode.TOKEN_EXPIRED, "이미 만료되었거나 유효하지 않은 토큰입니다."));
+                .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
 
         if (!session.getAuthUser().getUserUuid().equals(authenticatedUser.userUuid())) {
             throw new BusinessException(AuthErrorCode.FORBIDDEN);

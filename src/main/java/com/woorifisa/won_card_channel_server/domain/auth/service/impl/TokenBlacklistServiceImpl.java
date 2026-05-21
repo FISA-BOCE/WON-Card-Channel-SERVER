@@ -5,12 +5,16 @@ import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnToken
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+
+import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
-public class TokenBlacklistService implements com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService {
+public class TokenBlacklistServiceImpl implements TokenBlacklistService {
 
     private final CardChnTokenBlacklistRepository tokenBlacklistRepository;
 

@@ -1,10 +1,10 @@
 package com.woorifisa.won_card_channel_server.domain.auth.service.impl;
 
-import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClient;
+import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClientService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StubLedgerAuthClient implements LedgerAuthClient {
+public class StubLedgerAuthClientServiceImpl implements LedgerAuthClientService {
 
     @Override
     public LedgerAuthResult fetchAuthenticationResult(String userId, String rawPassword) {

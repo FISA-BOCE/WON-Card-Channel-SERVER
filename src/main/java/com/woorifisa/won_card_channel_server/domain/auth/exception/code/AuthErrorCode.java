@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 public enum AuthErrorCode implements ErrorCode {
 
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "AUTH_400_001", "입력값 형식이 올바르지 않습니다."),
-    EMPTY_UPDATE_REQUEST(HttpStatus.BAD_REQUEST, "AUTH_400_002", "수정할 정보가 없습니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH_401_001", "아이디 또는 비밀번호가 일치하지 않습니다."),
     AUTHENTICATION_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_401_002", "인증이 필요합니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH_401_003", "토큰이 만료되었습니다."),

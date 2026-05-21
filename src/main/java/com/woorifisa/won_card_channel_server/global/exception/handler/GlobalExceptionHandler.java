@@ -1,6 +1,5 @@
 package com.woorifisa.won_card_channel_server.global.exception.handler;
 
-import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
 import com.woorifisa.won_card_channel_server.global.response.ErrorResponse;
@@ -54,8 +53,8 @@ public class GlobalExceptionHandler {
             log.warn("bad request: type={}", e.getClass().getSimpleName(), e);
         }
         return ResponseEntity
-                .status(AuthErrorCode.INVALID_INPUT.getHttpStatus())
-                .body(ErrorResponse.of(AuthErrorCode.INVALID_INPUT));
+                .status(CommonErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
+                .body(ErrorResponse.of(CommonErrorCode.INVALID_INPUT_VALUE));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

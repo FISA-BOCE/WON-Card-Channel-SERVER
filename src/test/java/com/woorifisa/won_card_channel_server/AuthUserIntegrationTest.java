@@ -167,7 +167,7 @@ class AuthUserIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("AUTH_400_001"));
+                .andExpect(jsonPath("$.code").value("COM_400_002"));
     }
 
     @Test
@@ -308,7 +308,7 @@ class AuthUserIntegrationTest {
                                 {"email":"not-an-email"}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("AUTH_400_001"));
+                .andExpect(jsonPath("$.code").value("COM_400_002"));
     }
 
     @Test

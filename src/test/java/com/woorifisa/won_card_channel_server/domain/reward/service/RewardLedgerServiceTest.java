@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.reward.service;
 
+import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
 import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
@@ -250,6 +251,18 @@ class RewardLedgerServiceTest {
                     BusinessException businessException = (BusinessException) exception;
                     assertThat(businessException.getErrorCode())
                             .isEqualTo(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+                });
+    }
+
+    @Test
+    @DisplayName("인증 사용자 정보가 없으면 예외가 발생한다")
+    void getRewardLedgerAuthenticatedUserNull() {
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedger(null, "EARN"))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(AuthErrorCode.AUTHENTICATION_REQUIRED);
                 });
     }
 

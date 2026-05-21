@@ -215,7 +215,7 @@ class RewardLedgerServiceTest {
         );
     }
 
-    private CardChnAuthUser newAuthUser(UUID userUuid, UUID cardUserUuid) throws Exception {
+    private CardChnAuthUser newAuthUser(UUID userUuid, UUID cardUserUuid) {
         CardChnAuthUser user = CardChnAuthUser.builder()
                 .authUserUuid(AUTH_USER_UUID)
                 .userUuid(userUuid)

@@ -37,7 +37,7 @@ public class RewardLedgerService {
 
             return rewardLedgerMapper.toResponse(coreResponse.data());
         } catch (FeignException.NotFound e) {
-            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND);
+            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
         }
     }
 

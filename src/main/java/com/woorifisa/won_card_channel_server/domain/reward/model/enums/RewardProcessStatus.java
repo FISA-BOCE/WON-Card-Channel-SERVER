@@ -14,7 +14,7 @@ public enum RewardProcessStatus {
         try {
             return RewardProcessStatus.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException(RewardErrorCode.INVALID_REWARD_LEDGER_TYPE);
+            throw new BusinessException(RewardErrorCode.INVALID_REWARD_LEDGER_TYPE, e);
         }
     }
 }

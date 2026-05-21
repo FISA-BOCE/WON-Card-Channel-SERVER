@@ -134,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
     public void logoutUser(AuthenticatedUser authenticatedUser, DeleteLogoutRequest request) {
         String refreshTokenHash = refreshTokenService.createTokenHash(request.refreshToken());
         CardChnAuthSession session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
-                .orElseThrow(() -> new BusinessException(AuthErrorCode.TOKEN_EXPIRED, "이미 만료되었거나 유효하지 않은 토큰입니다."));
+                .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
 
         if (!session.getAuthUser().getUserUuid().equals(authenticatedUser.userUuid())) {
             throw new BusinessException(AuthErrorCode.FORBIDDEN);

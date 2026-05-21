@@ -25,7 +25,7 @@ public class AuthExceptionHandler {
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ErrorResponse.of(errorCode, e.getMessage()));
+                .body(ErrorResponse.of(errorCode));
     }
 
     @ExceptionHandler({

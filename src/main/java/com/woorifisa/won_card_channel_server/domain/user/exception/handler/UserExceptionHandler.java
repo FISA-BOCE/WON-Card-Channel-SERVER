@@ -24,7 +24,7 @@ public class UserExceptionHandler {
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ErrorResponse.of(errorCode, e.getMessage()));
+                .body(ErrorResponse.of(errorCode));
     }
 
     @ExceptionHandler({

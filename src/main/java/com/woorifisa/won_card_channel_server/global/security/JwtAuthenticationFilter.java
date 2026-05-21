@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             request.setAttribute(RequestAccessTokenHolder.ACCESS_TOKEN_ATTRIBUTE, token);
             AuthenticatedUser authenticatedUser = jwtTokenProvider.parse(token);
             if (tokenBlacklistService.isBlacklisted(authenticatedUser.jti())) {
-                throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED, "이미 만료되었거나 유효하지 않은 토큰입니다.");
+                throw new BusinessException(AuthErrorCode.INVALID_TOKEN);
             }
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(e.getErrorCode().getHttpStatus().value());
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            objectMapper.writeValue(response.getWriter(), ErrorResponse.of(e.getErrorCode(), e.getMessage()));
+            objectMapper.writeValue(response.getWriter(), ErrorResponse.of(e.getErrorCode()));
             response.getWriter().flush();
         }
     }

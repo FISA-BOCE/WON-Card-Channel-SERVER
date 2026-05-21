@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void withdrawUser(AuthenticatedUser authenticatedUser, DeleteUserRequest request) {
         CardChnAuthUser user = userRepository.findByUserUuid(authenticatedUser.userUuid())
-                .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
 
         if (user.getUserStatus() == UserStatus.DEACTIVATE) {
             throw new BusinessException(AuthErrorCode.ALREADY_WITHDRAWN);
@@ -112,7 +112,7 @@ public class UserServiceImpl implements UserService {
 
     private CardChnAuthUser getActiveUser(UUID userUuid) {
         CardChnAuthUser user = userRepository.findByUserUuid(userUuid)
-                .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
         if (user.getUserStatus() == UserStatus.DEACTIVATE) {
             throw new BusinessException(AuthErrorCode.WITHDRAWN_ACCOUNT);
         }

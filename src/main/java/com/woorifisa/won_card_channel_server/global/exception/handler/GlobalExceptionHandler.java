@@ -1,9 +1,11 @@
 package com.woorifisa.won_card_channel_server.global.exception.handler;
 
+import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
 import com.woorifisa.won_card_channel_server.global.response.ErrorResponse;
 import jakarta.validation.ConstraintViolationException;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,7 +22,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
-        log.warn("business exception: code={}, message={}", errorCode.getCode(), e.getMessage());
+        log.warn("business exception: code={}, type={}", errorCode.getCode(), e.getClass().getSimpleName());
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -34,10 +36,26 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
-        log.warn("bad request: {}", e.getMessage());
+        if (e instanceof MethodArgumentNotValidException validationException) {
+            String fields = validationException.getBindingResult().getFieldErrors().stream()
+                    .map(fieldError -> fieldError.getField() + ":" + fieldError.getCode())
+                    .collect(Collectors.joining(", "));
+            log.warn("bad request: type={}, fields={}", e.getClass().getSimpleName(), fields, e);
+        } else if (e instanceof ConstraintViolationException constraintViolationException) {
+            String violations = constraintViolationException.getConstraintViolations().stream()
+                    .map(violation -> violation.getPropertyPath() + ":" + violation.getMessageTemplate())
+                    .collect(Collectors.joining(", "));
+            log.warn("bad request: type={}, violations={}", e.getClass().getSimpleName(), violations, e);
+        } else if (e instanceof HttpMessageNotReadableException notReadableException) {
+            Throwable rootCause = notReadableException.getMostSpecificCause();
+            String rootCauseType = rootCause == null ? "unknown" : rootCause.getClass().getSimpleName();
+            log.warn("bad request: type={}, rootCause={}", e.getClass().getSimpleName(), rootCauseType, e);
+        } else {
+            log.warn("bad request: type={}", e.getClass().getSimpleName(), e);
+        }
         return ResponseEntity
-                .status(CommonErrorCode.INVALID_REQUEST.getHttpStatus())
-                .body(ErrorResponse.of(CommonErrorCode.INVALID_REQUEST));
+                .status(AuthErrorCode.INVALID_INPUT.getHttpStatus())
+                .body(ErrorResponse.of(AuthErrorCode.INVALID_INPUT));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

@@ -2,10 +2,10 @@ package com.woorifisa.won_card_channel_server.domain.reward.service;
 
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
-import com.woorifisa.won_card_channel_server.domain.card.exception.CardErrorCode;
+import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
-import com.woorifisa.won_card_channel_server.domain.reward.exception.RewardErrorCode;
+import com.woorifisa.won_card_channel_server.domain.reward.exception.code.RewardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.external.CardCoreRewardApi;
 import com.woorifisa.won_card_channel_server.domain.reward.mapper.RewardLedgerMapper;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;

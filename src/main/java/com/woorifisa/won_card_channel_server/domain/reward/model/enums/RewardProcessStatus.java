@@ -1,6 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.reward.model.enums;
 
-import com.woorifisa.won_card_channel_server.domain.reward.exception.RewardErrorCode;
+import com.woorifisa.won_card_channel_server.domain.reward.exception.code.RewardErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 
 public enum RewardProcessStatus {

@@ -2,17 +2,15 @@ package com.woorifisa.won_card_channel_server.domain.reward.service;
 
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
-import com.woorifisa.won_card_channel_server.domain.card.exception.CardErrorCode;
+import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
-import com.woorifisa.won_card_channel_server.domain.reward.exception.RewardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.external.CardCoreRewardApi;
 import com.woorifisa.won_card_channel_server.domain.reward.mapper.RewardLedgerMapper;
 import com.woorifisa.won_card_channel_server.domain.reward.model.enums.RewardProcessStatus;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

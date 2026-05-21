@@ -31,14 +31,10 @@ public class RewardLedgerService {
 
         UUID cardUserUuid = getCardUserUuid(authenticatedUser.userUuid());
 
-        try {
-            ApiResponse<CardCoreRewardLedgerResponse> coreResponse =
-                    cardCoreRewardApi.getRewardLedger(cardUserUuid, rewardProcessStatus.name());
+        ApiResponse<CardCoreRewardLedgerResponse> coreResponse =
+                cardCoreRewardApi.getRewardLedger(cardUserUuid, rewardProcessStatus.name());
 
-            return rewardLedgerMapper.toResponse(coreResponse.data());
-        } catch (FeignException.NotFound e) {
-            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
-        }
+        return rewardLedgerMapper.toResponse(coreResponse.data());
     }
 
     private UUID getCardUserUuid(UUID userUuid) {

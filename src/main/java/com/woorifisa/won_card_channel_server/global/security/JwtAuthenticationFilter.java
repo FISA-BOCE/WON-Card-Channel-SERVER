@@ -43,6 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String token = authorization.substring(7);
+            request.setAttribute(RequestAccessTokenHolder.ACCESS_TOKEN_ATTRIBUTE, token);
             AuthenticatedUser authenticatedUser = jwtTokenProvider.parse(token);
             if (tokenBlacklistService.isBlacklisted(authenticatedUser.jti())) {
                 throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED, "이미 만료되었거나 유효하지 않은 토큰입니다.");

@@ -3,6 +3,7 @@ package com.woorifisa.won_card_channel_server.global.exception.handler;
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
 import com.woorifisa.won_card_channel_server.global.response.ErrorResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -29,7 +30,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             MethodArgumentNotValidException.class,
             HttpMessageNotReadableException.class,
-            ServletRequestBindingException.class
+            ServletRequestBindingException.class,
+            ConstraintViolationException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
         log.warn("bad request: {}", e.getMessage());

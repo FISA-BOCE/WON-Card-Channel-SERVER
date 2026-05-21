@@ -69,9 +69,6 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(AuthErrorCode.ALREADY_WITHDRAWN);
         }
 
-        cardProductService.terminateProducts(user);
-        autoInvestService.disableAutoInvest(user);
-
         String refreshTokenHash = refreshTokenService.createTokenHash(request.refreshToken());
         CardChnAuthSession session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
@@ -79,6 +76,9 @@ public class UserServiceImpl implements UserService {
         if (!session.getAuthUser().getUserUuid().equals(authenticatedUser.userUuid())) {
             throw new BusinessException(AuthErrorCode.FORBIDDEN);
         }
+
+        cardProductService.terminateProducts(user);
+        autoInvestService.disableAutoInvest(user);
 
         sessionRepository.delete(session);
         tokenBlacklistService.saveBlacklistedToken(

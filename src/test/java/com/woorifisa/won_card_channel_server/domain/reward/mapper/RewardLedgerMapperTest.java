@@ -70,4 +70,19 @@ class RewardLedgerMapperTest {
         assertThat(response.ledgers()).isEmpty();
     }
 
+    @Test
+    @DisplayName("Card Core 응답의 ledgers가 null이면 빈 목록으로 변환한다")
+    void toResponseNullLedgers() {
+        // given
+        CardCoreRewardLedgerResponse coreResponse = new CardCoreRewardLedgerResponse(2026, 0L, null);
+
+        // when
+        RewardLedgerResponse response = rewardLedgerMapper.toResponse(coreResponse);
+
+        // then
+        assertThat(response.baseYear()).isEqualTo(2026);
+        assertThat(response.totalAccumulatedAmount()).isEqualTo(0L);
+        assertThat(response.ledgers()).isEmpty();
+    }
+
 }

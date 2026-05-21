@@ -4,13 +4,18 @@ import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCore
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class RewardLedgerMapper {
     public RewardLedgerResponse toResponse(CardCoreRewardLedgerResponse response) {
+        List<CardCoreRewardLedgerResponse.CardCoreRewardLedgerItem> ledgers =
+                response.ledgers() == null ? List.of() : response.ledgers();
+
         return new RewardLedgerResponse(
                 response.baseYear(),
                 response.totalAccumulatedAmount(),
-                response.ledgers().stream()
+                ledgers.stream()
                         .map(this::toLedgerItem)
                         .toList()
         );

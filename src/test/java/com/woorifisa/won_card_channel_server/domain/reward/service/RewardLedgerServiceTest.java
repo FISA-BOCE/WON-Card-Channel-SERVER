@@ -207,6 +207,52 @@ class RewardLedgerServiceTest {
                 });
     }
 
+    @Test
+    @DisplayName("Card Core 응답 자체가 null이면 예외가 발생한다")
+    void getRewardLedgerCoreResponseNull() throws Exception {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser user = newAuthUser(USER_UUID, CARD_USER_UUID);
+
+        given(userRepository.findByUserUuid(USER_UUID))
+                .willReturn(Optional.of(user));
+
+        given(cardCoreRewardApi.getRewardLedger(CARD_USER_UUID, "EARN"))
+                .willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedger(authenticatedUser, "EARN"))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+                });
+    }
+
+    @Test
+    @DisplayName("Card Core 응답 data가 null이면 예외가 발생한다")
+    void getRewardLedgerCoreResponseDataNull() throws Exception {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser user = newAuthUser(USER_UUID, CARD_USER_UUID);
+
+        given(userRepository.findByUserUuid(USER_UUID))
+                .willReturn(Optional.of(user));
+
+        given(cardCoreRewardApi.getRewardLedger(CARD_USER_UUID, "EARN"))
+                .willReturn(ApiResponse.of(SuccessStatus.OK, null));
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedger(authenticatedUser, "EARN"))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+                });
+    }
+
     private AuthenticatedUser authenticatedUser() {
         return new AuthenticatedUser(
                 AUTH_USER_UUID,

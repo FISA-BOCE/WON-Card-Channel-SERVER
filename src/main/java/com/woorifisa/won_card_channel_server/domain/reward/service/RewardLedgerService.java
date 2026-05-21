@@ -5,6 +5,7 @@ import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthU
 import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.exception.code.RewardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.external.CardCoreRewardApi;
 import com.woorifisa.won_card_channel_server.domain.reward.mapper.RewardLedgerMapper;
 import com.woorifisa.won_card_channel_server.domain.reward.model.enums.RewardProcessStatus;
@@ -32,7 +33,9 @@ public class RewardLedgerService {
         ApiResponse<CardCoreRewardLedgerResponse> coreResponse =
                 cardCoreRewardApi.getRewardLedger(cardUserUuid, rewardProcessStatus.name());
 
-        return rewardLedgerMapper.toResponse(coreResponse.data());
+        CardCoreRewardLedgerResponse data = extractCoreRewardLedgerData(coreResponse);
+
+        return rewardLedgerMapper.toResponse(data);
     }
 
     private UUID getCardUserUuid(UUID userUuid) {
@@ -48,5 +51,15 @@ public class RewardLedgerService {
 
         return cardUserUuid;
 
+    }
+
+    private CardCoreRewardLedgerResponse extractCoreRewardLedgerData(
+            ApiResponse<CardCoreRewardLedgerResponse> coreResponse) {
+
+        if (coreResponse == null || coreResponse.data() == null) {
+            throw new BusinessException(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+        }
+
+        return coreResponse.data();
     }
 }

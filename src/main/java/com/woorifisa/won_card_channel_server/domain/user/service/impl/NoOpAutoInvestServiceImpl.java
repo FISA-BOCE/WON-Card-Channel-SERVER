@@ -5,7 +5,7 @@ import com.woorifisa.won_card_channel_server.domain.user.service.AutoInvestServi
 import org.springframework.stereotype.Component;
 
 @Component
-public class NoOpAutoInvestService implements AutoInvestService {
+public class NoOpAutoInvestServiceImpl implements AutoInvestService {
 
     @Override
     public void disableAutoInvest(CardChnAuthUser user) {

@@ -5,7 +5,7 @@ import com.woorifisa.won_card_channel_server.domain.user.service.CardProductServ
 import org.springframework.stereotype.Component;
 
 @Component
-public class NoOpCardProductService implements CardProductService {
+public class NoOpCardProductServiceImpl implements CardProductService {
 
     @Override
     public void terminateProducts(CardChnAuthUser user) {

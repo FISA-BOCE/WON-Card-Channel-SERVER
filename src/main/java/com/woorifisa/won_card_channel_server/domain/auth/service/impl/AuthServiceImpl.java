@@ -13,7 +13,7 @@ import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErro
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthSessionRepository;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
 import com.woorifisa.won_card_channel_server.domain.auth.service.AuthService;
-import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClient;
+import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClientService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.RefreshTokenService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
@@ -38,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final CardChnAuthUserRepository userRepository;
     private final CardChnAuthSessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
-    private final LedgerAuthClient ledgerAuthClient;
+    private final LedgerAuthClientService ledgerAuthClientService;
     private final RefreshTokenService refreshTokenService;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -78,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
 
         validateActiveUser(user);
 
-        if (!ledgerAuthClient.fetchAuthenticationResult(request.userId(), request.userPw()).authenticated()) {
+        if (!ledgerAuthClientService.fetchAuthenticationResult(request.userId(), request.userPw()).authenticated()) {
             throw new BusinessException(AuthErrorCode.INVALID_CREDENTIALS);
         }
 

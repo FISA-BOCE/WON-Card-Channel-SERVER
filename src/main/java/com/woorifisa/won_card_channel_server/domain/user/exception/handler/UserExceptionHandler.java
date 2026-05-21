@@ -20,7 +20,7 @@ public class UserExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
-        log.warn("business exception: code={}, message={}", errorCode.getCode(), e.getMessage());
+        log.warn("business exception: code={}, type={}", errorCode.getCode(), e.getClass().getSimpleName());
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())

@@ -8,9 +8,9 @@ public record UpdateUserRequest(
         @Email
         @Size(max = 255)
         String email,
-        @Size(min = 8)
+        @Size(min = 8, max = 16)
         String currentPw,
-        @Size(min = 8)
+        @Size(min = 8, max = 16)
         String newPw
 ) {
 

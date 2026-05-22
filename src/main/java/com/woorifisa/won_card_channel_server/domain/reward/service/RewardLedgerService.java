@@ -67,7 +67,7 @@ public class RewardLedgerService {
     }
 
     private CardCoreRewardLedgerDetailResponse extractRewardLedgerDetail(ApiResponse<CardCoreRewardLedgerDetailResponse> coreResponse) {
-        if (coreResponse == null || coreResponse.data() == null) {
+        if (coreResponse == null || coreResponse.data() == null || coreResponse.data().detail() == null) {
             throw new BusinessException(RewardErrorCode.INVALID_REWARD_RESPONSE);
         }
 

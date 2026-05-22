@@ -6,11 +6,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.service.RewardLedgerService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
@@ -128,6 +130,47 @@ class RewardLedgerApiTest {
                 .andExpect(jsonPath("$.data.baseYear").value(2026))
                 .andExpect(jsonPath("$.data.totalAccumulatedAmount").value(1245000))
                 .andExpect(jsonPath("$.data.ledgers").isArray());
+    }
+
+    @Test
+    @DisplayName("자동투자 리워드 상세 내역을 조회한다")
+    void getRewardLedgerDetail() throws Exception {
+        // given
+        Long pointLedgerId = 1L;
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+
+        RewardLedgerDetailResponse response = new RewardLedgerDetailResponse(
+                pointLedgerId,
+                "2026-05", "EARN", 12450L,
+                LocalDateTime.of(2026, 5, 7, 14, 32),
+                Map.of(
+                        "previousMonthSpendAmount", 820000L,
+                        "targetSpendAmount", 500000L
+                )
+        );
+
+        given(rewardLedgerService.getRewardLedgerDetail(any(AuthenticatedUser.class), eq(pointLedgerId)
+        )).willReturn(response);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(toAuthentication(authenticatedUser));
+
+        // when & then
+        mockMvc.perform(
+                        get("/api/cards/rewards/ledger/{pointLedgerId}", pointLedgerId)
+                                .header("Authorization", "Bearer test-token")
+                                .header("X-Service-ID", "WOORI-FISA-APP-01")
+                                .header("X-Transaction-ID", "TX-20260512-RWD03")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("상세 리워드 내역 조회가 완료되었습니다."))
+                .andExpect(jsonPath("$.data.pointLedgerId").value(1))
+                .andExpect(jsonPath("$.data.baseMonth").value("2026-05"))
+                .andExpect(jsonPath("$.data.type").value("EARN"))
+                .andExpect(jsonPath("$.data.pointAmount").value(12450))
+                .andExpect(jsonPath("$.data.detail.previousMonthSpendAmount").value(820000))
+                .andExpect(jsonPath("$.data.detail.targetSpendAmount").value(500000));
     }
 
     private AuthenticatedUser authenticatedUser() {

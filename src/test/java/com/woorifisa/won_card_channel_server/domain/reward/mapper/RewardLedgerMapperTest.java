@@ -1,12 +1,15 @@
 package com.woorifisa.won_card_channel_server.domain.reward.mapper;
 
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,15 +25,7 @@ class RewardLedgerMapperTest {
         CardCoreRewardLedgerResponse coreResponse = new CardCoreRewardLedgerResponse(
                 2026,
                 1245000L,
-                List.of(
-                        new CardCoreRewardLedgerResponse.CardCoreRewardLedgerItem(
-                                1001L,
-                                "2026-05",
-                                12450L,
-                                "EARN",
-                                occurredAt
-                        )
-                )
+                List.of(new CardCoreRewardLedgerResponse.CardCoreRewardLedgerItem(1001L, "2026-05", 12450L, "EARN", occurredAt))
         );
 
         // when
@@ -55,11 +50,7 @@ class RewardLedgerMapperTest {
     @DisplayName("Card Core 리워드 내역이 비어 있으면 빈 목록으로 변환한다")
     void toResponseEmptyLedgers() {
         // given
-        CardCoreRewardLedgerResponse coreResponse = new CardCoreRewardLedgerResponse(
-                2026,
-                0L,
-                List.of()
-        );
+        CardCoreRewardLedgerResponse coreResponse = new CardCoreRewardLedgerResponse(2026, 0L, List.of());
 
         // when
         RewardLedgerResponse response = rewardLedgerMapper.toResponse(coreResponse);
@@ -85,4 +76,24 @@ class RewardLedgerMapperTest {
         assertThat(response.ledgers()).isEmpty();
     }
 
+    @Test
+    @DisplayName("Core 리워드 상세 응답을 Channel 리워드 상세 응답으로 변환한다")
+    void toDetailResponse() {
+        // given
+        LocalDateTime occurredAt = LocalDateTime.of(2026, 5, 7, 14, 32);
+        Map<String, Long> detail = Map.of("previousMonthSpendAmount", 820000L, "targetSpendAmount", 500000L);
+
+        CardCoreRewardLedgerDetailResponse coreResponse = new CardCoreRewardLedgerDetailResponse(1L, "2026-05", "EARN", 12450L, occurredAt, detail);
+
+        // when
+        RewardLedgerDetailResponse response = rewardLedgerMapper.toDetailResponse(coreResponse);
+
+        // then
+        assertThat(response.pointLedgerId()).isEqualTo(1L);
+        assertThat(response.baseMonth()).isEqualTo("2026-05");
+        assertThat(response.type()).isEqualTo("EARN");
+        assertThat(response.pointAmount()).isEqualTo(12450L);
+        assertThat(response.occurredAt()).isEqualTo(occurredAt);
+        assertThat(response.detail()).isEqualTo(detail);
+    }
 }

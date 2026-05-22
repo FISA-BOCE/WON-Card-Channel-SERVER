@@ -13,15 +13,19 @@ import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessEx
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
+import feign.FeignException;
+import feign.Request;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -227,7 +231,7 @@ class RewardLedgerServiceTest {
                 .satisfies(exception -> {
                     BusinessException businessException = (BusinessException) exception;
                     assertThat(businessException.getErrorCode())
-                            .isEqualTo(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_RESPONSE);
                 });
     }
 
@@ -250,7 +254,7 @@ class RewardLedgerServiceTest {
                 .satisfies(exception -> {
                     BusinessException businessException = (BusinessException) exception;
                     assertThat(businessException.getErrorCode())
-                            .isEqualTo(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_RESPONSE);
                 });
     }
 
@@ -266,12 +270,119 @@ class RewardLedgerServiceTest {
                 });
     }
 
+    @Test
+    @DisplayName("Card Core 상세 응답이 null이면 예외가 발생한다")
+    void getRewardLedgerDetailCoreResponseNull() throws Exception {
+        // given
+        Long pointLedgerId = 1L;
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser authUser = authUser(CARD_USER_UUID);
+
+        given(userRepository.findByUserUuid(USER_UUID)).willReturn(Optional.of(authUser));
+
+        given(cardCoreRewardApi.getRewardLedgerDetail(CARD_USER_UUID, pointLedgerId)).willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedgerDetail(authenticatedUser, pointLedgerId))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_RESPONSE);
+                });
+    }
+
+    @Test
+    @DisplayName("Card Core 목록 연동 실패 시 예외가 발생한다")
+    void getRewardLedgerCoreUnavailable() throws Exception {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser authUser = authUser(CARD_USER_UUID);
+
+        given(userRepository.findByUserUuid(USER_UUID)).willReturn(Optional.of(authUser));
+
+        given(cardCoreRewardApi.getRewardLedger(CARD_USER_UUID, "EARN")).willThrow(feignException(HttpStatus.BAD_GATEWAY));
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedger(authenticatedUser, "EARN"))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE);
+                });
+    }
+
+    @Test
+    @DisplayName("Card Core 상세 연동 실패 시 예외가 발생한다")
+    void getRewardLedgerDetailCoreUnavailable() throws Exception {
+        // given
+        Long pointLedgerId = 1L;
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser authUser = authUser(CARD_USER_UUID);
+
+        given(userRepository.findByUserUuid(USER_UUID)).willReturn(Optional.of(authUser));
+
+        given(cardCoreRewardApi.getRewardLedgerDetail(CARD_USER_UUID, pointLedgerId)).willThrow(feignException(HttpStatus.BAD_GATEWAY));
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedgerDetail(authenticatedUser, pointLedgerId))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE);
+                });
+    }
+
+    private FeignException feignException(HttpStatus status) {
+        Request request = Request.create(
+                Request.HttpMethod.GET,
+                "/internal/cards/rewards/ledger",
+                Map.of(),
+                null,
+                null,
+                null
+        );
+
+        return switch (status) {
+            case NOT_FOUND -> new FeignException.NotFound(
+                    "not found",
+                    request,
+                    null,
+                    Map.of()
+            );
+            case FORBIDDEN -> new FeignException.Forbidden(
+                    "forbidden",
+                    request,
+                    null,
+                    Map.of()
+            );
+            default -> new FeignException.BadGateway(
+                    "bad gateway",
+                    request,
+                    null,
+                    Map.of()
+            );
+        };
+    }
+
     private AuthenticatedUser authenticatedUser() {
         return new AuthenticatedUser(
                 AUTH_USER_UUID,
                 USER_UUID,
                 "test-jti"
         );
+    }
+
+    private CardChnAuthUser authUser(UUID cardUserUuid) throws Exception {
+        CardChnAuthUser user = CardChnAuthUser.builder()
+                .authUserUuid(AUTH_USER_UUID)
+                .userUuid(USER_UUID)
+                .cardUserUuid(cardUserUuid)
+                .build();
+
+        return user;
     }
 
     private CardChnAuthUser newAuthUser(UUID userUuid, UUID cardUserUuid) {

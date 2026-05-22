@@ -8,6 +8,7 @@ import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,7 +41,7 @@ public class RewardLedgerApi {
     @GetMapping("/api/cards/rewards/ledger/{pointLedgerId}")
     public ResponseEntity<ApiResponse<RewardLedgerDetailResponse>> getRewardLedger(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @PathVariable Long pointLedgerId
+            @PathVariable @Positive Long pointLedgerId
     ) {
         RewardLedgerDetailResponse response = rewardLedgerService.getRewardLedgerDetail(authenticatedUser, pointLedgerId);
 

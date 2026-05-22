@@ -47,6 +47,8 @@ public class RewardLedgerService {
     }
 
     public RewardLedgerDetailResponse getRewardLedgerDetail(AuthenticatedUser authenticatedUser, Long pointLedgerId) {
+        validatePointLedgerId(pointLedgerId);
+        
         UUID userUuid = extractUserUuid(authenticatedUser);
         UUID cardUserUuid = getCardUserUuid(userUuid);
 
@@ -63,6 +65,12 @@ public class RewardLedgerService {
             throw new BusinessException(RewardErrorCode.REWARD_LEDGER_FORBIDDEN, e);
         } catch (FeignException e) {
             throw new BusinessException(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE, e);
+        }
+    }
+
+    private void validatePointLedgerId(Long pointLedgerId) {
+        if (pointLedgerId == null || pointLedgerId <= 0) {
+            throw new BusinessException(RewardErrorCode.INVALID_REWARD_LEDGER_ID);
         }
     }
 

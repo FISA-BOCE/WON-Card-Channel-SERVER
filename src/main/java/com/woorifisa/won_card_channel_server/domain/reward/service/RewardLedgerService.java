@@ -4,7 +4,9 @@ import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErro
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
 import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.exception.code.RewardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.reward.external.CardCoreRewardApi;
@@ -13,6 +15,7 @@ import com.woorifisa.won_card_channel_server.domain.reward.model.enums.RewardPro
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +41,34 @@ public class RewardLedgerService {
         CardCoreRewardLedgerResponse data = extractCoreRewardLedgerData(coreResponse);
 
         return rewardLedgerMapper.toResponse(data);
+    }
+
+    public RewardLedgerDetailResponse getRewardLedgerDetail(AuthenticatedUser authenticatedUser, Long pointLedgerId) {
+        UUID userUuid = extractUserUuid(authenticatedUser);
+        UUID cardUserUuid = getCardUserUuid(userUuid);
+
+        try {
+            ApiResponse<CardCoreRewardLedgerDetailResponse> coreResponse =
+                    cardCoreRewardApi.getRewardLedgerDetail(cardUserUuid, pointLedgerId);
+
+            CardCoreRewardLedgerDetailResponse data = extractRewardLedgerDetail(coreResponse);
+
+            return rewardLedgerMapper.toDetailResponse(data);
+        } catch (FeignException.NotFound e) {
+            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
+        } catch (FeignException.Forbidden e) {
+            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_FORBIDDEN, e);
+        } catch (FeignException e) {
+            throw new BusinessException(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE, e);
+        }
+    }
+
+    private CardCoreRewardLedgerDetailResponse extractRewardLedgerDetail(ApiResponse<CardCoreRewardLedgerDetailResponse> coreResponse) {
+        if (coreResponse == null || coreResponse.data() == null) {
+            throw new BusinessException(RewardErrorCode.INVALID_REWARD_RESPONSE);
+        }
+
+        return coreResponse.data();
     }
 
     private UUID extractUserUuid(AuthenticatedUser authenticatedUser) {
@@ -67,7 +98,7 @@ public class RewardLedgerService {
             ApiResponse<CardCoreRewardLedgerResponse> coreResponse) {
 
         if (coreResponse == null || coreResponse.data() == null) {
-            throw new BusinessException(RewardErrorCode.INVALID_CORE_REWARD_RESPONSE);
+            throw new BusinessException(RewardErrorCode.INVALID_REWARD_RESPONSE);
         }
 
         return coreResponse.data();

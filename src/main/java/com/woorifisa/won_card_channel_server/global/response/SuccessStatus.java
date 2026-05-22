@@ -21,8 +21,9 @@ public enum SuccessStatus {
     USER_WITHDRAW_SUCCESS(HttpStatus.OK, "USER_200_002", "회원 탈퇴가 완료되었습니다."),
     USER_UPDATE_SUCCESS(HttpStatus.OK, "USER_200_003", "회원 정보 수정이 완료되었습니다."),
 
-    //리워드
-    REWARD_LEDGER_FOUND(HttpStatus.OK, "REWARD_200_001", "리워드 내역 조회가 완료되었습니다.");
+    // 리워드
+    REWARD_LEDGER_FOUND(HttpStatus.OK, "REWARD_200_001", "리워드 내역 조회가 완료되었습니다."),
+    REWARD_LEDGER_DETAIL_FOUND(HttpStatus.OK, "REWARD_200_002", "상세 리워드 내역 조회가 완료되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

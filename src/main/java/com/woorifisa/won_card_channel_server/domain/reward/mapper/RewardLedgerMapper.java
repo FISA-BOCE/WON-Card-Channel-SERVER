@@ -31,7 +31,18 @@ public class RewardLedgerMapper {
                 response.type(),
                 response.pointAmount(),
                 response.occurredAt(),
-                response.detail()
+                toRewardDetail(response.detail())
+
+        );
+    }
+
+    private RewardLedgerDetailResponse.RewardDetail toRewardDetail(
+            CardCoreRewardLedgerDetailResponse.CardCoreRewardDetail detail
+    ) {
+        return new RewardLedgerDetailResponse.RewardDetail(
+                detail.previousMonthSpendAmount(),
+                detail.targetSpendAmount(),
+                detail.shortfallAmount()
         );
     }
 

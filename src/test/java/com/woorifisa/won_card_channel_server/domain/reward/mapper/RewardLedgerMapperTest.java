@@ -80,10 +80,12 @@ class RewardLedgerMapperTest {
     void toDetailResponse() {
         // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 5, 7, 14, 32);
-        RewardLedgerDetailResponse.RewardDetail detail =
-                new RewardLedgerDetailResponse.RewardDetail(820000L, 500000L, 0L);
 
-        CardCoreRewardLedgerDetailResponse coreResponse = new CardCoreRewardLedgerDetailResponse(1L, "2026-05", "EARN", 12450L, occurredAt, detail);
+        CardCoreRewardLedgerDetailResponse.CardCoreRewardDetail coreDetail =
+                new CardCoreRewardLedgerDetailResponse.CardCoreRewardDetail(820000L, 500000L, 0L);
+
+        CardCoreRewardLedgerDetailResponse coreResponse =
+                new CardCoreRewardLedgerDetailResponse(1L, "2026-05", "EARN", 12450L, occurredAt, coreDetail);
 
         // when
         RewardLedgerDetailResponse response = rewardLedgerMapper.toDetailResponse(coreResponse);
@@ -94,6 +96,11 @@ class RewardLedgerMapperTest {
         assertThat(response.type()).isEqualTo("EARN");
         assertThat(response.pointAmount()).isEqualTo(12450L);
         assertThat(response.occurredAt()).isEqualTo(occurredAt);
-        assertThat(response.detail()).isEqualTo(detail);
+
+        RewardLedgerDetailResponse.RewardDetail detail = response.detail();
+
+        assertThat(detail.previousMonthSpendAmount()).isEqualTo(820000L);
+        assertThat(detail.targetSpendAmount()).isEqualTo(500000L);
+        assertThat(detail.shortfallAmount()).isEqualTo(0L);
     }
 }

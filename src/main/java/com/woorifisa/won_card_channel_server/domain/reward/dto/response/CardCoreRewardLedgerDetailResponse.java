@@ -8,6 +8,12 @@ public record CardCoreRewardLedgerDetailResponse(
         String type,
         Long pointAmount,
         LocalDateTime occurredAt,
-        RewardLedgerDetailResponse.RewardDetail detail
+        CardCoreRewardDetail detail
 ) {
+    public record CardCoreRewardDetail(
+            Long previousMonthSpendAmount,
+            Long targetSpendAmount,
+            Long shortfallAmount
+    ) {
+    }
 }

@@ -32,15 +32,18 @@ public class RewardLedgerService {
     public RewardLedgerResponse getRewardLedger(AuthenticatedUser authenticatedUser, String type) {
         UUID userUuid = extractUserUuid(authenticatedUser);
         RewardProcessStatus rewardProcessStatus = RewardProcessStatus.from(type);
-
         UUID cardUserUuid = getCardUserUuid(userUuid);
 
-        ApiResponse<CardCoreRewardLedgerResponse> coreResponse =
-                cardCoreRewardApi.getRewardLedger(cardUserUuid, rewardProcessStatus.name());
+        try {
+            ApiResponse<CardCoreRewardLedgerResponse> coreResponse =
+                    cardCoreRewardApi.getRewardLedger(cardUserUuid, rewardProcessStatus.name());
 
-        CardCoreRewardLedgerResponse data = extractCoreRewardLedgerData(coreResponse);
+            CardCoreRewardLedgerResponse data = extractCoreRewardLedgerData(coreResponse);
 
-        return rewardLedgerMapper.toResponse(data);
+            return rewardLedgerMapper.toResponse(data);
+        } catch (FeignException e) {
+            throw new BusinessException(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE, e);
+        }
     }
 
     public RewardLedgerDetailResponse getRewardLedgerDetail(AuthenticatedUser authenticatedUser, Long pointLedgerId) {

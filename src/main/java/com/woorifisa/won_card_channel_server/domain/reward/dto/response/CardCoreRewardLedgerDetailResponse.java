@@ -8,6 +8,6 @@ public record CardCoreRewardLedgerDetailResponse(
         String type,
         Long pointAmount,
         LocalDateTime occurredAt,
-        Object detail
+        RewardLedgerDetailResponse.RewardDetail detail
 ) {
 }

@@ -8,6 +8,12 @@ public record RewardLedgerDetailResponse(
         String type,
         Long pointAmount,
         LocalDateTime occurredAt,
-        Object detail
+        RewardDetail detail
 ) {
+    public record RewardDetail(
+            Long previousMonthSpendAmount,
+            Long targetSpendAmount,
+            Long shortfallAmount
+    ) {
+    }
 }

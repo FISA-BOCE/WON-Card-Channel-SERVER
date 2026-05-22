@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,7 +80,8 @@ class RewardLedgerMapperTest {
     void toDetailResponse() {
         // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 5, 7, 14, 32);
-        Map<String, Long> detail = Map.of("previousMonthSpendAmount", 820000L, "targetSpendAmount", 500000L);
+        RewardLedgerDetailResponse.RewardDetail detail =
+                new RewardLedgerDetailResponse.RewardDetail(820000L, 500000L, 0L);
 
         CardCoreRewardLedgerDetailResponse coreResponse = new CardCoreRewardLedgerDetailResponse(1L, "2026-05", "EARN", 12450L, occurredAt, detail);
 

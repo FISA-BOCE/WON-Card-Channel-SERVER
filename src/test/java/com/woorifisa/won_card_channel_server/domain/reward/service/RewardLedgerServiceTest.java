@@ -4,6 +4,7 @@ import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErro
 import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
 import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.exception.code.RewardErrorCode;
@@ -335,6 +336,99 @@ class RewardLedgerServiceTest {
                 });
     }
 
+    @Test
+    @DisplayName("Card Core 상세 응답 data가 null이면 예외가 발생한다")
+    void getRewardLedgerDetailCoreResponseDataNull() throws Exception {
+        // given
+        Long pointLedgerId = 1L;
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser authUser = authUser(CARD_USER_UUID);
+
+        given(userRepository.findByUserUuid(USER_UUID)).willReturn(Optional.of(authUser));
+        given(cardCoreRewardApi.getRewardLedgerDetail(CARD_USER_UUID, pointLedgerId))
+                .willReturn(ApiResponse.of(SuccessStatus.OK, null));
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedgerDetail(authenticatedUser, pointLedgerId))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_RESPONSE);
+                });
+    }
+
+    @Test
+    @DisplayName("Card Core 상세 응답 detail이 null이면 예외가 발생한다")
+    void getRewardLedgerDetailCoreResponseDetailNull() throws Exception {
+        // given
+        Long pointLedgerId = 1L;
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnAuthUser authUser = authUser(CARD_USER_UUID);
+
+        CardCoreRewardLedgerDetailResponse coreResponse = new CardCoreRewardLedgerDetailResponse(
+                pointLedgerId,
+                "2026-05",
+                "EARN",
+                12450L,
+                LocalDateTime.of(2026, 5, 7, 14, 32),
+                null
+        );
+
+        given(userRepository.findByUserUuid(USER_UUID)).willReturn(Optional.of(authUser));
+        given(cardCoreRewardApi.getRewardLedgerDetail(CARD_USER_UUID, pointLedgerId))
+                .willReturn(ApiResponse.of(SuccessStatus.OK, coreResponse));
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedgerDetail(authenticatedUser, pointLedgerId))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_RESPONSE);
+                });
+    }
+
+    @Test
+    @DisplayName("pointLedgerId가 null이면 예외가 발생한다")
+    void getRewardLedgerDetailPointLedgerIdNull() {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedgerDetail(authenticatedUser, null))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_LEDGER_ID);
+                });
+
+        then(userRepository).shouldHaveNoInteractions();
+        then(cardCoreRewardApi).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("pointLedgerId가 0 이하이면 예외가 발생한다")
+    void getRewardLedgerDetailPointLedgerIdNotPositive() {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        Long pointLedgerId = 0L;
+
+        // when & then
+        assertThatThrownBy(() -> rewardLedgerService.getRewardLedgerDetail(authenticatedUser, pointLedgerId))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException businessException = (BusinessException) exception;
+                    assertThat(businessException.getErrorCode())
+                            .isEqualTo(RewardErrorCode.INVALID_REWARD_LEDGER_ID);
+                });
+
+        then(userRepository).shouldHaveNoInteractions();
+        then(cardCoreRewardApi).shouldHaveNoInteractions();
+    }
+
+
     private FeignException feignException(HttpStatus status) {
         Request request = Request.create(
                 Request.HttpMethod.GET,
@@ -375,7 +469,7 @@ class RewardLedgerServiceTest {
         );
     }
 
-    private CardChnAuthUser authUser(UUID cardUserUuid) throws Exception {
+    private CardChnAuthUser authUser(UUID cardUserUuid) {
         CardChnAuthUser user = CardChnAuthUser.builder()
                 .authUserUuid(AUTH_USER_UUID)
                 .userUuid(USER_UUID)

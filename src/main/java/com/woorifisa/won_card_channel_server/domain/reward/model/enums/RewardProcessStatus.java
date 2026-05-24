@@ -4,7 +4,7 @@ import com.woorifisa.won_card_channel_server.domain.reward.exception.code.Reward
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 
 public enum RewardProcessStatus {
-    ALL, EARN, NOT_APPLIED, HOLD;
+    ALL, EARN, NOT_APPLIED;
 
     public static RewardProcessStatus from(String type) {
         if (type == null || type.isBlank()) {

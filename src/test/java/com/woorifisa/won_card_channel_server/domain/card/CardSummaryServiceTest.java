@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server.domain.card.service;
+package com.woorifisa.won_card_channel_server.domain.card;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -10,6 +10,7 @@ import com.woorifisa.won_card_channel_server.domain.card.dto.response.ExistingCa
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.NoCardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
+import com.woorifisa.won_card_channel_server.domain.card.service.CardSummaryService;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import java.math.BigDecimal;

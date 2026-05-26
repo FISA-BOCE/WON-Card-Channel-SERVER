@@ -119,9 +119,9 @@ public class CardChnSweepRequest extends BaseTimeEntity {
             AutoSweepTarget target, String correlationId, String idempotencyKey
     ) {
         return CardChnSweepRequest.builder()
-                .userUuid(target.useruuid())
+                .userUuid(target.userUuid())
                 .cardUserUuid(target.cardUserUuid())
-                .investUserUuid(target.investUuid())
+                .investUserUuid(target.investUserUuid())
                 .investAccountUuid(target.investAccountUuid())
                 .performanceId(target.performanceId())
                 .pointLedgerId(target.pointLedgerId())

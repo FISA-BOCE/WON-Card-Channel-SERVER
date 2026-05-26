@@ -69,11 +69,11 @@ public class CardChnSweepOutbox extends BaseTimeEntity {
 
     @Builder(access = AccessLevel.PRIVATE)
     private CardChnSweepOutbox(
-            CardChnSweepRequest sweepRequest, String eventId, SweepEventType eventType, String payload,
+            Long sweepRequestId, String eventId, SweepEventType eventType, String payload,
             OutboxPublishStatus publishStatus, String correlationId, String idempotencyKey,
             int retryCount, LocalDateTime nextRetryAt
     ) {
-        this.sweepRequest = sweepRequest;
+        this.sweepRequestId = sweepRequestId;
         this.eventId = eventId;
         this.eventType = eventType;
         this.payload = payload;
@@ -85,11 +85,11 @@ public class CardChnSweepOutbox extends BaseTimeEntity {
     }
 
     public static CardChnSweepOutbox pending(
-            CardChnSweepRequest sweepRequest, String eventId, SweepEventType eventType, String payload,
+            Long sweepRequestId, String eventId, SweepEventType eventType, String payload,
             String correlationId, String idempotencyKey
     ) {
         return CardChnSweepOutbox.builder()
-                .sweepRequest(sweepRequest)
+                .sweepRequestId(sweepRequestId)
                 .eventId(eventId)
                 .eventType(eventType)
                 .payload(payload)

@@ -32,13 +32,8 @@ public class CardChnSweepOutbox extends BaseTimeEntity {
     @Column(name = "outbox_event_id")
     private Long outboxEventId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "sweep_request_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_sweep_outbox_sweep_request")
-    )
-    private CardChnSweepRequest sweepRequest;
+    @Column(name = "sweep_request_id", nullable = false)
+    private Long sweepRequestId;
 
     @Column(name = "event_id", nullable = false, length = 100)
     private String eventId;

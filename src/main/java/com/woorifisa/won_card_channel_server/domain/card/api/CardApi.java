@@ -20,12 +20,12 @@ public class CardApi {
 
     private final CardSummaryService cardSummaryService;
 
-    @Operation(summary = "카드 요약 조회", description = "보유 카드 여부와 카드 사용 요약 정보를 조회합니다.")
+    @Operation(summary = "카드 목록 조회", description = "보유 카드 여부와 카드 사용 요약 정보를 조회합니다.")
     @GetMapping("/api/cards")
-    public ResponseEntity<ApiResponse<?>> getCardSummary(
+    public ResponseEntity<ApiResponse<?>> getCards(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Object response = cardSummaryService.getCardSummary(authenticatedUser);
+        Object response = cardSummaryService.getCards(authenticatedUser);
         SuccessStatus successStatus = response instanceof NoCardSummaryResponse
                 ? SuccessStatus.CARD_SUMMARY_NOT_FOUND
                 : SuccessStatus.CARD_SUMMARY_FOUND;

@@ -54,7 +54,7 @@ class CardSummaryServiceTest {
                 .willReturn(Optional.empty());
 
         // when
-        Object result = cardSummaryService.getCardSummary(authenticatedUser);
+        Object result = cardSummaryService.getCards(authenticatedUser);
 
         // then
         assertThat(result).isInstanceOf(NoCardSummaryResponse.class);
@@ -97,7 +97,7 @@ class CardSummaryServiceTest {
                 .willReturn(Optional.of(cardSummary));
 
         // when
-        Object result = cardSummaryService.getCardSummary(authenticatedUser);
+        Object result = cardSummaryService.getCards(authenticatedUser);
 
         // then
         assertThat(result).isInstanceOf(ExistingCardSummaryResponse.class);
@@ -131,7 +131,7 @@ class CardSummaryServiceTest {
     @Test
     @DisplayName("인증 사용자 정보가 없으면 인증 필요 예외를 던진다")
     void getCardSummaryWithoutAuthenticatedUser() {
-        assertThatThrownBy(() -> cardSummaryService.getCardSummary(null))
+        assertThatThrownBy(() -> cardSummaryService.getCards(null))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(AuthErrorCode.AUTHENTICATION_REQUIRED);

@@ -28,7 +28,7 @@ public class CardSummaryService {
     private final CardChnCardSummaryRepository cardSummaryRepository;
 
     @Transactional(readOnly = true)
-    public Object getCardSummary(AuthenticatedUser authenticatedUser) {
+    public Object getCards(AuthenticatedUser authenticatedUser) {
         UUID userUuid = extractUserUuid(authenticatedUser);
 
         return cardSummaryRepository.findByUserUuid(userUuid)

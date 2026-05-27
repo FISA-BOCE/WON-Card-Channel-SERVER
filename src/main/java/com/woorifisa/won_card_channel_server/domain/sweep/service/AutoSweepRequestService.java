@@ -153,10 +153,19 @@ public class AutoSweepRequestService {
 
             return SweepRequestCreateResponse.from(savedSweepRequest);
         } catch (DataIntegrityViolationException e) {
-            throw mapDataIntegrityViolation(e);
-        }  catch (JsonProcessingException e) {
+            if (isDuplicateAfterPreCheck(target.pointLedgerId(), idempotencyKey)) {
+                throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
+            }
+
+            throw new BusinessException(SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED, e);
+        } catch (JsonProcessingException e) {
             throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_CREATE_FAILED, e);
         }
+    }
+
+    private boolean isDuplicateAfterPreCheck(Long pointLedgerId, String idempotencyKey) {
+        return cardChnSweepRequestRepository.existsByPointLedgerId(pointLedgerId)
+                || cardChnSweepRequestRepository.existsByIdempotencyKey(idempotencyKey);
     }
 
     private void validateTarget(AutoSweepTarget target) {

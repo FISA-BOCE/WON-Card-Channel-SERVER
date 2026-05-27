@@ -2,6 +2,7 @@ package com.woorifisa.won_card_channel_server.domain.card.service;
 
 import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardCoreCardsResponse;
+import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.ExistingCardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.NoCardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
@@ -33,15 +34,15 @@ public class CardSummaryService {
     private final CardChnCardSummaryRepository cardSummaryRepository;
     private final CardCoreCardApi cardCoreCardApi;
 
-    public Object getCards(AuthenticatedUser authenticatedUser) {
+    public CardSummaryResponse getCards(AuthenticatedUser authenticatedUser) {
         UUID userUuid = extractUserUuid(authenticatedUser);
 
         return cardSummaryRepository.findByUserUuid(userUuid)
-                .<Object>map(this::toExistingCardResponse)
+                .<CardSummaryResponse>map(this::toExistingCardResponse)
                 .orElseGet(() -> getCardsFromCardCore(userUuid));
     }
 
-    private Object getCardsFromCardCore(UUID userUuid) {
+    private CardSummaryResponse getCardsFromCardCore(UUID userUuid) {
         try {
             ApiResponse<CardCoreCardsResponse> coreResponse = cardCoreCardApi.getCards(userUuid);
             CardCoreCardsResponse data = extractCardData(coreResponse);

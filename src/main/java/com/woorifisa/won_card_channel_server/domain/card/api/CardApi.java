@@ -1,6 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.card.api;
 
-import com.woorifisa.won_card_channel_server.domain.card.dto.response.NoCardSummaryResponse;
+import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.service.CardSummaryService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -25,10 +25,10 @@ public class CardApi {
     public ResponseEntity<ApiResponse<?>> getCards(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Object response = cardSummaryService.getCards(authenticatedUser);
-        SuccessStatus successStatus = response instanceof NoCardSummaryResponse
-                ? SuccessStatus.CARD_SUMMARY_NOT_FOUND
-                : SuccessStatus.CARD_SUMMARY_FOUND;
+        CardSummaryResponse response = cardSummaryService.getCards(authenticatedUser);
+        SuccessStatus successStatus = response.hasCard()
+                ? SuccessStatus.CARD_SUMMARY_FOUND
+                : SuccessStatus.CARD_SUMMARY_NOT_FOUND;
 
         return ResponseEntity
                 .status(successStatus.getHttpStatus())

@@ -6,7 +6,7 @@ import java.util.List;
 public record NoCardSummaryResponse(
         boolean hasCard,
         CardProduct cardProduct
-) {
+) implements CardSummaryResponse {
 
     public NoCardSummaryResponse(CardProduct cardProduct) {
         this(false, cardProduct);

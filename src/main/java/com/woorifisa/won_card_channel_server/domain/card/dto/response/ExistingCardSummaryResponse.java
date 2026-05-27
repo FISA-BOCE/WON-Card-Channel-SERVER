@@ -10,7 +10,7 @@ public record ExistingCardSummaryResponse(
         String cardNoDisplay,
         String cardStatus,
         UsageSummary usageSummary
-) {
+) implements CardSummaryResponse {
 
     public ExistingCardSummaryResponse(
             String cardUuid,

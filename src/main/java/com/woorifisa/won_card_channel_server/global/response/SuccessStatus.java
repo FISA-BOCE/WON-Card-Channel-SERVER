@@ -22,6 +22,10 @@ public enum SuccessStatus {
     REWARD_LEDGER_FOUND(HttpStatus.OK, "REWARD_200_001", "리워드 내역 조회가 완료되었습니다."),
     REWARD_LEDGER_DETAIL_FOUND(HttpStatus.OK, "REWARD_200_002", "상세 리워드 내역 조회가 완료되었습니다."),
 
+    // 스윕
+    SWEEP_REQUEST_CREATED(HttpStatus.CREATED, "SWEEP_201_001", "스윕 요청이 생성되었습니다."),
+
+    // 카드
     CARD_SUMMARY_FOUND(HttpStatus.OK, "CARD_200_001", "카드 정보 조회가 완료되었습니다."),
     CARD_SUMMARY_NOT_FOUND(HttpStatus.OK, "CARD_200_002", "신청된 카드 정보가 없습니다.");
 

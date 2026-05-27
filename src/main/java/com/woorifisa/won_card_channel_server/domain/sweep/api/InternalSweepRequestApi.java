@@ -31,7 +31,7 @@ public class InternalSweepRequestApi {
     public ResponseEntity<ApiResponse<SweepRequestCreateResponse>> createSweepRequest(
             @Valid @RequestBody InternalSweepRequestCreateRequest request
     ) {
-        SweepRequestCreateResponse response = autoSweepRequestService.create(request);
+        SweepRequestCreateResponse response = autoSweepRequestService.createSweepRequest(request);
 
         return ResponseEntity
                 .status(SuccessStatus.SWEEP_REQUEST_CREATED.getHttpStatus())

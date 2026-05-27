@@ -37,8 +37,7 @@ public class AutoSweepRequestService {
     private final CardChnSweepOutboxRepository cardChnSweepOutboxRepository;
     private final ObjectMapper objectMapper;
 
-    @Transactional
-    public SweepRequestCreateResponse createSweepRequest(AutoSweepTarget target) {
+    private SweepRequestCreateResponse createSweepRequestForApi(AutoSweepTarget target) {
 
         validateTarget(target);
 
@@ -79,7 +78,7 @@ public class AutoSweepRequestService {
     }
 
     @Transactional
-    public SweepRequestCreateResponse create(InternalSweepRequestCreateRequest request) {
+    public SweepRequestCreateResponse createSweepRequest(InternalSweepRequestCreateRequest request) {
         validateInternalRequest(request);
 
         String idempotencyKey = createIdempotencyKey(request.pointLedgerId());
@@ -154,8 +153,8 @@ public class AutoSweepRequestService {
 
             return SweepRequestCreateResponse.from(savedSweepRequest);
         } catch (DataIntegrityViolationException e) {
-            throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
-        } catch (JsonProcessingException e) {
+            throw mapDataIntegrityViolation(e);
+        }  catch (JsonProcessingException e) {
             throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_CREATE_FAILED, e);
         }
     }

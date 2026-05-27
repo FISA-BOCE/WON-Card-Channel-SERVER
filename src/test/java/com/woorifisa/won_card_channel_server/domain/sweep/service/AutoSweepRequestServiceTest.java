@@ -186,12 +186,13 @@ class AutoSweepRequestServiceTest {
     }
 
     @Test
-    @DisplayName("DB unique 제약 위반이 발생하면 중복 요청 예외로 변환한다")
-    void createSweepRequestDataIntegrityViolation() {
+    @DisplayName("DB unique 제약 위반 후 재조회 시 중복이 확인되면 중복 요청 예외로 변환한다")
+    void createSweepRequestDataIntegrityViolationWithDuplicateConfirmed() {
         // given
         InternalSweepRequestCreateRequest request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        // 사전 중복 체크(첫 번째 호출)는 false, 저장 실패 후 재조회(두 번째 호출)는 true
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false, true);
         when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
@@ -209,9 +210,33 @@ class AutoSweepRequestServiceTest {
     }
 
     @Test
+    @DisplayName("DB unique 제약 위반 후 재조회 시 중복이 없으면 저장 실패 예외로 변환한다")
+    void createSweepRequestDataIntegrityViolationWithNoConfirmedDuplicate() {
+        // given
+        InternalSweepRequestCreateRequest request = createSweepRequestRequest(1L);
+
+        // 사전 중복 체크와 재조회 모두 false → 동시 중복이 아닌 다른 DB 오류
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+
+        when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
+
+        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("other constraint violation"));
+
+        // when & then
+        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED);
+
+        verify(cardChnSweepOutboxRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("request가 null이면 잘못된 요청 예외가 발생한다")
     void createSweepRequestNullRequest() {
-        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(null))
+
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
 

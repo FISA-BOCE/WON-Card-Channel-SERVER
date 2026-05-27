@@ -37,46 +37,6 @@ public class AutoSweepRequestService {
     private final CardChnSweepOutboxRepository cardChnSweepOutboxRepository;
     private final ObjectMapper objectMapper;
 
-    private SweepRequestCreateResponse createSweepRequestForApi(AutoSweepTarget target) {
-
-        validateTarget(target);
-
-        String idempotencyKey = createIdempotencyKey(target.pointLedgerId());
-
-        validateNotDuplicated(target.pointLedgerId(), idempotencyKey);
-
-        String correlationId = UUID.randomUUID().toString();
-        String eventId = EVENT_ID_PREFIX + UUID.randomUUID();
-
-        try {
-            // 스윕 요청 발행
-            CardChnSweepRequest request = CardChnSweepRequest.createPendingPublish(target, correlationId, idempotencyKey);
-
-            // 스윕 요청 DB 저장
-            CardChnSweepRequest savedSweepRequest = cardChnSweepRequestRepository.save(request);
-
-            // 저장된 스윕 요청 기반으로 카드 -> 증권으로 보낼 이벤트 객체 생성
-            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweepRequest, eventId);
-
-            // SweepRequestedEvent 객체 JSON 문자열로 바꿈
-            String payload = objectMapper.writeValueAsString(event);
-
-            // outbox에 pending 상태로 저장
-            CardChnSweepOutbox outbox = CardChnSweepOutbox.pending(
-                    savedSweepRequest.getSweepRequestId(), eventId, SweepEventType.SWEEP_REQUESTED
-                    , payload, correlationId, idempotencyKey);
-
-            cardChnSweepOutboxRepository.save(outbox);
-
-            return SweepRequestCreateResponse.from(savedSweepRequest);
-        } catch (DataIntegrityViolationException e) {
-            throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
-        } catch (JsonProcessingException e) {
-            throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_CREATE_FAILED, e);
-        }
-
-    }
-
     @Transactional
     public SweepRequestCreateResponse createSweepRequest(InternalSweepRequestCreateRequest request) {
         validateInternalRequest(request);

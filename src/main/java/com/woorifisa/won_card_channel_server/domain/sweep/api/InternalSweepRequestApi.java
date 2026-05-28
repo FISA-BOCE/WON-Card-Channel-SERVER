@@ -1,7 +1,9 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.api;
 
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.request.InternalSweepRequestCreateRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.AutoSweepBatchResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.service.AutoSweepBatchService;
 import com.woorifisa.won_card_channel_server.domain.sweep.service.AutoSweepRequestService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -10,10 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalSweepRequestApi {
 
     private final AutoSweepRequestService autoSweepRequestService;
+    private final AutoSweepBatchService autoSweepBatchService;
 
     @Operation(
             summary = "내부 단건 자동 스윕 요청 생성",
@@ -29,7 +29,7 @@ public class InternalSweepRequestApi {
     )
     @PostMapping
     public ResponseEntity<ApiResponse<SweepRequestCreateResponse>> createSweepRequest(
-            @Valid @RequestBody InternalSweepRequestCreateRequest request
+            @Valid @RequestBody AutoSweepCreateCommand request
     ) {
         SweepRequestCreateResponse response = autoSweepRequestService.createSweepRequest(request);
 
@@ -37,4 +37,21 @@ public class InternalSweepRequestApi {
                 .status(SuccessStatus.SWEEP_REQUEST_CREATED.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.SWEEP_REQUEST_CREATED, response));
     }
+
+    @Operation(
+            summary = "자동 스윕 후보 리워드 배치 호출",
+            description = "기준월의 적립 완료 리워드 중 아직 스윕 요청되지 않은 원장 목록을 호출합니다."
+    )
+    @PostMapping("/auto")
+    public ResponseEntity<ApiResponse<AutoSweepBatchResponse>> requestMonthlyAutoSweeps(
+            @RequestParam String baseMonth
+    ) {
+        AutoSweepBatchResponse response =
+                autoSweepBatchService.requestMonthlyAutoSweeps(baseMonth);
+
+        return ResponseEntity
+                .status(SuccessStatus.SWEEP_REQUEST_BATCH_CREATED.getHttpStatus())
+                .body(ApiResponse.of(SuccessStatus.SWEEP_REQUEST_BATCH_CREATED, response));
+    }
+
 }

@@ -31,8 +31,8 @@ import org.hibernate.type.SqlTypes;
                         columnNames = "performance_id"
                 ),
                 @UniqueConstraint(
-                        name = "uk_card_chn_performance_summary_card_user_base_month",
-                        columnNames = {"card_user_uuid", "base_month"}
+                        name = "uk_card_chn_performance_summary_user_base_month",
+                        columnNames = {"user_uuid", "base_month"}
                 )
         },
         indexes = {

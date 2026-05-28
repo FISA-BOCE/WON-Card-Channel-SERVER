@@ -4,7 +4,7 @@ import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequ
 
 public record SweepRequestCreateResponse(
         Long sweepRequestId, String requestStatus,
-        Long pointLedgerId, Long krwAmount, String ticker
+        Long pointLedgerId, Long krwAmount, Long etfId
 ) {
     public static SweepRequestCreateResponse from(CardChnSweepRequest sweepRequest) {
         return new SweepRequestCreateResponse(
@@ -12,7 +12,7 @@ public record SweepRequestCreateResponse(
                 sweepRequest.getRequestStatus().name(),
                 sweepRequest.getPointLedgerId(),
                 sweepRequest.getKrwAmount(),
-                sweepRequest.getTicker()
+                sweepRequest.getEtfId()
         );
     }
 }

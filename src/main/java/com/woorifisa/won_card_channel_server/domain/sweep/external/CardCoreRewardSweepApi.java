@@ -1,11 +1,11 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.external;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.CardCoreSweepRequestResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepCancelResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepCandidateResponse;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -17,4 +17,16 @@ public interface CardCoreRewardSweepApi {
             @RequestHeader("X-Card-User-UUID") UUID cardUserUuid,
             @PathVariable("pointLedgerId") Long pointLedgerId
     );
+
+    @GetMapping("/internal/cards/rewards/ledger/sweep-candidates")
+    ApiResponse<CardCoreSweepCandidateResponse> getSweepCandidates(
+            @RequestParam("baseMonth") String baseMonth
+    );
+
+    @PostMapping("/internal/cards/rewards/ledger/{pointLedgerId}/sweep-request/cancel")
+    ApiResponse<CardCoreSweepCancelResponse> cancelSweepRequest(
+            @RequestHeader("X-Card-User-UUID") UUID cardUserUuid,
+            @PathVariable("pointLedgerId") Long pointLedgerId
+    );
+
 }

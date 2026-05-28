@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepRequestedEvent;
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.request.InternalSweepRequestCreateRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.CardCoreSweepRequestResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
@@ -18,6 +18,7 @@ import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessEx
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class AutoSweepRequestService {
 
@@ -78,7 +80,7 @@ public class AutoSweepRequestService {
     }
 
     @Transactional
-    public SweepRequestCreateResponse createSweepRequest(InternalSweepRequestCreateRequest request) {
+    public SweepRequestCreateResponse createSweepRequest(AutoSweepCreateCommand request) {
         validateInternalRequest(request);
 
         String idempotencyKey = createIdempotencyKey(request.pointLedgerId());
@@ -90,10 +92,31 @@ public class AutoSweepRequestService {
                 request.pointLedgerId()
         );
 
-        AutoSweepTarget target = AutoSweepTarget.of(request, coreResponse);
-        validateTarget(target);
+        try {
+            AutoSweepTarget target = AutoSweepTarget.of(request, coreResponse);
+            validateTarget(target);
 
-        return createSweepRequestAndOutbox(target, idempotencyKey);
+            return createSweepRequestAndOutbox(target, idempotencyKey);
+        } catch (BusinessException e) {
+            compensateSweepRequest(request.cardUserUuid(), request.pointLedgerId());
+            throw e;
+        } catch (RuntimeException e) {
+            compensateSweepRequest(request.cardUserUuid(), request.pointLedgerId());
+            throw e;
+        }
+    }
+
+    private void compensateSweepRequest(UUID cardUserUuid, Long pointLedgerId) {
+        try {
+            cardCoreRewardSweepApi.cancelSweepRequest(cardUserUuid, pointLedgerId);
+        } catch (Exception compensationException) {
+            log.warn(
+                    "Core 스윕 보상 호출에 실패했습니다. cardUserUuid={}, pointLedgerId={}",
+                    cardUserUuid,
+                    pointLedgerId,
+                    compensationException
+            );
+        }
     }
 
     private CardCoreSweepRequestResponse requestSweepFromCore(UUID cardUserUuid, Long pointLedgerId) {
@@ -172,15 +195,12 @@ public class AutoSweepRequestService {
         if (target == null
                 || target.userUuid() == null
                 || target.cardUserUuid() == null
-                || target.investUserUuid() == null
-                || target.investAccountUuid() == null
                 || target.performanceId() == null
                 || target.pointLedgerId() == null
                 || target.baseMonth() == null || target.baseMonth().isBlank()
                 || target.pointAmount() == null
                 || target.krwAmount() == null
-                || target.etfId() == null
-                || target.ticker() == null || target.ticker().isBlank()) {
+                || target.etfId() == null) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
 
@@ -189,16 +209,12 @@ public class AutoSweepRequestService {
         }
     }
 
-    private void validateInternalRequest(InternalSweepRequestCreateRequest request) {
+    private void validateInternalRequest(AutoSweepCreateCommand request) {
         if (request == null
                 || request.userUuid() == null
                 || request.cardUserUuid() == null
-                || request.investUserUuid() == null
-                || request.investAccountUuid() == null
                 || request.pointLedgerId() == null
-                || request.etfId() == null
-                || request.ticker() == null
-                || request.ticker().isBlank()) {
+                || request.etfId() == null) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
     }

@@ -8,9 +8,9 @@ import java.util.UUID;
 
 public record SweepRequestedEvent(
         String eventId, String eventType, String correlationId, String idempotencyKey, Long sweepRequestId,
-        UUID userUuid, UUID cardUserUuid, UUID investUserUuid, UUID investAccountUuid,
+        UUID userUuid, UUID cardUserUuid,
         Long performanceId, Long pointLedgerId, String baseMonth, Long pointAmount, Long krwAmount,
-        Long etfId, String ticker, LocalDateTime requestedAt
+        Long etfId, LocalDateTime requestedAt
 ) {
 
     public static SweepRequestedEvent from(CardChnSweepRequest sweepRequest, String eventId) {
@@ -22,15 +22,12 @@ public record SweepRequestedEvent(
                 sweepRequest.getSweepRequestId(),
                 sweepRequest.getUserUuid(),
                 sweepRequest.getCardUserUuid(),
-                sweepRequest.getInvestUserUuid(),
-                sweepRequest.getInvestAccountUuid(),
                 sweepRequest.getPerformanceId(),
                 sweepRequest.getPointLedgerId(),
                 sweepRequest.getBaseMonth(),
                 sweepRequest.getPointAmount(),
                 sweepRequest.getKrwAmount(),
                 sweepRequest.getEtfId(),
-                sweepRequest.getTicker(),
                 sweepRequest.getRequestedAt()
         );
     }

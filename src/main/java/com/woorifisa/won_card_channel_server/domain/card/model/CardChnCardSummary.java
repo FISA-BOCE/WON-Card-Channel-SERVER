@@ -68,7 +68,7 @@ public class CardChnCardSummary extends BaseTimeEntity {
     @Column(name = "last_synced_at", nullable = false)
     private LocalDateTime lastSyncedAt;
 
-    @Column(name = "selected_etf_id", nullable = false)
+    @Column(name = "selected_etf_id")
     private Long selectedEtfId;
 
 }

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +42,6 @@ public class SpendSummaryService {
     private final CardChnPerformanceSummaryRepository performanceSummaryRepository;
     private final CardCoreSpendApi cardCoreSpendApi;
 
-    @Transactional(readOnly = true)
     public SpendCurrentAmountResponse getSpendSummary(AuthenticatedUser authenticatedUser) {
         UUID userUuid = extractUserUuid(authenticatedUser);
         String baseMonth = YearMonth.now(SEOUL_ZONE_ID).toString();

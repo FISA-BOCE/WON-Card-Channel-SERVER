@@ -58,7 +58,9 @@ public class SpendSummaryService {
                 throw new BusinessException(SpendErrorCode.INVALID_SPEND_RESPONSE);
             }
 
-            return toResponse(coreResponse.data());
+            SpendCurrentAmountResponse coreData = coreResponse.data();
+            validateCoreSpendData(coreData);
+            return toResponse(coreData);
         } catch (FeignException.NotFound e) {
             throw new BusinessException(SpendErrorCode.CURRENT_SPEND_AMOUNT_NOT_FOUND, e);
         } catch (FeignException e) {
@@ -107,6 +109,26 @@ public class SpendSummaryService {
             rewardRanges(),
                 coreData.expectedReward()
         );
+    }
+
+    private void validateCoreSpendData(SpendCurrentAmountResponse coreData) {
+        if (!coreData.hasCurrentSpendAmount()
+                || isBlank(coreData.baseMonth())
+                || coreData.currentSpendAmount() == null
+                || coreData.currentRewardRate() == null
+                || isBlank(coreData.nextPerformanceStatus())
+                || coreData.amountRemainingUntilNextPerformance() == null
+                || coreData.nextRewardRate() == null
+                || coreData.expectedReward() == null
+                || coreData.expectedReward().targetSpendAmount() == null
+                || coreData.expectedReward().rewardRate() == null
+                || coreData.expectedReward().expectedRewardAmount() == null) {
+            throw new BusinessException(SpendErrorCode.INVALID_SPEND_RESPONSE);
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private List<SpendCurrentAmountResponse.RewardRange> rewardRanges() {

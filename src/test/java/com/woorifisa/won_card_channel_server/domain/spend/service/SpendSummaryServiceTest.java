@@ -57,16 +57,14 @@ class SpendSummaryServiceTest {
 
     @ParameterizedTest
     @DisplayName("DB 조회 성공 시 경계값 기준으로 실적 구간과 리워드를 계산한다")
-    @CsvSource(
-            value = {
-                    "0,1,2,500000,1.0,0.7,0",
-                    "499999,1,2,1,1.0,0.7,3499",
-                    "500000,2,3,1000000,1.2,1.0,5000",
-                    "1499999,2,3,1,1.2,1.0,14999",
-                    "1500000,3,3,0,1.2,1.2,18000",
-                    "4000000,3,3,0,1.2,1.2,40000"
-            }
-    )
+    @CsvSource({
+            "0,1,2,500000,1.0,0.7,0",
+            "499999,1,2,1,1.0,0.7,3499",
+            "500000,2,3,1000000,1.2,1.0,5000",
+            "1499999,2,3,1,1.2,1.0,14999",
+            "1500000,3,3,0,1.2,1.2,18000",
+            "4000000,3,3,0,1.2,1.2,40000"
+    })
     void getSpendSummaryFromDbCalculatesPerformanceRange(
             long currentSpendAmount,
             String expectedCurrentStatus,
@@ -76,15 +74,12 @@ class SpendSummaryServiceTest {
             String expectedCurrentRewardRate,
             long expectedRewardAmount
     ) {
-        // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
         given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.of(performanceSummary(BigDecimal.valueOf(currentSpendAmount))));
 
-        // when
         SpendCurrentAmountResponse response = spendSummaryService.getSpendSummary(authenticatedUser);
 
-        // then
         assertThat(response.hasCurrentSpendAmount()).isTrue();
         assertThat(response.baseMonth()).isEqualTo(BASE_MONTH);
         assertThat(response.currentSpendAmount()).isEqualTo(currentSpendAmount);
@@ -96,28 +91,22 @@ class SpendSummaryServiceTest {
         assertThat(response.expectedReward().targetSpendAmount()).isEqualTo(currentSpendAmount);
         assertThat(response.expectedReward().rewardRate()).isEqualByComparingTo(expectedCurrentRewardRate);
         assertThat(response.expectedReward().expectedRewardAmount()).isEqualTo(expectedRewardAmount);
-
-        String actualCurrentStatus = calculateCurrentStatusFromResponse(response);
-        assertThat(actualCurrentStatus).isEqualTo(expectedCurrentStatus);
+        assertThat(calculateCurrentStatusFromResponse(response)).isEqualTo(expectedCurrentStatus);
         then(cardCoreSpendApi).shouldHaveNoInteractions();
     }
 
     @Test
-    @DisplayName("DB에 없으면 계정계 API 응답 data를 꺼내 최종 응답으로 조립한다")
+    @DisplayName("DB에 없으면 계정계 응답 data를 꺼내 최종 응답으로 조립한다")
     void getSpendSummaryFromCardCoreWhenDbEmpty() {
-        // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
         SpendCurrentAmountResponse coreResponse = coreResponse();
-
         given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
         given(cardCoreSpendApi.getSpendSummary(USER_UUID))
                 .willReturn(ApiResponse.of(SuccessStatus.CURRENT_SPEND_AMOUNT_FOUND, coreResponse));
 
-        // when
         SpendCurrentAmountResponse response = spendSummaryService.getSpendSummary(authenticatedUser);
 
-        // then
         assertThat(response).isNotSameAs(coreResponse);
         assertThat(response.hasCurrentSpendAmount()).isEqualTo(coreResponse.hasCurrentSpendAmount());
         assertThat(response.baseMonth()).isEqualTo(coreResponse.baseMonth());
@@ -148,13 +137,11 @@ class SpendSummaryServiceTest {
     @Test
     @DisplayName("계정계 응답 객체가 null이면 응답 형식 예외를 던진다")
     void getSpendSummaryCoreResponseNull() {
-        // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
         given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
         given(cardCoreSpendApi.getSpendSummary(USER_UUID)).willReturn(null);
 
-        // when & then
         assertThatThrownBy(() -> spendSummaryService.getSpendSummary(authenticatedUser))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -164,14 +151,42 @@ class SpendSummaryServiceTest {
     @Test
     @DisplayName("계정계 응답 data가 null이면 응답 형식 예외를 던진다")
     void getSpendSummaryCoreResponseDataNull() {
-        // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
         given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
         given(cardCoreSpendApi.getSpendSummary(USER_UUID))
                 .willReturn(ApiResponse.of(SuccessStatus.CURRENT_SPEND_AMOUNT_FOUND, null));
 
-        // when & then
+        assertThatThrownBy(() -> spendSummaryService.getSpendSummary(authenticatedUser))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(SpendErrorCode.INVALID_SPEND_RESPONSE);
+    }
+
+    @Test
+    @DisplayName("계정계 응답 data의 필수 필드가 비어 있으면 응답 형식 예외를 던진다")
+    void getSpendSummaryCoreResponseRequiredFieldMissing() {
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        SpendCurrentAmountResponse invalidCoreData = new SpendCurrentAmountResponse(
+                true,
+                BASE_MONTH,
+                1_245_000L,
+                null,
+                "3",
+                255_000L,
+                new BigDecimal("1.2"),
+                null,
+                new SpendCurrentAmountResponse.ExpectedReward(
+                        1_245_000L,
+                        new BigDecimal("1.0"),
+                        12_450L
+                )
+        );
+        given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
+                .willReturn(Optional.empty());
+        given(cardCoreSpendApi.getSpendSummary(USER_UUID))
+                .willReturn(ApiResponse.of(SuccessStatus.CURRENT_SPEND_AMOUNT_FOUND, invalidCoreData));
+
         assertThatThrownBy(() -> spendSummaryService.getSpendSummary(authenticatedUser))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -181,13 +196,11 @@ class SpendSummaryServiceTest {
     @Test
     @DisplayName("계정계가 404를 반환하면 CARD_404_001 예외를 던진다")
     void getSpendSummaryCoreNotFound() {
-        // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
         given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
         given(cardCoreSpendApi.getSpendSummary(USER_UUID)).willThrow(feignException(HttpStatus.NOT_FOUND));
 
-        // when & then
         assertThatThrownBy(() -> spendSummaryService.getSpendSummary(authenticatedUser))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -197,13 +210,11 @@ class SpendSummaryServiceTest {
     @Test
     @DisplayName("계정계 호출 중 404 외 Feign 예외가 발생하면 이용 금액 조회 불가 예외를 던진다")
     void getSpendSummaryCoreUnavailable() {
-        // given
         AuthenticatedUser authenticatedUser = authenticatedUser();
         given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
         given(cardCoreSpendApi.getSpendSummary(USER_UUID)).willThrow(feignException(HttpStatus.BAD_GATEWAY));
 
-        // when & then
         assertThatThrownBy(() -> spendSummaryService.getSpendSummary(authenticatedUser))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -281,18 +292,8 @@ class SpendSummaryServiceTest {
         );
 
         return switch (status) {
-            case NOT_FOUND -> new FeignException.NotFound(
-                    "not found",
-                    request,
-                    null,
-                    Map.of()
-            );
-            default -> new FeignException.BadGateway(
-                    "bad gateway",
-                    request,
-                    null,
-                    Map.of()
-            );
+            case NOT_FOUND -> new FeignException.NotFound("not found", request, null, Map.of());
+            default -> new FeignException.BadGateway("bad gateway", request, null, Map.of());
         };
     }
 }

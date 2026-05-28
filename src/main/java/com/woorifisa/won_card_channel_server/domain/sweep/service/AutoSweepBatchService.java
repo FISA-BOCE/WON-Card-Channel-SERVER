@@ -10,6 +10,7 @@ import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreS
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.YearMonth;
@@ -17,6 +18,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AutoSweepBatchService {
@@ -84,7 +86,10 @@ public class AutoSweepBatchService {
             } catch (BusinessException e) {
                 if (e.getErrorCode() == SweepErrorCode.SWEEP_ALREADY_REQUESTED) {
                     skippedCount++;
+                    log.info("자동 스윕 후보를 skip했습니다. 이미 요청된 원장입니다. pointLedgerId={}, cardUserUuid={}", candidate.pointLedgerId(), candidate.cardUserUuid());
+
                 } else {
+                    log.warn("자동 스윕 후보 처리 중 비즈니스 예외가 발생했습니다. pointLedgerId={}, cardUserUuid={}, errorCode={}", candidate.pointLedgerId(), candidate.cardUserUuid(), e.getErrorCode().getCode(), e);
                     failedCount++;
                 }
             } catch (Exception e) {

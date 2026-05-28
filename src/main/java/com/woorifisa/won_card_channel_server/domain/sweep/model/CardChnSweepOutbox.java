@@ -100,4 +100,39 @@ public class CardChnSweepOutbox extends BaseTimeEntity {
                 .nextRetryAt(LocalDateTime.now())
                 .build();
     }
+
+    public void markProcessing() {
+        this.publishStatus = OutboxPublishStatus.PROCESSING;
+        this.lastErrorMessage = null;
+    }
+
+    public void markPublished() {
+        this.publishStatus = OutboxPublishStatus.PUBLISHED;
+        this.publishedAt = LocalDateTime.now();
+        this.nextRetryAt = null;
+        this.lastErrorMessage = null;
+    }
+
+    public void markRetry(String errorMessage) {
+        this.publishStatus = OutboxPublishStatus.RETRY;
+        this.retryCount++;
+        this.lastErrorMessage = truncate(errorMessage);
+        this.nextRetryAt = LocalDateTime.now().plusMinutes(Math.min(this.retryCount, 10));
+    }
+
+    public void markFailed(String errorMessage) {
+        this.publishStatus = OutboxPublishStatus.FAILED;
+        this.retryCount++;
+        this.lastErrorMessage = truncate(errorMessage);
+        this.nextRetryAt = null;
+    }
+
+    private String truncate(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value.length() > 1000 ? value.substring(0, 1000) : value;
+    }
+
 }

@@ -12,6 +12,8 @@ import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -29,8 +31,15 @@ public class AutoSweepBatchService {
         validateBaseMonth(baseMonth);
 
         // Core 후보 조회 Feign 호출
-        ApiResponse<CardCoreSweepCandidateResponse> apiResponse =
-                cardCoreRewardSweepApi.getSweepCandidates(baseMonth);
+        ApiResponse<CardCoreSweepCandidateResponse> apiResponse;
+
+        try {
+            apiResponse = cardCoreRewardSweepApi.getSweepCandidates(baseMonth);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_CORE_UNAVAILABLE, e);
+        }
 
         if (apiResponse == null || apiResponse.data() == null || apiResponse.data().candidates() == null) {
             throw new BusinessException(SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
@@ -94,6 +103,12 @@ public class AutoSweepBatchService {
 
     private void validateBaseMonth(String baseMonth) {
         if (baseMonth == null || !BASE_MONTH_PATTERN.matcher(baseMonth).matches()) {
+            throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
+        }
+
+        try {
+            YearMonth.parse(baseMonth);
+        } catch (DateTimeParseException e) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
     }

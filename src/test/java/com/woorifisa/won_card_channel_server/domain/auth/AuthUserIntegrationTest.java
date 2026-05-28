@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server;
+package com.woorifisa.won_card_channel_server.domain.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

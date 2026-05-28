@@ -42,14 +42,6 @@ public class CardChnSweepRequest extends BaseTimeEntity {
     @Column(name = "card_user_uuid", nullable = false, length = 36)
     private UUID cardUserUuid;
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(name = "invest_user_uuid", nullable = false, length = 36)
-    private UUID investUserUuid;
-
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(name = "invest_account_uuid", nullable = false, length = 36)
-    private UUID investAccountUuid;
-
     @Column(name = "performance_id", nullable = false)
     private Long performanceId;
 
@@ -67,9 +59,6 @@ public class CardChnSweepRequest extends BaseTimeEntity {
 
     @Column(name = "etf_id", nullable = false)
     private Long etfId;
-
-    @Column(name = "ticker", nullable = false, length = 30)
-    private String ticker;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "request_status", nullable = false, length = 30)
@@ -94,21 +83,18 @@ public class CardChnSweepRequest extends BaseTimeEntity {
     private String failReason;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private CardChnSweepRequest(UUID userUuid, UUID cardUserUuid, UUID investUserUuid, UUID investAccountUuid,
-                                Long performanceId, Long pointLedgerId, String baseMonth, Long pointAmount, Long krwAmount, Long etfId, String ticker,
+    private CardChnSweepRequest(UUID userUuid, UUID cardUserUuid,
+                                Long performanceId, Long pointLedgerId, String baseMonth, Long pointAmount, Long krwAmount, Long etfId,
                                 SweepRequestStatus requestStatus, String correlationId, String idempotencyKey, LocalDateTime requestedAt
     ) {
         this.userUuid = userUuid;
         this.cardUserUuid = cardUserUuid;
-        this.investUserUuid = investUserUuid;
-        this.investAccountUuid = investAccountUuid;
         this.performanceId = performanceId;
         this.pointLedgerId = pointLedgerId;
         this.baseMonth = baseMonth;
         this.pointAmount = pointAmount;
         this.krwAmount = krwAmount;
         this.etfId = etfId;
-        this.ticker = ticker;
         this.requestStatus = requestStatus;
         this.correlationId = correlationId;
         this.idempotencyKey = idempotencyKey;
@@ -121,15 +107,12 @@ public class CardChnSweepRequest extends BaseTimeEntity {
         return CardChnSweepRequest.builder()
                 .userUuid(target.userUuid())
                 .cardUserUuid(target.cardUserUuid())
-                .investUserUuid(target.investUserUuid())
-                .investAccountUuid(target.investAccountUuid())
                 .performanceId(target.performanceId())
                 .pointLedgerId(target.pointLedgerId())
                 .baseMonth(target.baseMonth())
                 .pointAmount(target.pointAmount())
                 .krwAmount(target.krwAmount())
                 .etfId(target.etfId())
-                .ticker(target.ticker())
                 .requestStatus(SweepRequestStatus.PENDING_PUBLISH)
                 .correlationId(correlationId)
                 .idempotencyKey(idempotencyKey)

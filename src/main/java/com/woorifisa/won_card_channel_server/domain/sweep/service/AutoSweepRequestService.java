@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepRequestedEvent;
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.request.InternalSweepRequestCreateRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.CardCoreSweepRequestResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
@@ -78,7 +78,7 @@ public class AutoSweepRequestService {
     }
 
     @Transactional
-    public SweepRequestCreateResponse createSweepRequest(InternalSweepRequestCreateRequest request) {
+    public SweepRequestCreateResponse createSweepRequest(AutoSweepCreateCommand request) {
         validateInternalRequest(request);
 
         String idempotencyKey = createIdempotencyKey(request.pointLedgerId());
@@ -172,15 +172,12 @@ public class AutoSweepRequestService {
         if (target == null
                 || target.userUuid() == null
                 || target.cardUserUuid() == null
-                || target.investUserUuid() == null
-                || target.investAccountUuid() == null
                 || target.performanceId() == null
                 || target.pointLedgerId() == null
                 || target.baseMonth() == null || target.baseMonth().isBlank()
                 || target.pointAmount() == null
                 || target.krwAmount() == null
-                || target.etfId() == null
-                || target.ticker() == null || target.ticker().isBlank()) {
+                || target.etfId() == null) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
 
@@ -189,16 +186,12 @@ public class AutoSweepRequestService {
         }
     }
 
-    private void validateInternalRequest(InternalSweepRequestCreateRequest request) {
+    private void validateInternalRequest(AutoSweepCreateCommand request) {
         if (request == null
                 || request.userUuid() == null
                 || request.cardUserUuid() == null
-                || request.investUserUuid() == null
-                || request.investAccountUuid() == null
                 || request.pointLedgerId() == null
-                || request.etfId() == null
-                || request.ticker() == null
-                || request.ticker().isBlank()) {
+                || request.etfId() == null) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
     }

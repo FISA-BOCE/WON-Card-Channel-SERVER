@@ -18,6 +18,7 @@ import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessEx
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class AutoSweepRequestService {
 
@@ -90,10 +92,31 @@ public class AutoSweepRequestService {
                 request.pointLedgerId()
         );
 
-        AutoSweepTarget target = AutoSweepTarget.of(request, coreResponse);
-        validateTarget(target);
+        try {
+            AutoSweepTarget target = AutoSweepTarget.of(request, coreResponse);
+            validateTarget(target);
 
-        return createSweepRequestAndOutbox(target, idempotencyKey);
+            return createSweepRequestAndOutbox(target, idempotencyKey);
+        } catch (BusinessException e) {
+            compensateSweepRequest(request.cardUserUuid(), request.pointLedgerId());
+            throw e;
+        } catch (RuntimeException e) {
+            compensateSweepRequest(request.cardUserUuid(), request.pointLedgerId());
+            throw e;
+        }
+    }
+
+    private void compensateSweepRequest(UUID cardUserUuid, Long pointLedgerId) {
+        try {
+            cardCoreRewardSweepApi.cancelSweepRequest(cardUserUuid, pointLedgerId);
+        } catch (Exception compensationException) {
+            log.warn(
+                    "Core 스윕 보상 호출에 실패했습니다. cardUserUuid={}, pointLedgerId={}",
+                    cardUserUuid,
+                    pointLedgerId,
+                    compensationException
+            );
+        }
     }
 
     private CardCoreSweepRequestResponse requestSweepFromCore(UUID cardUserUuid, Long pointLedgerId) {

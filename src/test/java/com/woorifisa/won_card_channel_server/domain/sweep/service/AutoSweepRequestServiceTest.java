@@ -257,6 +257,130 @@ class AutoSweepRequestServiceTest {
         verify(cardChnSweepOutboxRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("Core 선점 후 sweep_request 저장에 실패하면 Core 스윕 보상 API를 호출한다")
+    void createSweepRequestCompensatesWhenSweepRequestSaveFails() {
+        // given
+        AutoSweepCreateCommand request = createSweepRequestRequest(1L);
+
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+
+        when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
+
+        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("save failed"));
+
+        // when & then
+        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED);
+
+        verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
+        verify(cardChnSweepOutboxRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Core 선점 후 outbox 저장에 실패하면 Core 스윕 보상 API를 호출한다")
+    void createSweepRequestCompensatesWhenOutboxSaveFails() {
+        // given
+        AutoSweepCreateCommand request = createSweepRequestRequest(1L);
+
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+
+        when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
+
+        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+                .thenAnswer(invocation -> {
+                    CardChnSweepRequest sweepRequest = invocation.getArgument(0);
+                    setField(sweepRequest, "sweepRequestId", 1L);
+                    return sweepRequest;
+                });
+
+        when(cardChnSweepOutboxRepository.save(any(CardChnSweepOutbox.class)))
+                .thenThrow(new DataIntegrityViolationException("outbox save failed"));
+
+        // when & then
+        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
+                .isInstanceOf(BusinessException.class);
+
+        verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
+    }
+
+    @Test
+    @DisplayName("Core 선점 후 Core 응답 값 검증에 실패하면 Core 스윕 보상 API를 호출한다")
+    void createSweepRequestCompensatesWhenCoreResponseInvalidAfterReservation() {
+        // given
+        AutoSweepCreateCommand request = createSweepRequestRequest(1L);
+
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+
+        when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 0L)));
+
+        // when & then
+        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
+
+        verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
+        verify(cardChnSweepRequestRepository, never()).save(any());
+        verify(cardChnSweepOutboxRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Core 보상 API 호출이 실패해도 원래 Channel 예외를 유지한다")
+    void createSweepRequestKeepsOriginalExceptionWhenCompensationFails() {
+        // given
+        AutoSweepCreateCommand request = createSweepRequestRequest(1L);
+
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+
+        when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
+
+        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("save failed"));
+
+        doThrow(new RuntimeException("cancel failed"))
+                .when(cardCoreRewardSweepApi)
+                .cancelSweepRequest(cardUserUuid, 1L);
+
+        // when & then
+        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED);
+
+        verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
+    }
+
+    @Test
+    @DisplayName("Core 선점 자체가 실패하면 Core 보상 API를 호출하지 않는다")
+    void createSweepRequestDoesNotCompensateWhenCoreReservationFails() {
+        // given
+        AutoSweepCreateCommand request = createSweepRequestRequest(1L);
+
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+
+        when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, null));
+
+        // when & then
+        assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
+
+        verify(cardCoreRewardSweepApi, never()).cancelSweepRequest(any(), any());
+        verify(cardChnSweepRequestRepository, never()).save(any());
+        verify(cardChnSweepOutboxRepository, never()).save(any());
+    }
+
     private AutoSweepCreateCommand createSweepRequestRequest(Long pointLedgerId) {
         return new AutoSweepCreateCommand(
                 userUuid,

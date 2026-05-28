@@ -21,4 +21,11 @@ public interface CardCoreRewardSweepApi {
     ApiResponse<CardCoreSweepCandidateResponse> getSweepCandidates(
             @RequestParam("baseMonth") String baseMonth
     );
+
+    @PostMapping("/internal/cards/rewards/ledger/{pointLedgerId}/sweep-request/cancel")
+    ApiResponse<Void> cancelSweepRequest(
+            @RequestHeader("X-Card-User-UUID") UUID cardUserUuid,
+            @PathVariable("pointLedgerId") Long pointLedgerId
+    );
+
 }

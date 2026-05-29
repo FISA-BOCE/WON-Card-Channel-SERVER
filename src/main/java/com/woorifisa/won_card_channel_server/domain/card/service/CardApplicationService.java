@@ -194,6 +194,9 @@ public class CardApplicationService {
     }
 
     private String encryptApplicantField(String value) {
+        if (value == null || value.isBlank()) {
+            throw new BusinessException(CardErrorCode.CARD_APPLICATION_INVALID_REQUEST);
+        }
         return textEncryptor.encrypt(value.trim());
     }
 

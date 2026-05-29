@@ -3,6 +3,8 @@ package com.woorifisa.won_card_channel_server.domain.ai.chat.api;
 import com.woorifisa.won_card_channel_server.domain.ai.chat.dto.request.ChatRequest;
 import com.woorifisa.won_card_channel_server.domain.ai.chat.dto.response.ChatResponse;
 import com.woorifisa.won_card_channel_server.domain.ai.chat.service.ChatService;
+import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
+import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
@@ -34,6 +36,9 @@ public class ChatApi {
             @RequestHeader("X-Transaction-ID") String transactionId,
             @Valid @RequestBody ChatRequest request
     ) {
+        if (authenticatedUser == null) {
+            throw new BusinessException(AuthErrorCode.AUTHENTICATION_REQUIRED);
+        }
         ChatResponse response = chatService.processChat(request.question(), authenticatedUser.userUuid());
         return ResponseEntity
                 .status(SuccessStatus.CHAT_SUCCESS.getHttpStatus())

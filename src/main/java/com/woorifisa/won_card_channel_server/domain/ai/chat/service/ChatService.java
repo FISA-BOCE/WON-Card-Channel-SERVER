@@ -80,11 +80,17 @@ public class ChatService {
                     return buildSpendContext(summary.get(), intent);
                 }
             } else if (isCardNeo4jIntent(intent)) {
-                contextUsed.add("CARD_GRAPH");
-                return queryCardNeo4j(intent, userUuid);
+                String result = queryCardNeo4j(intent, userUuid);
+                if (result != null) {
+                    contextUsed.add("CARD_GRAPH");
+                    return result;
+                }
             } else if (intent == QueryIntent.MERCHANT_TO_ETF) {
-                contextUsed.add("CARD_GRAPH");
-                return queryMerchantToEtf(userUuid);
+                String result = queryMerchantToEtf(userUuid);
+                if (result != null) {
+                    contextUsed.add("CARD_GRAPH");
+                    return result;
+                }
             }
         } catch (Exception e) {
             log.warn("DB query failed for intent={}, userUuid={}: {}", intent, userUuid, e.getMessage());

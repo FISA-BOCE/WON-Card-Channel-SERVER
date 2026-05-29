@@ -1,6 +1,7 @@
 package com.woorifisa.won_card_channel_server.global.config;
 
 import com.zaxxer.hikari.HikariDataSource;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -8,10 +9,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
-
 @Configuration
 public class AiDbDataSourceConfig {
+
+    private HikariDataSource cardAiDataSource;
+    private HikariDataSource securitiesAiDataSource;
 
     @Bean
     @ConfigurationProperties(prefix = "datasource.card-ai")
@@ -27,15 +29,23 @@ public class AiDbDataSourceConfig {
 
     @Bean
     public JdbcTemplate cardAiJdbcTemplate() {
-        return new JdbcTemplate(buildDataSource(cardAiDataSourceProperties()));
+        cardAiDataSource = buildDataSource(cardAiDataSourceProperties());
+        return new JdbcTemplate(cardAiDataSource);
     }
 
     @Bean
     public JdbcTemplate securitiesAiJdbcTemplate() {
-        return new JdbcTemplate(buildDataSource(securitiesAiDataSourceProperties()));
+        securitiesAiDataSource = buildDataSource(securitiesAiDataSourceProperties());
+        return new JdbcTemplate(securitiesAiDataSource);
     }
 
-    private DataSource buildDataSource(AiDataSourceProperties properties) {
+    @PreDestroy
+    public void closeDataSources() {
+        if (cardAiDataSource != null) cardAiDataSource.close();
+        if (securitiesAiDataSource != null) securitiesAiDataSource.close();
+    }
+
+    private HikariDataSource buildDataSource(AiDataSourceProperties properties) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(properties.getUrl());
         ds.setUsername(properties.getUsername());

@@ -22,7 +22,7 @@ public class InvestSummaryRepository {
             "SELECT user_uuid, invest_account_uuid, total_buy_amount, profit_loss_amount, etf_summary_json " +
             "FROM invest_chn_ai_summary " +
             "WHERE user_uuid = ? " +
-            "LIMIT 1";
+            "ORDER BY last_synced_at DESC LIMIT 1";
 
     public Optional<InvestSummary> findByUserUuid(UUID userUuid) {
         return securitiesAiJdbcTemplate.query(SELECT_BY_USER, rowMapper(), userUuid.toString())

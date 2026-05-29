@@ -22,6 +22,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
@@ -95,11 +96,17 @@ public class OpenAiService {
             return response.firstContent();
 
         } catch (WebClientRequestException e) {
-            log.error("OpenAI request failed: {}", e.getMessage());
-            throw new BusinessException(OpenAiErrorCode.OPENAI_TIMEOUT);
+            log.error("OpenAI request failed", e);
+            throw new BusinessException(OpenAiErrorCode.OPENAI_TIMEOUT, e);
         } catch (WebClientResponseException e) {
-            log.error("OpenAI response error: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BusinessException(OpenAiErrorCode.OPENAI_API_ERROR);
+            log.error("OpenAI response error: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new BusinessException(OpenAiErrorCode.OPENAI_API_ERROR, e);
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof TimeoutException) {
+                log.error("OpenAI timeout (block)", e);
+                throw new BusinessException(OpenAiErrorCode.OPENAI_TIMEOUT, e);
+            }
+            throw e;
         }
     }
 
@@ -121,7 +128,7 @@ public class OpenAiService {
 
             return new ClassifyResult(intent, confidence, entities != null ? entities : Map.of());
         } catch (JsonProcessingException e) {
-            log.warn("Failed to parse classify result: {}", content);
+            log.warn("Failed to parse classify result: content_length={}", content != null ? content.length() : 0);
             return new ClassifyResult(QueryIntent.UNKNOWN, 0.0, Map.of());
         }
     }
@@ -134,7 +141,7 @@ public class OpenAiService {
                     node.path("suggestedQuestions"), List.class);
             return new GenerateResult(answer, suggestedQuestions != null ? suggestedQuestions : List.of());
         } catch (JsonProcessingException e) {
-            log.warn("Failed to parse generate result: {}", content);
+            log.warn("Failed to parse generate result: content_length={}", content != null ? content.length() : 0);
             return new GenerateResult(content, List.of());
         }
     }

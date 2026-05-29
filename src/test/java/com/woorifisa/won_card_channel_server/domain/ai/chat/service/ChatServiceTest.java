@@ -240,6 +240,28 @@ class ChatServiceTest {
         then(cardNeo4jDriver).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("증권 Neo4j 조회 실패해도 증권 MySQL 조회에 성공하면 partial 응답을 반환한다")
+    void processChat_증권Neo4j실패_MySQL성공_partial응답() {
+        // given
+        given(openAiService.classifyIntent("내 ETF 보유 현황"))
+                .willReturn(new ClassifyResult(QueryIntent.ETF_HOLDINGS, 0.85, Map.of()));
+        given(investSummaryRepository.findByUserUuid(USER_UUID))
+                .willReturn(Optional.of(investSummary()));
+        given(securitiesNeo4jDriver.session()).willThrow(new RuntimeException("Neo4j 연결 실패"));
+        given(openAiService.generateResponse(anyString(), eq(QueryIntent.ETF_HOLDINGS), anyString()))
+                .willReturn(new GenerateResult("MySQL 기반 ETF 보유 현황입니다.", List.of("수익률 알려줘")));
+
+        // when
+        ChatResponse response = chatService.processChat("내 ETF 보유 현황", USER_UUID);
+
+        // then
+        assertThat(response.answer()).isEqualTo("MySQL 기반 ETF 보유 현황입니다.");
+        assertThat(response.contextUsed()).containsExactly("INVESTMENT_DATA");
+        then(spendSummaryRepository).shouldHaveNoInteractions();
+        then(cardNeo4jDriver).shouldHaveNoInteractions();
+    }
+
     private SpendSummary spendSummary() {
         return SpendSummary.builder()
                 .userUuid(USER_UUID)

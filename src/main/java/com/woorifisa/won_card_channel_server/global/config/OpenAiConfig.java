@@ -1,10 +1,12 @@
 package com.woorifisa.won_card_channel_server.global.config;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
@@ -29,11 +31,12 @@ public class OpenAiConfig {
 
     @Getter
     @Setter
+    @Validated
     public static class OpenAiProperties {
-        private String endpoint;
-        private String apiKey;
-        private String deploymentName;
-        private String apiVersion;
+        @NotBlank private String endpoint;
+        @NotBlank private String apiKey;
+        @NotBlank private String deploymentName;
+        @NotBlank private String apiVersion;
     }
 
     @Bean

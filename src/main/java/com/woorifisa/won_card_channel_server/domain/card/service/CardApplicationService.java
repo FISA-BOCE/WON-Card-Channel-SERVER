@@ -10,6 +10,7 @@ import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.Inve
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestEtfDetailsResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.exception.code.AutoInvestErrorCode;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.external.InvestChannelAutoInvestApi;
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.InvestAccountResponseValidator;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.service.InvestEtfResponseValidator;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSubscriptionService;
 import com.woorifisa.won_card_channel_server.domain.card.dto.request.CardApplicationCreateRequest;
@@ -52,6 +53,7 @@ public class CardApplicationService {
     private final InvestChannelAutoInvestApi investChannelAutoInvestApi;
     private final AutoInvestSubscriptionService autoInvestSubscriptionService;
     private final CommonUserMappingApi commonUserMappingApi;
+    private final InvestEtfResponseValidator investEtfResponseValidator;
     private final TextEncryptor textEncryptor;
     private final ObjectMapper objectMapper;
 
@@ -128,19 +130,9 @@ public class CardApplicationService {
             // 증권 계좌 확인
             ApiResponse<InvestAccountDetailsResponse> response =
                     investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid);
-
-            var data = response == null ? null : response.data();
-            if (data == null
-                    || data.invstAccountUuid() == null
-                    || !invstAccountUuid.equals(data.invstAccountUuid())
-                    || data.accountStatus() == null) {
-                throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_RESPONSE_INVALID);
-            }
+            InvestAccountDetailsResponse data = InvestAccountResponseValidator.validate(invstAccountUuid, response);
             if (data.userUuid() != null && !userUuid.equals(data.userUuid())) {
                 throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_FORBIDDEN);
-            }
-            if (!"ACTIVE".equalsIgnoreCase(data.accountStatus())) {
-                throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_INVALID_STATUS);
             }
 
         } catch (FeignException.NotFound e) {
@@ -203,14 +195,7 @@ public class CardApplicationService {
         try {
             // 증권 채널계 자동 투자 가능 ETF 목록
             ApiResponse<InvestEtfDetailsResponse> response = investChannelAutoInvestApi.getEtf(etfId);
-            InvestEtfDetailsResponse data = InvestEtfResponseValidator.validate(etfId, ticker, response);
-
-            // 소수점 매수 가능 여부 확인
-            if (!Boolean.TRUE.equals(data.isFractionalAvailable())) {
-                throw new BusinessException(AutoInvestErrorCode.ETF_FRACTIONAL_BUY_NOT_ALLOWED);
-            }
-
-            return data;
+            return investEtfResponseValidator.validateForAutoInvest(etfId, ticker, response);
 
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.ETF_NOT_FOUND, e);

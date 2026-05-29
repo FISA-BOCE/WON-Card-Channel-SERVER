@@ -35,7 +35,7 @@ class CardApplicationApiTest {
     private static final UUID USER_UUID = UUID.fromString("33333333-3333-3333-3333-333333333333");
     private static final UUID AUTH_USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID CARD_UUID = UUID.fromString("55555555-5555-5555-5555-555555555555");
-    private static final UUID INVST_ACCOUNT_UUID = UUID.fromString("44444444-4444-4444-4444-444444444444");
+    private static final UUID INVEST_ACCOUNT_UUID = UUID.fromString("44444444-4444-4444-4444-444444444444");
 
     @Autowired
     private MockMvc mockMvc;
@@ -69,7 +69,7 @@ class CardApplicationApiTest {
                         "서울시 마포구 상암동",
                         "직장인"
                 ),
-                INVST_ACCOUNT_UUID,
+                INVEST_ACCOUNT_UUID,
                 1001L,
                 "VOO",
                 true,

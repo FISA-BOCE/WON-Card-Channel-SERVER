@@ -11,7 +11,7 @@ import java.util.UUID;
 public record CardApplicationCreateRequest(
         @NotNull @Positive Long cardProductId,
         @NotNull @Valid ApplicantInfo applicantInfo,
-        @NotNull UUID invstAccountUuid,
+        @NotNull UUID investAccountUuid,
         @NotNull @Positive Long etfId,
         @NotBlank String ticker,
         @NotNull Boolean requiredTerms,

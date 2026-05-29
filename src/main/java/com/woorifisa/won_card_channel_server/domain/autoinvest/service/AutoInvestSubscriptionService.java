@@ -10,7 +10,7 @@ public interface AutoInvestSubscriptionService {
 
     void createInitialSubscription(
             @NotNull UUID userUuid,
-            @NotNull UUID invstAccountUuid,
+            @NotNull UUID investAccountUuid,
             @NotNull @Positive Long etfId,
             @NotBlank String ticker
     );

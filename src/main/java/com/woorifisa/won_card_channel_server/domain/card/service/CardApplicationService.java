@@ -79,7 +79,7 @@ public class CardApplicationService {
         // 공통 사용자 검증
         validateInvestMapping(userUuid);
         // 증권 계좌 연동 여부 검증
-        validateInvestmentAccount(userUuid, request.invstAccountUuid());
+        validateInvestmentAccount(userUuid, request.investAccountUuid());
 
         // 선택 가능한 자동투자 ETF
         InvestEtfDetailsResponse etf = validateEtf(request.etfId(), request.ticker().trim());

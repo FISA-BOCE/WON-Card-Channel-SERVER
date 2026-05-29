@@ -31,22 +31,22 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     @Transactional
     public void createInitialSubscription(
             UUID userUuid,
-            UUID invstAccountUuid,
+            UUID investAccountUuid,
             Long etfId,
             String ticker
     ) {
-        validateInvestmentAccount(userUuid, invstAccountUuid);
+        validateInvestmentAccount(userUuid, investAccountUuid);
         InvestEtfDetailsResponse etf = validateEtf(etfId, ticker.trim());
 
         cardSummaryRepository.findByUserUuid(userUuid)
                 .ifPresent(summary -> summary.updateAutoInvestSelection(etf.etfId(), LocalDateTime.now()));
     }
 
-    private InvestAccountDetailsResponse validateInvestmentAccount(UUID userUuid, UUID invstAccountUuid) {
+    private InvestAccountDetailsResponse validateInvestmentAccount(UUID userUuid, UUID investAccountUuid) {
         try {
             ApiResponse<InvestAccountDetailsResponse> response =
-                    investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid);
-            return InvestAccountResponseValidator.validate(userUuid, invstAccountUuid, response);
+                    investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid);
+            return InvestAccountResponseValidator.validate(userUuid, investAccountUuid, response);
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_NOT_FOUND, e);
         } catch (FeignException.Forbidden e) {

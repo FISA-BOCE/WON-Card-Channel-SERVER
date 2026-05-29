@@ -53,7 +53,7 @@ class CardApplicationServiceTest {
 
     private final UUID userUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
     private final UUID authUserUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    private final UUID invstAccountUuid = UUID.fromString("44444444-4444-4444-4444-444444444444");
+    private final UUID investAccountUuid = UUID.fromString("44444444-4444-4444-4444-444444444444");
     private final UUID cardUuid = UUID.fromString("55555555-5555-5555-5555-555555555555");
 
     private CardChnAuthUserRepository authUserRepository;
@@ -101,10 +101,10 @@ class CardApplicationServiceTest {
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
-        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid))
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                invstAccountUuid, userUuid, "ACTIVE"
+                                investAccountUuid, userUuid, "ACTIVE"
                         )));
         given(investChannelAutoInvestApi.getEtf(1001L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -125,7 +125,7 @@ class CardApplicationServiceTest {
                         && "cipher:test@example.com".equals(coreRequest.emailEnc())
                         && "cipher:서울시 마포구 상암동".equals(coreRequest.addressEnc())
         ));
-        verify(autoInvestSubscriptionService).createInitialSubscription(userUuid, invstAccountUuid, 1001L, "VOO");
+        verify(autoInvestSubscriptionService).createInitialSubscription(userUuid, investAccountUuid, 1001L, "VOO");
     }
 
     @Test
@@ -137,10 +137,10 @@ class CardApplicationServiceTest {
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
-        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid))
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                invstAccountUuid, userUuid, "ACTIVE"
+                                investAccountUuid, userUuid, "ACTIVE"
                         )));
         given(investChannelAutoInvestApi.getEtf(1001L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -170,10 +170,10 @@ class CardApplicationServiceTest {
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
-        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid))
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                invstAccountUuid, userUuid, "ACTIVE"
+                                investAccountUuid, userUuid, "ACTIVE"
                         )));
         given(investChannelAutoInvestApi.getEtf(1001L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -205,7 +205,7 @@ class CardApplicationServiceTest {
                         "서울시 마포구 상암동",
                         "직장인"
                 ),
-                invstAccountUuid, 1001L, "VOO",
+                investAccountUuid, 1001L, "VOO",
                 false,
                 null
         );
@@ -225,10 +225,10 @@ class CardApplicationServiceTest {
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
-        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid))
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                invstAccountUuid, userUuid, "ACTIVE"
+                                investAccountUuid, userUuid, "ACTIVE"
                         )));
         given(investChannelAutoInvestApi.getEtf(1001L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -251,10 +251,10 @@ class CardApplicationServiceTest {
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
-        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid))
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                invstAccountUuid, userUuid, "ACTIVE"
+                                investAccountUuid, userUuid, "ACTIVE"
                         )));
         given(investChannelAutoInvestApi.getEtf(1001L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -286,10 +286,10 @@ class CardApplicationServiceTest {
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
-        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid))
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                invstAccountUuid, userUuid, "ACTIVE"
+                                investAccountUuid, userUuid, "ACTIVE"
                         )));
         given(investChannelAutoInvestApi.getEtf(1001L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -361,7 +361,7 @@ class CardApplicationServiceTest {
                         "서울시 마포구 상암동",
                         "직장인"
                 ),
-                invstAccountUuid,
+                investAccountUuid,
                 1001L,
                 "VOO",
                 true,

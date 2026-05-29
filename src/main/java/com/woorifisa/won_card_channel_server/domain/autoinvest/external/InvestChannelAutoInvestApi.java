@@ -13,10 +13,10 @@ import java.util.UUID;
 @FeignClient(name = "invest-channel-auto-invest", url = "${internal.invest-core.url}")
 public interface InvestChannelAutoInvestApi {
 
-    @GetMapping("/internal/invest/accounts/{invstAccountUuid}")
+    @GetMapping("/internal/invest/accounts/{investAccountUuid}")
     ApiResponse<InvestAccountDetailsResponse> getInvestmentAccount(
             @RequestHeader("X-User-UUID") UUID userUuid,
-            @PathVariable("invstAccountUuid") UUID invstAccountUuid
+            @PathVariable("investAccountUuid") UUID investAccountUuid
     );
 
     @GetMapping("/internal/invest/etfs/{etfId}")

@@ -14,11 +14,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.format.ResolverStyle;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,38 +23,24 @@ import org.springframework.stereotype.Service;
 public class PerformanceSummaryService {
 
     private static final ZoneId SEOUL_ZONE_ID = ZoneId.of("Asia/Seoul");
-    private static final DateTimeFormatter YEAR_MONTH_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM")
-            .withResolverStyle(ResolverStyle.STRICT);
-    private static final String PREVIOUS_MONTH_QUERY_PARAM = "previousMonth";
     private static final String REWARD_STATUS_SATISFIED = "기준 충족";
     private static final String REWARD_STATUS_NOT_SATISFIED = "기준 미달";
 
     private final CardChnPerformanceSummaryRepository performanceSummaryRepository;
     private final CardCorePerformanceApi cardCorePerformanceApi;
 
-    public PreviousPerformanceResponse getPreviousPerformance(
-            AuthenticatedUser authenticatedUser,
-            Map<String, String> queryParams
-    ) {
+    public PreviousPerformanceResponse getPreviousPerformance(AuthenticatedUser authenticatedUser) {
         UUID userUuid = extractUserUuid(authenticatedUser);
-        YearMonth previousMonth = resolvePreviousMonth(queryParams);
-        YearMonth baseMonth = previousMonth.plusMonths(1);
+        String baseMonth = YearMonth.now(SEOUL_ZONE_ID).toString();
 
-        return performanceSummaryRepository.findByUserUuidAndBaseMonth(userUuid, baseMonth.toString())
-                .map(performanceSummary -> toResponse(performanceSummary, previousMonth.toString()))
-                .orElseGet(() -> getPreviousPerformanceFromCardCore(userUuid, queryParams, previousMonth));
+        return performanceSummaryRepository.findByUserUuidAndBaseMonth(userUuid, baseMonth)
+                .map(this::toResponse)
+                .orElseGet(() -> getPreviousPerformanceFromCardCore(userUuid));
     }
 
-    private PreviousPerformanceResponse getPreviousPerformanceFromCardCore(
-            UUID userUuid,
-            Map<String, String> queryParams,
-            YearMonth previousMonth
-    ) {
+    private PreviousPerformanceResponse getPreviousPerformanceFromCardCore(UUID userUuid) {
         try {
-            ApiResponse<PreviousPerformanceResponse> coreResponse = cardCorePerformanceApi.getMonthlyPerformance(
-                    userUuid,
-                    toCoreQueryParams(queryParams, previousMonth)
-            );
+            ApiResponse<PreviousPerformanceResponse> coreResponse = cardCorePerformanceApi.getMonthlyPerformance(userUuid);
             if (coreResponse == null || coreResponse.data() == null) {
                 throw new BusinessException(PerformanceErrorCode.PERFORMANCE_NOT_FOUND);
             }
@@ -72,32 +53,16 @@ public class PerformanceSummaryService {
         }
     }
 
-    private Map<String, String> toCoreQueryParams(Map<String, String> queryParams, YearMonth previousMonth) {
-        Map<String, String> coreQueryParams = new LinkedHashMap<>();
-        if (queryParams != null) {
-            coreQueryParams.putAll(queryParams);
-        }
-        coreQueryParams.put(PREVIOUS_MONTH_QUERY_PARAM, previousMonth.toString());
-        return coreQueryParams;
-    }
-
-    private PreviousPerformanceResponse toResponse(
-            CardChnPerformanceSummary performanceSummary,
-            String previousMonth
-    ) {
+    private PreviousPerformanceResponse toResponse(CardChnPerformanceSummary performanceSummary) {
         String rewardStatus = getRewardStatus(performanceSummary);
-        Long previousMonthSpendAmount = toLong(performanceSummary.getPreviousMonthSpendAmount());
-        Long rewardPointAmount = toLong(performanceSummary.getRewardPointAmount());
 
         return new PreviousPerformanceResponse(
                 performanceSummary.getBaseMonth(),
-                previousMonth,
                 rewardStatus,
-                previousMonthSpendAmount,
-                new PreviousPerformanceResponse.Detail(
-                        previousMonthSpendAmount,
-                        rewardPointAmount
-                )
+                toLong(performanceSummary.getPreviousMonthSpendAmount()),
+                toLong(performanceSummary.getRewardPointAmount()),
+                performanceSummary.getRewardRate(),
+                performanceSummary.getPerformanceStatus()
         );
     }
 
@@ -112,19 +77,6 @@ public class PerformanceSummaryService {
         }
 
         return REWARD_STATUS_SATISFIED;
-    }
-
-    private YearMonth resolvePreviousMonth(Map<String, String> queryParams) {
-        String previousMonth = queryParams == null ? null : queryParams.get(PREVIOUS_MONTH_QUERY_PARAM);
-        if (previousMonth == null || previousMonth.isBlank()) {
-            return YearMonth.now(SEOUL_ZONE_ID).minusMonths(1);
-        }
-
-        try {
-            return YearMonth.parse(previousMonth, YEAR_MONTH_FORMATTER);
-        } catch (DateTimeParseException e) {
-            throw new BusinessException(PerformanceErrorCode.INVALID_QUERY_MONTH, e);
-        }
     }
 
     private UUID extractUserUuid(AuthenticatedUser authenticatedUser) {

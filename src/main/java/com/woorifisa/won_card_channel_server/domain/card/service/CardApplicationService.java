@@ -172,6 +172,27 @@ public class CardApplicationService {
                 || "ACTIVE".equalsIgnoreCase(investLinkStatus));
     }
 
+    private boolean isCardLinked(String cardLinkStatus) {
+        return cardLinkStatus != null
+                && ("LINKED".equalsIgnoreCase(cardLinkStatus)
+                || "ACTIVE".equalsIgnoreCase(cardLinkStatus));
+    }
+
+    private CardCoreApplicationRequest buildCoreApplicationRequest(CardApplicationCreateRequest request) {
+        return CardCoreApplicationRequest.from(
+                request,
+                encryptApplicantField(request.applicantInfo().nameKo()),
+                encryptApplicantField(request.applicantInfo().birthDateEnc()),
+                encryptApplicantField(request.applicantInfo().telEnc()),
+                encryptApplicantField(request.applicantInfo().emailEnc()),
+                encryptApplicantField(request.applicantInfo().addressEnc())
+        );
+    }
+
+    private String encryptApplicantField(String value) {
+        return textEncryptor.encrypt(value.trim());
+    }
+
     private void syncCardUserMappingIfPossible(UUID userUuid, CardChnAuthUser authUser) {
 
         if (authUser.getCardUserUuid() == null) {

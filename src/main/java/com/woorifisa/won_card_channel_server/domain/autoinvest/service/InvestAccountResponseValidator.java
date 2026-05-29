@@ -24,9 +24,12 @@ public final class InvestAccountResponseValidator {
                 || data.userUuid() == null
                 || data.investAccountUuid() == null
                 || data.accountStatus() == null
-                || !Objects.equals(expectedUserUuid, data.userUuid())
                 || !Objects.equals(investAccountUuid, data.investAccountUuid())) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_RESPONSE_INVALID);
+        }
+
+        if (!Objects.equals(expectedUserUuid, data.userUuid())) {
+            throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_FORBIDDEN);
         }
 
         if (!ACTIVE_ACCOUNT_STATUS.equalsIgnoreCase(data.accountStatus())) {

@@ -55,8 +55,7 @@ class AutoInvestSubscriptionServiceTest {
         service = new AutoInvestSubscriptionServiceImpl(
                 cardSummaryRepository,
                 investChannelAutoInvestApi,
-                investEtfResponseValidator,
-                validator
+                investEtfResponseValidator
         );
     }
 

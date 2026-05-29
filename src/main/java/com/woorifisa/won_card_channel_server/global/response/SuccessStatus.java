@@ -27,6 +27,7 @@ public enum SuccessStatus {
     SWEEP_REQUEST_BATCH_CREATED(HttpStatus.CREATED, "SWEEP_201_002", "자동 스윕 요청 배치가 완료되었습니다."),
 
     // 카드
+    CARD_APPLICATION_CREATED(HttpStatus.CREATED, "CARD_201_001", "카드 신청이 완료되었습니다."),
     CARD_SUMMARY_FOUND(HttpStatus.OK, "CARD_200_001", "카드 정보 조회가 완료되었습니다."),
     CARD_SUMMARY_NOT_FOUND(HttpStatus.OK, "CARD_200_002", "신청된 카드 정보가 없습니다."),
 

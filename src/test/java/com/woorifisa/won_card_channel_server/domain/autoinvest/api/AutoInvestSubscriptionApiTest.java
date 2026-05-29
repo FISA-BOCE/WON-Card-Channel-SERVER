@@ -42,7 +42,7 @@ class AutoInvestSubscriptionApiTest {
             UUID.fromString("248bc5f2-f0a0-4c51-9d62-168c87cb7ab7");
     private static final UUID AUTH_USER_UUID =
             UUID.fromString("4810c4fd-3530-4f9d-bf1c-146f50e652cc");
-    private static final UUID SUBSCRIPTION_UUID =
+    private static final UUID CARD_UUID =
             UUID.fromString("188340e6-0205-44df-a4dc-8c8db40b64c6");
 
     @Autowired
@@ -65,7 +65,7 @@ class AutoInvestSubscriptionApiTest {
         SecurityContextHolder.getContext().setAuthentication(toAuthentication(authenticatedUser()));
 
         AutoInvestSubscriptionDetailResponse response = new AutoInvestSubscriptionDetailResponse(
-                SUBSCRIPTION_UUID,
+                CARD_UUID,
                 new AutoInvestSubscriptionDetailResponse.CurrentEtf(
                         1001L,
                         "S&P 500 ETF",
@@ -77,14 +77,14 @@ class AutoInvestSubscriptionApiTest {
 
         given(autoInvestSubscriptionService.getSubscription(any(AuthenticatedUser.class), any(UUID.class))).willReturn(response);
 
-        mockMvc.perform(get("/api/cards/auto-invest/subscriptions/{subscriptionUuid}", SUBSCRIPTION_UUID)
+        mockMvc.perform(get("/api/cards/{cardUuid}/auto-invest", CARD_UUID)
                         .header("Authorization", "Bearer test-token")
                         .header("X-Service-ID", "WOORI-WON-APP")
                         .header("X-Transaction-ID", "TX-20260528-SUB02"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("AUTO_200_001"))
                 .andExpect(jsonPath("$.message").value("자동투자 설정 조회가 완료되었습니다."))
-                .andExpect(jsonPath("$.data.autoInvestSubscriptionUuid").value(SUBSCRIPTION_UUID.toString()))
+                .andExpect(jsonPath("$.data.cardUuid").value(CARD_UUID.toString()))
                 .andExpect(jsonPath("$.data.currentEtf.ticker").value("VOO"))
                 .andExpect(jsonPath("$.data.history").doesNotExist());
     }
@@ -95,7 +95,7 @@ class AutoInvestSubscriptionApiTest {
         SecurityContextHolder.getContext().setAuthentication(toAuthentication(authenticatedUser()));
 
         AutoInvestSubscriptionChangeResponse response = new AutoInvestSubscriptionChangeResponse(
-                SUBSCRIPTION_UUID,
+                CARD_UUID,
                 new AutoInvestSubscriptionChangeResponse.PreviousEtf(
                         "S&P 500 ETF",
                         "VOO",
@@ -115,7 +115,7 @@ class AutoInvestSubscriptionApiTest {
                 any(AutoInvestSubscriptionChangeRequest.class)
         )).willReturn(response);
 
-        mockMvc.perform(patch("/api/cards/auto-invest/subscriptions/{subscriptionUuid}", SUBSCRIPTION_UUID)
+        mockMvc.perform(patch("/api/cards/{cardUuid}/auto-invest", CARD_UUID)
                         .contentType(APPLICATION_JSON)
                         .header("Authorization", "Bearer test-token")
                         .header("X-Service-ID", "WOORI-WON-APP")

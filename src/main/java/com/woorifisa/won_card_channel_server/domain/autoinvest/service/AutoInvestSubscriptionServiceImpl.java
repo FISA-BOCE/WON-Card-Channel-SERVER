@@ -54,10 +54,10 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     }
 
     @Override
-    public AutoInvestSubscriptionDetailResponse getSubscription(AuthenticatedUser authenticatedUser, UUID subscriptionUuid) {
+    public AutoInvestSubscriptionDetailResponse getSubscription(AuthenticatedUser authenticatedUser, UUID cardUuid) {
         UUID userUuid = extractUserUuid(authenticatedUser);
         CardChnCardSummary summary = findRequiredCardSummary(userUuid);
-        validateSubscriptionOwner(subscriptionUuid, summary);
+        validateCardOwner(cardUuid, summary);
 
         Long selectedEtfId = summary.getSelectedEtfId();
         if (selectedEtfId == null) {
@@ -81,12 +81,12 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     @Transactional
     public AutoInvestSubscriptionChangeResponse changeSubscription(
             AuthenticatedUser authenticatedUser,
-            UUID subscriptionUuid,
+            UUID cardUuid,
             AutoInvestSubscriptionChangeRequest request
     ) {
         UUID userUuid = extractUserUuid(authenticatedUser);
         CardChnCardSummary summary = findRequiredCardSummary(userUuid);
-        validateSubscriptionOwner(subscriptionUuid, summary);
+        validateCardOwner(cardUuid, summary);
 
         Long currentEtfId = summary.getSelectedEtfId();
         if (currentEtfId == null) {
@@ -154,8 +154,8 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
                 .orElseThrow(() -> new BusinessException(AutoInvestErrorCode.AUTO_INVEST_CHANGE_TARGET_NOT_FOUND));
     }
 
-    private void validateSubscriptionOwner(UUID subscriptionUuid, CardChnCardSummary summary) {
-        if (subscriptionUuid == null || summary.getCardUuid() == null || !summary.getCardUuid().equals(subscriptionUuid)) {
+    private void validateCardOwner(UUID cardUuid, CardChnCardSummary summary) {
+        if (cardUuid == null || summary.getCardUuid() == null || !summary.getCardUuid().equals(cardUuid)) {
             throw new BusinessException(AutoInvestErrorCode.AUTO_INVEST_NOT_OWNER);
         }
     }

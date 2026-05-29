@@ -21,12 +21,12 @@ public interface AutoInvestSubscriptionService {
 
     AutoInvestSubscriptionDetailResponse getSubscription(
             AuthenticatedUser authenticatedUser,
-            @NotNull UUID subscriptionUuid
+            @NotNull UUID cardUuid
     );
 
     AutoInvestSubscriptionChangeResponse changeSubscription(
             AuthenticatedUser authenticatedUser,
-            @NotNull UUID subscriptionUuid,
+            @NotNull UUID cardUuid,
             @NotNull AutoInvestSubscriptionChangeRequest request
     );
 }

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record AutoInvestSubscriptionChangeResponse(
-        UUID autoInvestSubscriptionUuid,
+        UUID cardUuid,
         PreviousEtf previousEtf,
         NewEtf newEtf
 ) {

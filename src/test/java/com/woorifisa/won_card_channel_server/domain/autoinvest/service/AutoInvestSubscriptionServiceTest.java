@@ -89,7 +89,7 @@ class AutoInvestSubscriptionServiceTest {
 
         AutoInvestSubscriptionDetailResponse response = service.getSubscription(authenticatedUser(), cardUuid);
 
-        assertThat(response.autoInvestSubscriptionUuid()).isEqualTo(cardUuid);
+        assertThat(response.cardUuid()).isEqualTo(cardUuid);
         assertThat(response.currentEtf().etfId()).isEqualTo(101L);
         assertThat(response.currentEtf().etfName()).isEqualTo("S&P 500 ETF");
     }
@@ -124,7 +124,7 @@ class AutoInvestSubscriptionServiceTest {
         );
 
         assertThat(summary.getSelectedEtfId()).isEqualTo(202L);
-        assertThat(response.autoInvestSubscriptionUuid()).isEqualTo(cardUuid);
+        assertThat(response.cardUuid()).isEqualTo(cardUuid);
         assertThat(response.previousEtf().ticker()).isEqualTo("VOO");
         assertThat(response.newEtf().etfId()).isEqualTo(202L);
     }

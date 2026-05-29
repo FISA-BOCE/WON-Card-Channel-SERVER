@@ -5,6 +5,7 @@ import com.woorifisa.won_card_channel_server.domain.autoinvest.exception.code.Au
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public final class InvestAccountResponseValidator {
@@ -18,12 +19,14 @@ public final class InvestAccountResponseValidator {
     public static InvestAccountDetailsResponse validate(UUID expectedUserUuid, UUID invstAccountUuid, ApiResponse<InvestAccountDetailsResponse> response) {
         InvestAccountDetailsResponse data = response == null ? null : response.data();
 
-        if (data == null
+        if (expectedUserUuid == null
+                || invstAccountUuid == null
+                || data == null
                 || data.userUuid() == null
                 || data.invstAccountUuid() == null
                 || data.accountStatus() == null
-                || !expectedUserUuid.equals(data.userUuid())
-                || !invstAccountUuid.equals(data.invstAccountUuid())) {
+                || !Objects.equals(expectedUserUuid, data.userUuid())
+                || !Objects.equals(invstAccountUuid, data.invstAccountUuid())) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_RESPONSE_INVALID);
         }
 

@@ -59,14 +59,14 @@ class CardApplicationApiTest {
         CardApplicationCreateRequest request = new CardApplicationCreateRequest(
                 1L,
                 new CardApplicationCreateRequest.ApplicantInfo(
-                        "enc:name",
+                        "홍길동",
                         "HONG GIL DONG",
-                        "enc:birth",
+                        "19900101",
                         "M",
                         "KR",
-                        "enc:tel",
-                        "enc:email",
-                        "enc:address",
+                        "01012345678",
+                        "test@example.com",
+                        "서울시 마포구 상암동",
                         "직장인"
                 ),
                 INVST_ACCOUNT_UUID,

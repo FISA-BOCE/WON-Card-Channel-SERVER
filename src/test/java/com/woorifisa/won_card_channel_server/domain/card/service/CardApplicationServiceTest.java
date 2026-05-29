@@ -119,11 +119,11 @@ class CardApplicationServiceTest {
         assertThat(response.autoInvestEtfName()).isEqualTo("S&P 500 ETF");
         verify(textEncryptor, times(5)).encrypt(anyString());
         verify(cardCoreCardApplicationApi).applyCard(eq(userUuid), argThat(coreRequest ->
-                "cipher:enc:name".equals(coreRequest.userNameEnc())
-                        && "cipher:enc:birth".equals(coreRequest.birthDateEnc())
-                        && "cipher:enc:tel".equals(coreRequest.telEnc())
-                        && "cipher:enc:email".equals(coreRequest.emailEnc())
-                        && "cipher:enc:address".equals(coreRequest.addressEnc())
+                "cipher:홍길동".equals(coreRequest.userNameEnc())
+                        && "cipher:19900101".equals(coreRequest.birthDateEnc())
+                        && "cipher:01012345678".equals(coreRequest.telEnc())
+                        && "cipher:test@example.com".equals(coreRequest.emailEnc())
+                        && "cipher:서울시 마포구 상암동".equals(coreRequest.addressEnc())
         ));
         verify(autoInvestSubscriptionService).createInitialSubscription(userUuid, invstAccountUuid, 1001L, "VOO");
     }
@@ -195,14 +195,14 @@ class CardApplicationServiceTest {
         CardApplicationCreateRequest request = new CardApplicationCreateRequest(
                 1L,
                 new CardApplicationCreateRequest.ApplicantInfo(
-                        "enc:name",
+                        "홍길동",
                         "HONG GIL DONG",
-                        "enc:birth",
+                        "19900101",
                         "M",
                         "KR",
-                        "enc:tel",
-                        "enc:email",
-                        "enc:address",
+                        "01012345678",
+                        "test@example.com",
+                        "서울시 마포구 상암동",
                         "직장인"
                 ),
                 invstAccountUuid, 1001L, "VOO",
@@ -351,14 +351,14 @@ class CardApplicationServiceTest {
         return new CardApplicationCreateRequest(
                 1L,
                 new CardApplicationCreateRequest.ApplicantInfo(
-                        "enc:name",
+                        "홍길동",
                         "HONG GIL DONG",
-                        "enc:birth",
+                        "19900101",
                         "M",
                         "KR",
-                        "enc:tel",
-                        "enc:email",
-                        "enc:address",
+                        "01012345678",
+                        "test@example.com",
+                        "서울시 마포구 상암동",
                         "직장인"
                 ),
                 invstAccountUuid,

@@ -21,12 +21,12 @@ public record CardApplicationCreateRequest(
     public record ApplicantInfo(
             @NotBlank String nameKo,
             @NotBlank String nameEn,
-            @NotBlank String birthDateEnc,
+            @NotBlank String birthDate,
             @NotBlank String gender,
             @NotBlank String nationality,
-            @NotBlank String telEnc,
-            @NotBlank String emailEnc,
-            @NotBlank String addressEnc,
+            @NotBlank String phoneNumber,
+            @NotBlank String email,
+            @NotBlank String address,
             @NotBlank String job
     ) {
     }

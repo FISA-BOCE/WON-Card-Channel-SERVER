@@ -186,10 +186,10 @@ public class CardApplicationService {
         return CardCoreApplicationRequest.from(
                 request,
                 encryptApplicantField(request.applicantInfo().nameKo()),
-                encryptApplicantField(request.applicantInfo().birthDateEnc()),
-                encryptApplicantField(request.applicantInfo().telEnc()),
-                encryptApplicantField(request.applicantInfo().emailEnc()),
-                encryptApplicantField(request.applicantInfo().addressEnc())
+                encryptApplicantField(request.applicantInfo().birthDate()),
+                encryptApplicantField(request.applicantInfo().phoneNumber()),
+                encryptApplicantField(request.applicantInfo().email()),
+                encryptApplicantField(request.applicantInfo().address())
         );
     }
 

@@ -11,16 +11,23 @@ public record CardCoreApplicationRequest(
         String addressEnc
 ) {
 
-    public static CardCoreApplicationRequest from(CardApplicationCreateRequest request, String userNameEnc) {
+    public static CardCoreApplicationRequest from(
+            CardApplicationCreateRequest request,
+            String userNameEnc,
+            String birthDateEnc,
+            String telEnc,
+            String emailEnc,
+            String addressEnc
+    ) {
         return new CardCoreApplicationRequest(
                 userNameEnc,
-                request.applicantInfo().birthDateEnc(),
+                birthDateEnc,
                 request.applicantInfo().gender(),
                 request.applicantInfo().nationality(),
                 request.requiredTerms(),
-                request.applicantInfo().telEnc(),
-                request.applicantInfo().emailEnc(),
-                request.applicantInfo().addressEnc()
+                telEnc,
+                emailEnc,
+                addressEnc
         );
     }
 }

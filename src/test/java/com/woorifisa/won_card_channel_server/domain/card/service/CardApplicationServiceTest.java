@@ -40,12 +40,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
 
 class CardApplicationServiceTest {
 
@@ -85,7 +87,7 @@ class CardApplicationServiceTest {
                 textEncryptor,
                 new ObjectMapper()
         );
-        given(textEncryptor.encrypt("enc:name")).willReturn("cipher:name");
+        given(textEncryptor.encrypt(anyString())).willAnswer(invocation -> "cipher:" + invocation.getArgument(0, String.class));
         given(investEtfResponseValidator.validateForAutoInvest(eq(1001L), eq("VOO"), any()))
                 .willReturn(new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true));
     }
@@ -115,6 +117,14 @@ class CardApplicationServiceTest {
 
         assertThat(response.cardUuid()).isEqualTo(cardUuid);
         assertThat(response.autoInvestEtfName()).isEqualTo("S&P 500 ETF");
+        verify(textEncryptor, times(5)).encrypt(anyString());
+        verify(cardCoreCardApplicationApi).applyCard(eq(userUuid), argThat(coreRequest ->
+                "cipher:enc:name".equals(coreRequest.userNameEnc())
+                        && "cipher:enc:birth".equals(coreRequest.birthDateEnc())
+                        && "cipher:enc:tel".equals(coreRequest.telEnc())
+                        && "cipher:enc:email".equals(coreRequest.emailEnc())
+                        && "cipher:enc:address".equals(coreRequest.addressEnc())
+        ));
         verify(autoInvestSubscriptionService).createInitialSubscription(userUuid, invstAccountUuid, 1001L, "VOO");
     }
 

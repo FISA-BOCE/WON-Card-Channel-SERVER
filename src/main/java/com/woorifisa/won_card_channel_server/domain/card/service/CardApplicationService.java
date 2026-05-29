@@ -84,9 +84,10 @@ public class CardApplicationService {
         // 선택 가능한 자동투자 ETF
         InvestEtfDetailsResponse etf = validateEtf(request.etfId(), request.ticker().trim());
 
+        CardCoreApplicationRequest coreRequest = buildCoreApplicationRequest(request);
         CardCoreApplicationResponse cardResponse = requestCardIssuance(
                 userUuid,
-                CardCoreApplicationRequest.from(request, textEncryptor.encrypt(request.applicantInfo().nameKo().trim()))
+                coreRequest
         );
 
         syncCardUserMappingIfPossible(userUuid, authUser);
@@ -132,7 +133,7 @@ public class CardApplicationService {
             // 증권 계좌 확인
             ApiResponse<InvestAccountDetailsResponse> response =
                     investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid);
-            InvestAccountDetailsResponse data = InvestAccountResponseValidator.validate(userUuid, invstAccountUuid, response);
+            InvestAccountResponseValidator.validate(userUuid, invstAccountUuid, response);
 
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_NOT_FOUND, e);
@@ -154,6 +155,9 @@ public class CardApplicationService {
 
             if (data == null || data.userUuid() == null || !userUuid.equals(data.userUuid())) {
                 throw new BusinessException(CardErrorCode.CARD_MAPPING_RESPONSE_INVALID);
+            }
+            if (data.cardUserUuid() != null && isCardLinked(data.cardLinkStatus())) {
+                throw new BusinessException(CardErrorCode.CARD_ALREADY_EXISTS);
             }
             if (data.investUserUuid() == null || !isInvestLinked(data.investLinkStatus())) {
                 throw new BusinessException(CardErrorCode.CARD_INVEST_LINK_REQUIRED);

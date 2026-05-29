@@ -66,8 +66,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false, true);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false, false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
@@ -188,8 +188,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false, true);
+        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false, false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));

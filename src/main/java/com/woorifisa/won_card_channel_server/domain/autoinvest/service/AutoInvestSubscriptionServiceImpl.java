@@ -14,11 +14,9 @@ import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessEx
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import feign.FeignException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +31,11 @@ import org.springframework.validation.annotation.Validated;
 @Transactional(readOnly = true)
 public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscriptionService {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final CardChnCardSummaryRepository cardSummaryRepository;
     private final InvestChannelAutoInvestApi investChannelAutoInvestApi;
     private final InvestEtfResponseValidator investEtfResponseValidator;
-    private final Validator validator;
 
     @Override
     @Transactional
@@ -50,7 +49,7 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
         InvestEtfDetailsResponse etf = validateEtf(etfId, ticker.trim());
 
         cardSummaryRepository.findByUserUuid(userUuid)
-                .ifPresent(summary -> summary.updateAutoInvestSelection(etf.etfId(), LocalDateTime.now()));
+                .ifPresent(summary -> summary.updateAutoInvestSelection(etf.etfId(), nowKst()));
     }
 
     @Override
@@ -98,7 +97,7 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
 
         InvestEtfDetailsResponse previousEtf = loadEtfDetails(currentEtfId);
         InvestEtfDetailsResponse newEtf = loadAutoInvestSelectableEtf(request.etfId());
-        LocalDateTime changedAt = LocalDateTime.now();
+        LocalDateTime changedAt = nowKst();
         summary.updateAutoInvestSelection(newEtf.etfId(), changedAt);
 
         return new AutoInvestSubscriptionChangeResponse(
@@ -163,16 +162,7 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     private InvestEtfDetailsResponse loadEtfDetails(Long etfId) {
         try {
             ApiResponse<InvestEtfDetailsResponse> response = investChannelAutoInvestApi.getEtf(etfId);
-            InvestEtfDetailsResponse data = response == null ? null : response.data();
-            if (data == null) {
-                throw new BusinessException(AutoInvestErrorCode.ETF_RESPONSE_INVALID);
-            }
-
-            Set<ConstraintViolation<InvestEtfDetailsResponse>> violations = validator.validate(data);
-            if (!violations.isEmpty() || !etfId.equals(data.etfId())) {
-                throw new BusinessException(AutoInvestErrorCode.ETF_RESPONSE_INVALID);
-            }
-            return data;
+            return investEtfResponseValidator.validateBasic(etfId, response);
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.ETF_NOT_FOUND, e);
         } catch (FeignException e) {
@@ -181,14 +171,14 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     }
 
     private InvestEtfDetailsResponse loadAutoInvestSelectableEtf(Long etfId) {
-        InvestEtfDetailsResponse data = loadEtfDetails(etfId);
-        if (!Boolean.TRUE.equals(data.isTradeAvailable())) {
-            throw new BusinessException(AutoInvestErrorCode.ETF_NOT_TRADABLE);
+        try {
+            ApiResponse<InvestEtfDetailsResponse> response = investChannelAutoInvestApi.getEtf(etfId);
+            return investEtfResponseValidator.validateSelectable(etfId, response);
+        } catch (FeignException.NotFound e) {
+            throw new BusinessException(AutoInvestErrorCode.ETF_NOT_FOUND, e);
+        } catch (FeignException e) {
+            throw new BusinessException(AutoInvestErrorCode.ETF_UNAVAILABLE, e);
         }
-        if (!Boolean.TRUE.equals(data.isFractionalAvailable())) {
-            throw new BusinessException(AutoInvestErrorCode.ETF_FRACTIONAL_BUY_NOT_ALLOWED);
-        }
-        return data;
     }
 
     private LocalDateTime nextEffectiveFrom(LocalDateTime changedAt) {
@@ -196,5 +186,9 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
                 .with(TemporalAdjusters.firstDayOfMonth())
                 .toLocalDate()
                 .atStartOfDay();
+    }
+
+    private LocalDateTime nowKst() {
+        return LocalDateTime.now(KST);
     }
 }

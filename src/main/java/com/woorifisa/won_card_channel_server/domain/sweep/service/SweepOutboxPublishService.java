@@ -1,14 +1,12 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.global.config.SqsProperties;
 import com.woorifisa.won_card_channel_server.global.config.SweepOutboxPublisherProperties;
-import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
+import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
@@ -17,48 +15,42 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 @Slf4j
 public class SweepOutboxPublishService {
 
-    private final CardChnSweepOutboxRepository outboxRepository;
+    private final SweepOutboxStatusService statusService;
     private final SqsClient sqsClient;
     private final SqsProperties sqsProperties;
     private final SweepOutboxPublisherProperties publisherProperties;
 
-    @Transactional
     public void publish(Long outboxEventId) {
-        CardChnSweepOutbox outbox = outboxRepository.findById(outboxEventId)
-                .orElseThrow(() -> new IllegalStateException(CommonErrorCode.INTERNAL_SERVER_ERROR.getMessage() + outboxEventId));
+        SweepOutboxPublishMessage message;
+
+        try {
+            message = statusService.getPublishMessage(outboxEventId);
+        } catch (BusinessException e) {
+            log.warn(
+                    "스윕 Outbox 발행 메시지 조회에 실패했습니다. outboxEventId={}, errorCode={}",
+                    outboxEventId, e.getErrorCode().getCode(), e);
+            return;
+        }
 
         try {
             SendMessageRequest request = SendMessageRequest.builder()
                     .queueUrl(sqsProperties.sweepRequestQueueUrl())
-                    .messageBody(outbox.getPayload())
-                    .messageDeduplicationId(outbox.getIdempotencyKey())
+                    .messageBody(message.payload())
+                    .messageDeduplicationId(message.idempotencyKey())
                     .messageGroupId("SWEEP_REQUESTED")
                     .build();
 
             sqsClient.sendMessage(request);
 
-            outbox.markPublished();
+            statusService.markPublished(outboxEventId);
 
-            log.info(
-                    "스윕 Outbox 이벤트 발행 성공. outboxEventId={}, eventId={}, sweepRequestId={}",
-                    outbox.getOutboxEventId(),
-                    outbox.getEventId(),
-                    outbox.getSweepRequestId()
-            );
+            log.info("스윕 Outbox 이벤트 발행 성공. outboxEventId={}, eventId={}, sweepRequestId={}",
+                    message.outboxEventId(), message.eventId(), message.sweepRequestId());
         } catch (Exception e) {
-            if (outbox.getRetryCount() + 1 >= publisherProperties.maxRetryCount()) {
-                outbox.markFailed(e.getMessage());
-            } else {
-                outbox.markRetry(e.getMessage());
-            }
+            statusService.markPublishFailed(outboxEventId, e.getMessage(), publisherProperties.maxRetryCount());
 
-            log.warn(
-                    "스윕 Outbox 이벤트 발행 실패. outboxEventId={}, eventId={}, retryCount={}",
-                    outbox.getOutboxEventId(),
-                    outbox.getEventId(),
-                    outbox.getRetryCount(),
-                    e
-            );
+            log.warn("스윕 Outbox 이벤트 발행 실패. outboxEventId={}, eventId={}, sweepRequestId={}",
+                    message.outboxEventId(), message.eventId(), message.sweepRequestId(), e);
         }
     }
 

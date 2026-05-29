@@ -127,6 +127,15 @@ public class CardChnSweepOutbox extends BaseTimeEntity {
         this.nextRetryAt = null;
     }
 
+    public boolean isProcessing() {
+        return this.publishStatus == OutboxPublishStatus.PROCESSING;
+    }
+
+    public boolean isPublishTarget() {
+        return this.publishStatus == OutboxPublishStatus.PENDING
+                || this.publishStatus == OutboxPublishStatus.RETRY;
+    }
+
     private String truncate(String value) {
         if (value == null) {
             return null;

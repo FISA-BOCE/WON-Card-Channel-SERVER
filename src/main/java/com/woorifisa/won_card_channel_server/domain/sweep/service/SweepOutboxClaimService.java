@@ -1,8 +1,10 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
+import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class SweepOutboxClaimService {
     @Transactional
     public List<Long> claimPublishTargets(int batchSize) {
         if (batchSize <= 0) {
-            throw new IllegalArgumentException("Outbox 발행 batchSize는 1 이상이어야 합니다. batchSize=" + batchSize);
+            throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_INVALID_BATCH_SIZE);
         }
 
         List<CardChnSweepOutbox> targets = outboxRepository.findPublishTargets(

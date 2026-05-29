@@ -26,45 +26,45 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/cards/auto-invest")
-@Tag(name = "AutoInvest", description = "카드 리워드 자동투자 설정 API")
+@RequestMapping("/api/cards")
+@Tag(name = "AutoInvest", description = "카드 자동투자 현재 선택 ETF 조회/변경 API")
 public class AutoInvestSubscriptionApi {
 
     private final AutoInvestSubscriptionService autoInvestSubscriptionService;
 
-    @Operation(summary = "자동투자 설정 조회", description = "현재 선택된 자동투자 ETF를 조회합니다.")
-    @GetMapping("/subscriptions/{subscriptionUuid}")
+    @Operation(summary = "현재 선택 ETF 조회", description = "카드 기준 현재 선택된 자동투자 ETF를 조회합니다.")
+    @GetMapping("/{cardUuid}/auto-invest")
     public ResponseEntity<ApiResponse<AutoInvestSubscriptionDetailResponse>> getSubscription(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Parameter(description = "호출 서비스 식별자", required = true)
             @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
-            @Parameter(description = "현재 카드 식별값")
-            @PathVariable UUID subscriptionUuid
+            @Parameter(description = "조회할 카드 UUID")
+            @PathVariable UUID cardUuid
     ) {
         AutoInvestSubscriptionDetailResponse response =
-                autoInvestSubscriptionService.getSubscription(authenticatedUser, subscriptionUuid);
+                autoInvestSubscriptionService.getSubscription(authenticatedUser, cardUuid);
 
         return ResponseEntity
                 .status(SuccessStatus.AUTO_INVEST_SUBSCRIPTION_FOUND.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.AUTO_INVEST_SUBSCRIPTION_FOUND, response));
     }
 
-    @Operation(summary = "자동투자 ETF 변경", description = "현재 자동투자 ETF를 변경합니다.")
-    @PatchMapping("/subscriptions/{subscriptionUuid}")
+    @Operation(summary = "현재 선택 ETF 변경", description = "카드 기준 현재 선택된 자동투자 ETF를 변경합니다.")
+    @PatchMapping("/{cardUuid}/auto-invest")
     public ResponseEntity<ApiResponse<AutoInvestSubscriptionChangeResponse>> changeSubscription(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Parameter(description = "호출 서비스 식별자", required = true)
             @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
-            @Parameter(description = "현재 카드 식별값")
-            @PathVariable UUID subscriptionUuid,
+            @Parameter(description = "변경할 카드 UUID")
+            @PathVariable UUID cardUuid,
             @Valid @RequestBody AutoInvestSubscriptionChangeRequest request
     ) {
         AutoInvestSubscriptionChangeResponse response =
-                autoInvestSubscriptionService.changeSubscription(authenticatedUser, subscriptionUuid, request);
+                autoInvestSubscriptionService.changeSubscription(authenticatedUser, cardUuid, request);
 
         return ResponseEntity
                 .status(SuccessStatus.AUTO_INVEST_SUBSCRIPTION_CHANGED.getHttpStatus())

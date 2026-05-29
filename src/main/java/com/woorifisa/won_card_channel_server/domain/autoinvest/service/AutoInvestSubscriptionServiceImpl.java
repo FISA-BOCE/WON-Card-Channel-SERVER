@@ -11,11 +11,13 @@ import feign.FeignException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 @Service
+@Slf4j
 @Validated
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,10 +35,7 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
             Long etfId,
             String ticker
     ) {
-        InvestAccountDetailsResponse account = validateInvestmentAccount(userUuid, invstAccountUuid);
-
-        // 증권 계좌 - 사용자 유효성 검증
-        validateInvestmentAccountOwner(userUuid, account);
+        validateInvestmentAccount(userUuid, invstAccountUuid);
         InvestEtfDetailsResponse etf = validateEtf(etfId, ticker.trim());
 
         cardSummaryRepository.findByUserUuid(userUuid)
@@ -47,19 +46,13 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
         try {
             ApiResponse<InvestAccountDetailsResponse> response =
                     investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid);
-            return InvestAccountResponseValidator.validate(invstAccountUuid, response);
+            return InvestAccountResponseValidator.validate(userUuid, invstAccountUuid, response);
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_NOT_FOUND, e);
         } catch (FeignException.Forbidden e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_FORBIDDEN, e);
         } catch (FeignException e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_UNAVAILABLE, e);
-        }
-    }
-
-    private void validateInvestmentAccountOwner(UUID userUuid, InvestAccountDetailsResponse account) {
-        if (account.userUuid() != null && !userUuid.equals(account.userUuid())) {
-            throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_FORBIDDEN);
         }
     }
 

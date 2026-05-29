@@ -13,7 +13,7 @@ public enum CardErrorCode implements ErrorCode {
 
     CARD_ALREADY_EXISTS(HttpStatus.CONFLICT, "CARD_409_001", "이미 발급된 카드가 존재합니다."),
     CARD_USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "CARD_409_002", "이미 등록된 카드 고객입니다."),
-    CARD_CONSTRAINT_CONFLICT(HttpStatus.CONFLICT, "CARD_409_003", "제약사항 충돌"),
+    CARD_CONSTRAINT_CONFLICT(HttpStatus.CONFLICT, "CARD_409_003", "카드 발급 제약 조건이 충돌했습니다."),
 
     CARD_ISSUANCE_NOT_ALLOWED(HttpStatus.UNPROCESSABLE_ENTITY, "CARD_422_001", "해당 고객은 발급이 불가합니다."),
 

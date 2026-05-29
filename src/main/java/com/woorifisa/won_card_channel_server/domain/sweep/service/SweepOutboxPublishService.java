@@ -4,6 +4,7 @@ import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutb
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.global.config.SqsProperties;
 import com.woorifisa.won_card_channel_server.global.config.SweepOutboxPublisherProperties;
+import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class SweepOutboxPublishService {
     @Transactional
     public void publish(Long outboxEventId) {
         CardChnSweepOutbox outbox = outboxRepository.findById(outboxEventId)
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException(CommonErrorCode.INTERNAL_SERVER_ERROR.getMessage() + outboxEventId));
 
         try {
             SendMessageRequest request = SendMessageRequest.builder()

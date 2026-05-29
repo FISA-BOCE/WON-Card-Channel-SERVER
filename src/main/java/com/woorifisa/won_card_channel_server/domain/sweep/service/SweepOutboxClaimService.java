@@ -19,6 +19,10 @@ public class SweepOutboxClaimService {
 
     @Transactional
     public List<Long> claimPublishTargets(int batchSize) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Outbox 발행 batchSize는 1 이상이어야 합니다. batchSize=" + batchSize);
+        }
+
         List<CardChnSweepOutbox> targets = outboxRepository.findPublishTargets(
                 List.of(OutboxPublishStatus.PENDING, OutboxPublishStatus.RETRY),
                 LocalDateTime.now(),

@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/spend-summary").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/cards/performance/monthly").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/rewards/ledger", "/api/cards/rewards/ledger/**").authenticated()
                         .requestMatchers("/api/users", "/api/users/**").authenticated()
                         .anyRequest().denyAll())

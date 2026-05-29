@@ -30,6 +30,7 @@ import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import com.woorifisa.won_card_channel_server.global.security.TextEncryptor;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CardApplicationService {
@@ -130,10 +132,7 @@ public class CardApplicationService {
             // 증권 계좌 확인
             ApiResponse<InvestAccountDetailsResponse> response =
                     investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid);
-            InvestAccountDetailsResponse data = InvestAccountResponseValidator.validate(invstAccountUuid, response);
-            if (data.userUuid() != null && !userUuid.equals(data.userUuid())) {
-                throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_FORBIDDEN);
-            }
+            InvestAccountDetailsResponse data = InvestAccountResponseValidator.validate(userUuid, invstAccountUuid, response);
 
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_NOT_FOUND, e);
@@ -288,7 +287,24 @@ public class CardApplicationService {
 
         try {
             cardSummaryRepository.save(summary);
-        } catch (DataIntegrityViolationException ignored) {
+        } catch (DataIntegrityViolationException e) {
+            if (isDuplicateConstraintViolation(e)) {
+                log.info("Skip duplicate card summary projection for userUuid={}, cardUuid={}", userUuid, cardResponse.cardUuid());
+                return;
+            }
+            log.error("Failed to save card summary projection for userUuid={}, cardUuid={}", userUuid, cardResponse.cardUuid(), e);
+            throw e;
         }
+    }
+
+    private boolean isDuplicateConstraintViolation(DataIntegrityViolationException e) {
+        String message = e.getMostSpecificCause() == null ? e.getMessage() : e.getMostSpecificCause().getMessage();
+        if (message == null) {
+            return false;
+        }
+        String normalized = message.toLowerCase();
+        return normalized.contains("duplicate")
+                || normalized.contains("unique")
+                || normalized.contains("uk_card_summary");
     }
 }

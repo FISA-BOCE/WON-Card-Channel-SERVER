@@ -77,7 +77,7 @@ public class CardApplicationService {
         }
 
         // 공통 사용자 검증
-        validateInvestMapping(userUuid);
+        validateMapping(userUuid);
         // 증권 계좌 연동 여부 검증
         validateInvestmentAccount(userUuid, request.investAccountUuid());
 
@@ -95,7 +95,7 @@ public class CardApplicationService {
 
         autoInvestSubscriptionService.createInitialSubscription(
                 userUuid,
-                request.invstAccountUuid(),
+                request.investAccountUuid(),
                 request.etfId(),
                 request.ticker().trim()
         );
@@ -127,13 +127,13 @@ public class CardApplicationService {
         }
     }
 
-    private void validateInvestmentAccount(UUID userUuid, UUID invstAccountUuid) {
+    private void validateInvestmentAccount(UUID userUuid, UUID investAccountUuid) {
         try {
 
             // 증권 계좌 확인
             ApiResponse<InvestAccountDetailsResponse> response =
-                    investChannelAutoInvestApi.getInvestmentAccount(userUuid, invstAccountUuid);
-            InvestAccountResponseValidator.validate(userUuid, invstAccountUuid, response);
+                    investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid);
+            InvestAccountResponseValidator.validate(userUuid, investAccountUuid, response);
 
         } catch (FeignException.NotFound e) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_NOT_FOUND, e);
@@ -144,7 +144,7 @@ public class CardApplicationService {
         }
     }
 
-    private void validateInvestMapping(UUID userUuid) {
+    private void validateMapping(UUID userUuid) {
         try {
             // 공통계 매핑 여부 확인
             ApiResponse<GetMyUserMappingResponse> response =

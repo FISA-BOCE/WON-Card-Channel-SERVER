@@ -10,7 +10,7 @@ public enum SweepErrorCode implements ErrorCode {
     SWEEP_REWARD_LEDGER_FORBIDDEN(HttpStatus.FORBIDDEN, "SWEEP_403_001", "해당 리워드 원장에 대한 권한이 없습니다."),
 
     SWEEP_REWARD_LEDGER_NOT_FOUND(HttpStatus.NOT_FOUND, "SWEEP_404_001", "스윕 대상 리워드 원장을 찾을 수 없습니다."),
-    SWEEP_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "SWEEP_404_001", "스윕 Outbox 이벤트를 찾을 수 없습니다."),
+    SWEEP_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "SWEEP_404_002", "스윕 Outbox 이벤트를 찾을 수 없습니다."),
 
     SWEEP_REWARD_LEDGER_NOT_ELIGIBLE(HttpStatus.UNPROCESSABLE_ENTITY, "SWEEP_422_001", "스윕할 수 없는 리워드 원장입니다."),
 

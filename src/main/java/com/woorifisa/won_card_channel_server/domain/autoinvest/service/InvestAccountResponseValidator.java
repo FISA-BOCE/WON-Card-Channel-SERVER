@@ -14,13 +14,15 @@ public final class InvestAccountResponseValidator {
     private InvestAccountResponseValidator() {
     }
 
-    // 기본 응답 겁증과 ticker 일치, 거래 가능 여부, 소수점 가능 여부 검증
-    public static InvestAccountDetailsResponse validate(UUID invstAccountUuid, ApiResponse<InvestAccountDetailsResponse> response) {
+    // 기본 응답 검증과 사용자/계좌 일치, ACTIVE 상태를 검증
+    public static InvestAccountDetailsResponse validate(UUID expectedUserUuid, UUID invstAccountUuid, ApiResponse<InvestAccountDetailsResponse> response) {
         InvestAccountDetailsResponse data = response == null ? null : response.data();
 
         if (data == null
+                || data.userUuid() == null
                 || data.invstAccountUuid() == null
                 || data.accountStatus() == null
+                || !expectedUserUuid.equals(data.userUuid())
                 || !invstAccountUuid.equals(data.invstAccountUuid())) {
             throw new BusinessException(AutoInvestErrorCode.INVEST_ACCOUNT_RESPONSE_INVALID);
         }

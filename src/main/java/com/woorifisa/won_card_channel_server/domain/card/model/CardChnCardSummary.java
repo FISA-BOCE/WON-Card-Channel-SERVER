@@ -74,6 +74,7 @@ public class CardChnCardSummary extends BaseTimeEntity {
     // TODO: 자동투자 ETF 변경 시 사용할 메서드
     public void updateSelectedEtfId(Long selectedEtfId) {
         this.selectedEtfId = selectedEtfId;
+        this.lastSyncedAt = LocalDateTime.now();
     }
 
     public void updateAutoInvestSelection(Long selectedEtfId, LocalDateTime syncedAt) {

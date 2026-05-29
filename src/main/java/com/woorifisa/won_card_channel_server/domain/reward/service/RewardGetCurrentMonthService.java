@@ -1,9 +1,10 @@
-package com.woorifisa.won_card_channel_server.domain.performance.service;
+package com.woorifisa.won_card_channel_server.domain.reward.service;
 
 import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
-import com.woorifisa.won_card_channel_server.domain.performance.dto.response.PreviousPerformanceResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardGetCurrentResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.exception.code.RewardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.performance.exception.code.PerformanceErrorCode;
-import com.woorifisa.won_card_channel_server.domain.performance.external.CardCorePerformanceApi;
+import com.woorifisa.won_card_channel_server.domain.reward.external.CardCoreRewardApi;
 import com.woorifisa.won_card_channel_server.domain.performance.model.CardChnPerformanceSummary;
 import com.woorifisa.won_card_channel_server.domain.performance.repository.CardChnPerformanceSummaryRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
@@ -20,16 +21,16 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class PerformanceSummaryService {
+public class RewardGetCurrentMonthService {
 
     private static final ZoneId SEOUL_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final String REWARD_STATUS_SATISFIED = "기준 충족";
     private static final String REWARD_STATUS_NOT_SATISFIED = "기준 미달";
 
     private final CardChnPerformanceSummaryRepository performanceSummaryRepository;
-    private final CardCorePerformanceApi cardCorePerformanceApi;
+    private final CardCoreRewardApi cardCoreRewardApi;
 
-    public PreviousPerformanceResponse getPreviousPerformance(AuthenticatedUser authenticatedUser) {
+    public RewardGetCurrentResponse getCurrentMonthReward(AuthenticatedUser authenticatedUser) {
         UUID userUuid = extractUserUuid(authenticatedUser);
         String baseMonth = YearMonth.now(SEOUL_ZONE_ID).toString();
 
@@ -38,25 +39,26 @@ public class PerformanceSummaryService {
                 .orElseGet(() -> getPreviousPerformanceFromCardCore(userUuid));
     }
 
-    private PreviousPerformanceResponse getPreviousPerformanceFromCardCore(UUID userUuid) {
+    private RewardGetCurrentResponse getPreviousPerformanceFromCardCore(UUID userUuid) {
         try {
-            ApiResponse<PreviousPerformanceResponse> coreResponse = cardCorePerformanceApi.getMonthlyPerformance(userUuid);
+            ApiResponse<RewardGetCurrentResponse> coreResponse = cardCoreRewardApi.getCurrentMonthReward(userUuid);
             if (coreResponse == null || coreResponse.data() == null) {
-                throw new BusinessException(PerformanceErrorCode.PERFORMANCE_NOT_FOUND);
+                throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND);
             }
 
             return coreResponse.data();
         } catch (FeignException.BadRequest | FeignException.NotFound e) {
-            throw new BusinessException(PerformanceErrorCode.PERFORMANCE_NOT_FOUND, e);
+            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
         } catch (FeignException e) {
-            throw new BusinessException(PerformanceErrorCode.PERFORMANCE_NOT_FOUND, e);
+            //나중에 여기 로그찍는거 추가해야함. 일부러 사용자한테 계정계 문제있는거 안알려주려고 같게함
+            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
         }
     }
 
-    private PreviousPerformanceResponse toResponse(CardChnPerformanceSummary performanceSummary) {
+    private RewardGetCurrentResponse toResponse(CardChnPerformanceSummary performanceSummary) {
         String rewardStatus = getRewardStatus(performanceSummary);
 
-        return new PreviousPerformanceResponse(
+        return new RewardGetCurrentResponse(
                 performanceSummary.getBaseMonth(),
                 rewardStatus,
                 toLong(performanceSummary.getPreviousMonthSpendAmount()),

@@ -1,8 +1,8 @@
-package com.woorifisa.won_card_channel_server.domain.performance.dto.response;
+package com.woorifisa.won_card_channel_server.domain.reward.dto.response;
 
 import java.math.BigDecimal;
 
-public record PreviousPerformanceResponse(
+public record RewardGetCurrentResponse(
         String baseMonth,
         String rewardStatus,
         Long previousMonthSpendAmount,

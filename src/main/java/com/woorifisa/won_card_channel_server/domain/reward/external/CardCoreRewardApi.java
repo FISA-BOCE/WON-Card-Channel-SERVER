@@ -2,6 +2,7 @@ package com.woorifisa.won_card_channel_server.domain.reward.external;
 
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.CardCoreRewardLedgerResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardGetCurrentResponse;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,5 +25,10 @@ public interface CardCoreRewardApi {
     ApiResponse<CardCoreRewardLedgerDetailResponse> getRewardLedgerDetail(
             @RequestHeader("X-Card-User-UUID") UUID cardUserUuid,
             @PathVariable("pointLedgerId") Long pointLedgerId
+    );
+
+    @GetMapping("/internal/cards/rewards/monthly")
+    ApiResponse<RewardGetCurrentResponse> getCurrentMonthReward(
+            @RequestHeader("X-User-UUID") UUID userUuid
     );
 }

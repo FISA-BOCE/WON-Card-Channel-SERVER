@@ -69,14 +69,29 @@ public class CardChnCardSummary extends BaseTimeEntity {
     @Column(name = "selected_etf_id")
     private Long selectedEtfId;
 
-    // TODO: 자동투자 ETF 변경 시 사용할 메서드
+    @Column(name = "pending_selected_etf_id")
+    private Long pendingSelectedEtfId;
+
+    @Column(name = "pending_effective_from")
+    private LocalDateTime pendingEffectiveFrom;
+
     public void updateSelectedEtfId(Long selectedEtfId) {
         this.selectedEtfId = selectedEtfId;
+        this.pendingSelectedEtfId = null;
+        this.pendingEffectiveFrom = null;
         this.lastSyncedAt = LocalDateTime.now();
     }
 
     public void updateAutoInvestSelection(Long selectedEtfId, LocalDateTime syncedAt) {
         this.selectedEtfId = selectedEtfId;
+        this.pendingSelectedEtfId = null;
+        this.pendingEffectiveFrom = null;
+        this.lastSyncedAt = syncedAt;
+    }
+
+    public void reserveAutoInvestSelection(Long pendingSelectedEtfId, LocalDateTime pendingEffectiveFrom, LocalDateTime syncedAt) {
+        this.pendingSelectedEtfId = pendingSelectedEtfId;
+        this.pendingEffectiveFrom = pendingEffectiveFrom;
         this.lastSyncedAt = syncedAt;
     }
 }

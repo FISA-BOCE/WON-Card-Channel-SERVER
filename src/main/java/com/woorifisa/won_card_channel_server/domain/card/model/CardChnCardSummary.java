@@ -8,11 +8,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -71,4 +69,14 @@ public class CardChnCardSummary extends BaseTimeEntity {
     @Column(name = "selected_etf_id")
     private Long selectedEtfId;
 
+    // TODO: 자동투자 ETF 변경 시 사용할 메서드
+    public void updateSelectedEtfId(Long selectedEtfId) {
+        this.selectedEtfId = selectedEtfId;
+        this.lastSyncedAt = LocalDateTime.now();
+    }
+
+    public void updateAutoInvestSelection(Long selectedEtfId, LocalDateTime syncedAt) {
+        this.selectedEtfId = selectedEtfId;
+        this.lastSyncedAt = syncedAt;
+    }
 }

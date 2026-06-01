@@ -25,6 +25,14 @@ public enum SuccessStatus {
     SWEEP_REQUEST_CREATED(HttpStatus.CREATED, "SWEEP_201_001", "스윕 요청이 생성되었습니다."),
     SWEEP_REQUEST_BATCH_CREATED(HttpStatus.CREATED, "SWEEP_201_002", "자동 스윕 요청 배치가 완료되었습니다."),
 
+    
+    // 자동투자
+    AUTO_INVEST_SUBSCRIPTION_CREATED(HttpStatus.CREATED, "AUTO_201_001", "자동투자 신청이 완료되었습니다."),
+    AUTO_INVEST_SUBSCRIPTION_FOUND(HttpStatus.OK, "AUTO_200_001", "자동투자 설정 조회가 완료되었습니다."),
+    AUTO_INVEST_SUBSCRIPTION_CHANGED(HttpStatus.OK, "AUTO_200_002", "ETF 변경이 완료되었습니다."),
+
+    // 카드
+    CARD_APPLICATION_CREATED(HttpStatus.CREATED, "CARD_201_001", "카드 신청이 완료되었습니다."),
     CARD_SUMMARY_FOUND(HttpStatus.OK, "CARD_200_001", "카드 정보 조회가 완료되었습니다."),
     CARD_SUMMARY_NOT_FOUND(HttpStatus.OK, "CARD_200_002", "신청된 카드 정보가 없습니다."),
     PREVIOUS_PERFORMANCE_FOUND(HttpStatus.OK, "CARD_200_004", "전월 실적 조회가 완료되었습니다."),

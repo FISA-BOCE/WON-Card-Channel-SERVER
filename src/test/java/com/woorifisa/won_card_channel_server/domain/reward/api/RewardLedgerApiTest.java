@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.service.RewardGetCurrentMonthService;
 import com.woorifisa.won_card_channel_server.domain.reward.service.RewardLedgerService;
 
 import java.time.LocalDateTime;
@@ -32,7 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(RewardLedgerApi.class)
 @AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = {
-        "internal.card-core.url=http://localhost:8082"
+        "internal.card-core.url=http://localhost:8082",
+        "internal.invest-core.url=http://localhost:8083"
 })
 class RewardLedgerApiTest {
 
@@ -48,6 +50,9 @@ class RewardLedgerApiTest {
 
     @MockitoBean
     private RewardLedgerService rewardLedgerService;
+
+    @MockitoBean
+    private RewardGetCurrentMonthService rewardGetCurrentMonthService;
 
     @AfterEach
     void tearDown() {

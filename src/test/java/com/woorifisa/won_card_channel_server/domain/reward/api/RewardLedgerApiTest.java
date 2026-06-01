@@ -33,7 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(RewardLedgerApi.class)
 @AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = {
-        "internal.card-core.url=http://localhost:8082"
+        "internal.card-core.url=http://localhost:8082",
+        "internal.invest-core.url=http://localhost:8083"
 })
 class RewardLedgerApiTest {
 

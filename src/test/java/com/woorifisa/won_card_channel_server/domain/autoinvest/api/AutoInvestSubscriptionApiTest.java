@@ -93,6 +93,12 @@ class AutoInvestSubscriptionApiTest {
                         "VOO",
                         LocalDateTime.of(2026, 5, 28, 12, 30)
                 ),
+                new AutoInvestSubscriptionDetailResponse.PendingEtf(
+                        1002L,
+                        "NASDAQ 100 ETF",
+                        "QQQ",
+                        LocalDateTime.of(2026, 6, 1, 0, 0)
+                ),
                 true
         );
 
@@ -109,7 +115,7 @@ class AutoInvestSubscriptionApiTest {
                 .andExpect(jsonPath("$.message").value("자동투자 설정 조회가 완료되었습니다."))
                 .andExpect(jsonPath("$.data.cardUuid").value(CARD_UUID.toString()))
                 .andExpect(jsonPath("$.data.currentEtf.ticker").value("VOO"))
-                .andExpect(jsonPath("$.data.history").doesNotExist());
+                .andExpect(jsonPath("$.data.pendingEtf.ticker").value("QQQ"));
 
         verify(autoInvestSubscriptionService).getSubscription(
                 argThat(user ->

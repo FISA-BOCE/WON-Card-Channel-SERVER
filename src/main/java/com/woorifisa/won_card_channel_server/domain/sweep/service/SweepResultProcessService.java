@@ -4,8 +4,8 @@ import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestm
 import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepResultRequest;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepRequestRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import feign.FeignException;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SweepResultProcessService {
 
     private final CardCoreRewardSweepApi cardCoreRewardSweepApi;
-    private final CardChnSweepRequestRepository sweepRequestRepository;
+    private final SweepRepository sweepRequestRepository;
 
     // 복구 불가능한 메세지 필터링
     public void validate(SweepInvestmentResultEvent event) {
@@ -39,15 +39,15 @@ public class SweepResultProcessService {
     public void process(Long inboxEventId, SweepInvestmentResultEvent event) {
         applyResultToCardCore(event);
 
-        CardChnSweepRequest sweepRequest = sweepRequestRepository.findByIdempotencyKey(event.idempotencyKey())
+        Sweep sweep = sweepRequestRepository.findByIdempotencyKey(event.idempotencyKey())
                 .orElseThrow(() -> new BusinessException(SweepErrorCode.SWEEP_REWARD_LEDGER_NOT_FOUND));
 
         if (event.completed()) {
-            sweepRequest.markSucceeded();
+            sweep.markSucceeded();
             return;
         }
 
-        sweepRequest.markFailed(event.failureMessage());
+        sweep.markFailed(event.failureMessage());
     }
 
     private void applyResultToCardCore(SweepInvestmentResultEvent event) {

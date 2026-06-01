@@ -2,9 +2,9 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.InboxClaimResult;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestmentResultEvent;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepInbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnInboxEventRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepResultInboxRepository;
 import com.woorifisa.won_card_channel_server.global.config.SweepResultConsumerProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,12 +18,12 @@ import static org.mockito.Mockito.*;
 
 class SweepResultInboxServiceTest {
 
-    private CardChnInboxEventRepository inboxRepository;
+    private SweepResultInboxRepository inboxRepository;
     private SweepResultInboxService service;
 
     @BeforeEach
     void setUp() {
-        inboxRepository = mock(CardChnInboxEventRepository.class);
+        inboxRepository = mock(SweepResultInboxRepository.class);
         service = new SweepResultInboxService(
                 inboxRepository,
                 new SweepResultConsumerProperties(true, 10000, 10, 5, 300)
@@ -37,20 +37,20 @@ class SweepResultInboxServiceTest {
 
         when(inboxRepository.findByIdempotencyKeyForUpdate(event.idempotencyKey()))
                 .thenReturn(Optional.empty());
-        when(inboxRepository.save(any(CardChnSweepInbox.class)))
+        when(inboxRepository.save(any(SweepResultInbox.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         InboxClaimResult result = service.claim(event, "{\"eventId\":\"INVEST-SWEEP-TEST-1\"}");
 
         assertThat(result.claimed()).isTrue();
         assertThat(result.alreadyProcessed()).isFalse();
-        verify(inboxRepository).save(any(CardChnSweepInbox.class));
+        verify(inboxRepository).save(any(SweepResultInbox.class));
     }
 
     @Test
     @DisplayName("이미 처리 완료된 inbox는 재처리하지 않는다")
     void claimAlreadyProcessed() {
-        CardChnSweepInbox inbox = CardChnSweepInbox.received(
+        SweepResultInbox inbox = SweepResultInbox.received(
                 "INVEST-SWEEP-TEST-1",
                 2L,
                 SweepEventType.SWEEP_INVESTMENT_COMPLETED,

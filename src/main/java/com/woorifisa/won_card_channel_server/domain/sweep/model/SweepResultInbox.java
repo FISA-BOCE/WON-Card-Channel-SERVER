@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CardChnSweepInbox extends BaseTimeEntity {
+public class SweepResultInbox extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,7 +67,7 @@ public class CardChnSweepInbox extends BaseTimeEntity {
     @Column(name = "last_error_message", length = 500)
     private String lastErrorMessage;
 
-    private CardChnSweepInbox(
+    private SweepResultInbox(
             String sourceEventId,
             Long sweepRequestId,
             SweepEventType eventType,
@@ -86,7 +86,7 @@ public class CardChnSweepInbox extends BaseTimeEntity {
         this.receivedAt = LocalDateTime.now();
     }
 
-    public static CardChnSweepInbox received(
+    public static SweepResultInbox received(
             String sourceEventId,
             Long sweepRequestId,
             SweepEventType eventType,
@@ -94,7 +94,7 @@ public class CardChnSweepInbox extends BaseTimeEntity {
             String correlationId,
             String idempotencyKey
     ) {
-        return new CardChnSweepInbox(sourceEventId, sweepRequestId, eventType, payload, correlationId, idempotencyKey);
+        return new SweepResultInbox(sourceEventId, sweepRequestId, eventType, payload, correlationId, idempotencyKey);
     }
 
     public void markProcessing() {

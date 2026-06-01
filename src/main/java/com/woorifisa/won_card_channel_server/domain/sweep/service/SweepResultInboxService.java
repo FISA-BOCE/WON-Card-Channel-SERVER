@@ -2,8 +2,8 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.InboxClaimResult;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestmentResultEvent;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepInbox;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnInboxEventRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepResultInboxRepository;
 import com.woorifisa.won_card_channel_server.global.config.SweepResultConsumerProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class SweepResultInboxService {
 
-    private final CardChnInboxEventRepository inboxRepository;
+    private final SweepResultInboxRepository inboxRepository;
     private final SweepResultConsumerProperties properties;
 
     @Transactional
@@ -27,19 +27,19 @@ public class SweepResultInboxService {
 
     @Transactional
     public void markProcessed(Long inboxEventId) {
-        CardChnSweepInbox inbox = inboxRepository.findById(inboxEventId)
+        SweepResultInbox inbox = inboxRepository.findById(inboxEventId)
                 .orElseThrow();
         inbox.markProcessed();
     }
 
     @Transactional
     public void markFailed(Long inboxEventId, String errorMessage) {
-        CardChnSweepInbox inbox = inboxRepository.findById(inboxEventId)
+        SweepResultInbox inbox = inboxRepository.findById(inboxEventId)
                 .orElseThrow();
         inbox.markFailed(errorMessage);
     }
 
-    private InboxClaimResult claimExisting(CardChnSweepInbox inbox) {
+    private InboxClaimResult claimExisting(SweepResultInbox inbox) {
         if (inbox.alreadyProcessed()) {
             return InboxClaimResult.alreadyProcessed(inbox.getInboxEventId());
         }
@@ -55,7 +55,7 @@ public class SweepResultInboxService {
     }
 
     private InboxClaimResult claimNew(SweepInvestmentResultEvent event, String payload) {
-        CardChnSweepInbox inbox = CardChnSweepInbox.received(
+        SweepResultInbox inbox = SweepResultInbox.received(
                 event.eventId(),
                 event.sweepRequestId(),
                 event.eventType(),
@@ -65,7 +65,7 @@ public class SweepResultInboxService {
         );
 
         inbox.markProcessing();
-        CardChnSweepInbox saved = inboxRepository.save(inbox);
+        SweepResultInbox saved = inboxRepository.save(inbox);
 
         return InboxClaimResult.claimed(saved.getInboxEventId());
     }

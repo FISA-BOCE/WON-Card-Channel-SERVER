@@ -2,8 +2,8 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SweepOutboxStatusService {
 
-    private final CardChnSweepOutboxRepository outboxRepository;
+    private final SweepOutboxRepository outboxRepository;
 
     @Transactional(readOnly = true)
     public SweepOutboxPublishMessage getPublishMessage(Long outboxEventId) {
-        CardChnSweepOutbox outbox = findOutbox(outboxEventId);
+        SweepOutbox outbox = findOutbox(outboxEventId);
 
         if (!outbox.isProcessing()) {
             throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_INVALID_PUBLISH_STATE);
@@ -36,7 +36,7 @@ public class SweepOutboxStatusService {
 
     @Transactional
     public void markPublished(Long outboxEventId) {
-        CardChnSweepOutbox outbox = findOutbox(outboxEventId);
+        SweepOutbox outbox = findOutbox(outboxEventId);
 
         if (!outbox.isProcessing()) {
             log.warn(
@@ -52,7 +52,7 @@ public class SweepOutboxStatusService {
 
     @Transactional
     public void markPublishFailed(Long outboxEventId, String errorMessage, int maxRetryCount) {
-        CardChnSweepOutbox outbox = findOutbox(outboxEventId);
+        SweepOutbox outbox = findOutbox(outboxEventId);
 
         if (!outbox.isProcessing()) {
             log.warn(
@@ -70,7 +70,7 @@ public class SweepOutboxStatusService {
         }
     }
 
-    private CardChnSweepOutbox findOutbox(Long outboxEventId) {
+    private SweepOutbox findOutbox(Long outboxEventId) {
         return outboxRepository.findById(outboxEventId)
                 .orElseThrow(() -> new BusinessException(SweepErrorCode.SWEEP_OUTBOX_NOT_FOUND));
     }

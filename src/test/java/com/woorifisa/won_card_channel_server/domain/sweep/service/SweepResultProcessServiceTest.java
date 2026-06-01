@@ -5,10 +5,10 @@ import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestm
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepResultRequest;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepResultResponse;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepRequestStatus;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepRequestRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepProcessStatus;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 class SweepResultProcessServiceTest {
 
     private CardCoreRewardSweepApi cardCoreRewardSweepApi;
-    private CardChnSweepRequestRepository sweepRequestRepository;
+    private SweepRepository sweepRequestRepository;
     private SweepResultProcessService service;
 
     private final UUID userUuid = UUID.fromString("a5324ba5-0ee3-44c6-b3d5-a951f9e94df5");
@@ -36,7 +36,7 @@ class SweepResultProcessServiceTest {
     @BeforeEach
     void setUp() {
         cardCoreRewardSweepApi = mock(CardCoreRewardSweepApi.class);
-        sweepRequestRepository = mock(CardChnSweepRequestRepository.class);
+        sweepRequestRepository = mock(SweepRepository.class);
         service = new SweepResultProcessService(cardCoreRewardSweepApi, sweepRequestRepository);
     }
 
@@ -44,18 +44,18 @@ class SweepResultProcessServiceTest {
     @DisplayName("투자 완료 결과를 Card Core에 반영하고 채널 요청 상태를 SUCCEEDED로 변경한다")
     void processCompleted() {
         SweepInvestmentResultEvent event = completedEvent();
-        CardChnSweepRequest sweepRequest = sweepRequest();
+        Sweep sweep = sweepRequest();
 
         when(cardCoreRewardSweepApi.applySweepResult(any(), any(), any()))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, new CardCoreSweepResultResponse(1L, "COMPLETED")));
         when(sweepRequestRepository.findByIdempotencyKey("SWEEP:POINT_LEDGER:1"))
-                .thenReturn(Optional.of(sweepRequest));
+                .thenReturn(Optional.of(sweep));
 
         service.process(1L, event);
 
-        assertThat(sweepRequest.getRequestStatus()).isEqualTo(SweepRequestStatus.SUCCEEDED);
-        assertThat(sweepRequest.getCompletedAt()).isNotNull();
-        assertThat(sweepRequest.getFailReason()).isNull();
+        assertThat(sweep.getRequestStatus()).isEqualTo(SweepProcessStatus.SUCCEEDED);
+        assertThat(sweep.getCompletedAt()).isNotNull();
+        assertThat(sweep.getFailReason()).isNull();
 
         ArgumentCaptor<CardCoreSweepResultRequest> captor =
                 ArgumentCaptor.forClass(CardCoreSweepResultRequest.class);
@@ -68,17 +68,17 @@ class SweepResultProcessServiceTest {
     @DisplayName("투자 실패 결과를 Card Core에 반영하고 채널 요청 상태를 FAILED로 변경한다")
     void processFailed() {
         SweepInvestmentResultEvent event = failedEvent();
-        CardChnSweepRequest sweepRequest = sweepRequest();
+        Sweep sweep = sweepRequest();
 
         when(cardCoreRewardSweepApi.applySweepResult(any(), any(), any()))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, new CardCoreSweepResultResponse(1L, "FAILED")));
         when(sweepRequestRepository.findByIdempotencyKey("SWEEP:POINT_LEDGER:1"))
-                .thenReturn(Optional.of(sweepRequest));
+                .thenReturn(Optional.of(sweep));
 
         service.process(1L, event);
 
-        assertThat(sweepRequest.getRequestStatus()).isEqualTo(SweepRequestStatus.FAILED);
-        assertThat(sweepRequest.getFailReason()).isEqualTo("투자 실패");
+        assertThat(sweep.getRequestStatus()).isEqualTo(SweepProcessStatus.FAILED);
+        assertThat(sweep.getFailReason()).isEqualTo("투자 실패");
     }
 
     @Test
@@ -133,7 +133,7 @@ class SweepResultProcessServiceTest {
         );
     }
 
-    private CardChnSweepRequest sweepRequest() {
+    private Sweep sweepRequest() {
         AutoSweepTarget target = new AutoSweepTarget(
                 userUuid,
                 cardUserUuid,
@@ -145,7 +145,7 @@ class SweepResultProcessServiceTest {
                 100L
         );
 
-        return CardChnSweepRequest.createPendingPublish(
+        return Sweep.createPendingPublish(
                 target,
                 "CORR-SWEEP-TEST-1",
                 "SWEEP:POINT_LEDGER:1"

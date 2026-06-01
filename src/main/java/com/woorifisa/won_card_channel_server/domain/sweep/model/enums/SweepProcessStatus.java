@@ -1,6 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.model.enums;
 
-public enum SweepRequestStatus {
+public enum SweepProcessStatus {
     PENDING_PUBLISH,
     SENT,
     SUCCEEDED,

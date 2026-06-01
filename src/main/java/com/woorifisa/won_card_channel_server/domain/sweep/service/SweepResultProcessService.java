@@ -1,7 +1,7 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestmentResultEvent;
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.request.CardCoreSweepResultRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepResultRequest;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;

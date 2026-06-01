@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepRequestedEvent;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.CardCoreSweepRequestResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepRequestResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;

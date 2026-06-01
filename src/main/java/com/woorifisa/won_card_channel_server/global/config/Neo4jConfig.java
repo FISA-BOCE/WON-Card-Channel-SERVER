@@ -24,13 +24,13 @@ public class Neo4jConfig {
         return new Neo4jProperties();
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public Driver cardNeo4jDriver() {
         Neo4jProperties props = cardNeo4jProperties();
         return GraphDatabase.driver(props.getUri(), AuthTokens.basic(props.getUsername(), props.getPassword()));
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public Driver securitiesNeo4jDriver() {
         Neo4jProperties props = securitiesNeo4jProperties();
         return GraphDatabase.driver(props.getUri(), AuthTokens.basic(props.getUsername(), props.getPassword()));

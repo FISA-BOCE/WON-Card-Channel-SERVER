@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,12 +37,17 @@ public class ChatApi {
             @RequestHeader("X-Transaction-ID") String transactionId,
             @Valid @RequestBody ChatRequest request
     ) {
-        if (authenticatedUser == null) {
+        if (authenticatedUser == null || authenticatedUser.userUuid() == null) {
             throw new BusinessException(AuthErrorCode.AUTHENTICATION_REQUIRED);
         }
-        ChatResponse response = chatService.processChat(request.question(), authenticatedUser.userUuid());
-        return ResponseEntity
-                .status(SuccessStatus.CHAT_SUCCESS.getHttpStatus())
-                .body(ApiResponse.of(SuccessStatus.CHAT_SUCCESS, response));
+        MDC.put("transactionId", transactionId);
+        try {
+            ChatResponse response = chatService.processChat(request.question(), authenticatedUser.userUuid());
+            return ResponseEntity
+                    .status(SuccessStatus.CHAT_SUCCESS.getHttpStatus())
+                    .body(ApiResponse.of(SuccessStatus.CHAT_SUCCESS, response));
+        } finally {
+            MDC.remove("transactionId");
+        }
     }
 }

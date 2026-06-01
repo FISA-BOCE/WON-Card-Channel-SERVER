@@ -15,6 +15,7 @@ import java.time.Duration;
 public class OpenAiConfig {
 
     @Bean
+    @Validated
     @ConfigurationProperties(prefix = "azure.openai")
     public OpenAiProperties openAiProperties() {
         return new OpenAiProperties();

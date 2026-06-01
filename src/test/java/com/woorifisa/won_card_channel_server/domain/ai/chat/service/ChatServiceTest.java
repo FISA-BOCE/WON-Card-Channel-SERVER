@@ -201,7 +201,7 @@ class ChatServiceTest {
                 .willReturn(new ClassifyResult(QueryIntent.TOTAL_SPEND, 0.91, Map.of()));
         given(spendSummaryRepository.findLatestByUserUuid(USER_UUID))
                 .willThrow(new RuntimeException("DB 연결 실패"));
-        given(openAiService.generateResponse(anyString(), eq(QueryIntent.TOTAL_SPEND), eq(null)))
+        given(openAiService.generateResponse(anyString(), eq(QueryIntent.TOTAL_SPEND), eq("")))
                 .willReturn(new GenerateResult("일시적으로 데이터를 조회할 수 없습니다.", List.of("잠시 후 다시 시도해줘")));
 
         // when
@@ -210,7 +210,7 @@ class ChatServiceTest {
         // then
         assertThat(response.answer()).isEqualTo("일시적으로 데이터를 조회할 수 없습니다.");
         assertThat(response.contextUsed()).isEmpty();
-        then(openAiService).should().generateResponse(anyString(), eq(QueryIntent.TOTAL_SPEND), eq(null));
+        then(openAiService).should().generateResponse(anyString(), eq(QueryIntent.TOTAL_SPEND), eq(""));
     }
 
     @Test
@@ -260,6 +260,43 @@ class ChatServiceTest {
         assertThat(response.contextUsed()).containsExactly("INVESTMENT_DATA");
         then(spendSummaryRepository).shouldHaveNoInteractions();
         then(cardNeo4jDriver).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("질문에 주민번호가 포함되면 마스킹 후 OpenAI에 전달된다")
+    void processChat_PII마스킹_주민번호() {
+        // given
+        String rawQuestion = "901231-1234567 가진 사람 지출 알려줘";
+        String maskedQuestion = "******-******* 가진 사람 지출 알려줘";
+        given(openAiService.classifyIntent(maskedQuestion))
+                .willReturn(new ClassifyResult(QueryIntent.UNKNOWN, 0.95, Map.of()));
+        given(openAiService.generateResponse(anyString(), eq(QueryIntent.UNKNOWN), eq(null)))
+                .willReturn(new GenerateResult("관련 데이터가 없습니다.", List.of()));
+
+        // when
+        chatService.processChat(rawQuestion, USER_UUID);
+
+        // then
+        then(openAiService).should().classifyIntent(maskedQuestion);
+        then(openAiService).should().generateResponse(eq(maskedQuestion), any(), any());
+    }
+
+    @Test
+    @DisplayName("질문에 전화번호가 포함되면 마스킹 후 OpenAI에 전달된다")
+    void processChat_PII마스킹_전화번호() {
+        // given
+        String rawQuestion = "010-1234-5678 번호 등록 지출 알려줘";
+        String maskedQuestion = "010-****-**** 번호 등록 지출 알려줘";
+        given(openAiService.classifyIntent(maskedQuestion))
+                .willReturn(new ClassifyResult(QueryIntent.UNKNOWN, 0.95, Map.of()));
+        given(openAiService.generateResponse(anyString(), eq(QueryIntent.UNKNOWN), eq(null)))
+                .willReturn(new GenerateResult("관련 데이터가 없습니다.", List.of()));
+
+        // when
+        chatService.processChat(rawQuestion, USER_UUID);
+
+        // then
+        then(openAiService).should().classifyIntent(maskedQuestion);
     }
 
     private SpendSummary spendSummary() {

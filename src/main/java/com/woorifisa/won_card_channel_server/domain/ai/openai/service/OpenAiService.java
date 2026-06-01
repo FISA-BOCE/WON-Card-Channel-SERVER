@@ -142,7 +142,7 @@ public class OpenAiService {
             return new GenerateResult(answer, suggestedQuestions != null ? suggestedQuestions : List.of());
         } catch (JsonProcessingException e) {
             log.warn("Failed to parse generate result: content_length={}", content != null ? content.length() : 0);
-            return new GenerateResult(content, List.of());
+            throw new BusinessException(OpenAiErrorCode.OPENAI_API_ERROR, e);
         }
     }
 
@@ -150,10 +150,12 @@ public class OpenAiService {
         StringBuilder sb = new StringBuilder();
         sb.append("사용자 질문: ").append(question).append("\n");
         sb.append("분류된 의도: ").append(intent.name()).append("\n");
-        if (dataContext != null && !dataContext.isBlank()) {
-            sb.append("조회 데이터:\n").append(dataContext);
+        if (dataContext == null) {
+            sb.append("조회 데이터: 없음 (해당 사용자의 관련 데이터가 없습니다.)");
+        } else if (dataContext.isEmpty()) {
+            sb.append("조회 데이터: 없음 (일시적 오류로 데이터를 조회하지 못했습니다.)");
         } else {
-            sb.append("조회 데이터: 없음 (데이터 조회 실패 또는 해당 데이터 없음)");
+            sb.append("조회 데이터:\n").append(dataContext);
         }
         return sb.toString();
     }

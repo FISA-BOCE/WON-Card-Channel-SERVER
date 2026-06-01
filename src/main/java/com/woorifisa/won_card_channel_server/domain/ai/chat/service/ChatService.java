@@ -2,6 +2,7 @@ package com.woorifisa.won_card_channel_server.domain.ai.chat.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.ai.chat.dto.response.ChatResponse;
+import com.woorifisa.won_card_channel_server.global.util.PiiTextMasker;
 import com.woorifisa.won_card_channel_server.domain.ai.invest.model.InvestSummary;
 import com.woorifisa.won_card_channel_server.domain.ai.invest.repository.InvestSummaryRepository;
 import com.woorifisa.won_card_channel_server.domain.ai.openai.service.OpenAiService;
@@ -45,8 +46,10 @@ public class ChatService {
             "질문을 더 구체적으로 입력해 주세요. 예: '이번 달 식비가 얼마야?', '내 ETF 수익률 알려줘'";
 
     public ChatResponse processChat(String question, UUID userUuid) {
+        String sanitizedQuestion = PiiTextMasker.mask(question);
+
         // 1. 의도 분류
-        ClassifyResult classifyResult = openAiService.classifyIntent(question);
+        ClassifyResult classifyResult = openAiService.classifyIntent(sanitizedQuestion);
         log.info("intent={}, confidence={}", classifyResult.intent(), classifyResult.confidence());
 
         // 2. confidence 낮으면 재질문 유도
@@ -60,7 +63,7 @@ public class ChatService {
 
         // 5-6. 자연어 답변 생성
         GenerateResult generateResult = openAiService.generateResponse(
-                question, classifyResult.intent(), dataContext);
+                sanitizedQuestion, classifyResult.intent(), dataContext);
 
         return new ChatResponse(generateResult.answer(), contextUsed, generateResult.suggestedQuestions());
     }
@@ -94,6 +97,7 @@ public class ChatService {
             }
         } catch (Exception e) {
             log.warn("DB query failed for intent={}, userUuid={}: {}", intent, userUuid, e.getMessage());
+            return "";
         }
 
         return null;
@@ -101,6 +105,7 @@ public class ChatService {
 
     private String fetchEtfContext(QueryIntent intent, UUID userUuid, List<String> contextUsed) {
         List<String> parts = new ArrayList<>();
+        boolean hadException = false;
 
         try {
             Optional<InvestSummary> summary = investSummaryRepository.findByUserUuid(userUuid);
@@ -109,6 +114,7 @@ public class ChatService {
                 parts.add(buildInvestContext(summary.get(), intent));
             }
         } catch (Exception e) {
+            hadException = true;
             log.warn("InvestSummary query failed for intent={}, userUuid={}: {}", intent, userUuid, e.getMessage());
         }
 
@@ -119,10 +125,14 @@ public class ChatService {
                 parts.add(neo4jResult);
             }
         } catch (Exception e) {
+            hadException = true;
             log.warn("Securities Neo4j query failed for intent={}, userUuid={}: {}", intent, userUuid, e.getMessage());
         }
 
-        return parts.isEmpty() ? null : String.join("\n", parts);
+        if (parts.isEmpty()) {
+            return hadException ? "" : null;
+        }
+        return String.join("\n", parts);
     }
 
     private boolean isCardMysqlIntent(QueryIntent intent) {

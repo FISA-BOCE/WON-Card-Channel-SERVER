@@ -119,4 +119,25 @@ public class CardChnSweepRequest extends BaseTimeEntity {
                 .requestedAt(LocalDateTime.now())
                 .build();
     }
+
+    public void markSucceeded() {
+        this.requestStatus = SweepRequestStatus.SUCCEEDED;
+        this.completedAt = LocalDateTime.now();
+        this.failReason = null;
+    }
+
+    public void markFailed(String failReason) {
+        this.requestStatus = SweepRequestStatus.FAILED;
+        this.completedAt = LocalDateTime.now();
+        this.failReason = truncate(failReason);
+    }
+
+    private String truncate(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value.length() > 500 ? value.substring(0, 500) : value;
+    }
+
 }

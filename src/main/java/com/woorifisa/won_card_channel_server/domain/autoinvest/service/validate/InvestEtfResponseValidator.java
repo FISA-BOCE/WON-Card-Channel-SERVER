@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server.domain.autoinvest.service;
+package com.woorifisa.won_card_channel_server.domain.autoinvest.service.validate;
 
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestEtfDetailsResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.exception.code.AutoInvestErrorCode;

@@ -12,6 +12,7 @@ import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.Inve
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestEtfDetailsResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.exception.code.AutoInvestErrorCode;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.external.InvestChannelAutoInvestApi;
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.validate.InvestEtfResponseValidator;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;

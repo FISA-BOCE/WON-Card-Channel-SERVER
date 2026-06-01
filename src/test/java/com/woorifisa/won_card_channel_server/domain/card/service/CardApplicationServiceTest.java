@@ -8,7 +8,7 @@ import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthU
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestEtfDetailsResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.external.InvestChannelAutoInvestApi;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSubscriptionService;
-import com.woorifisa.won_card_channel_server.domain.autoinvest.service.InvestEtfResponseValidator;
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.validate.InvestEtfResponseValidator;
 import com.woorifisa.won_card_channel_server.domain.card.dto.request.CardApplicationCreateRequest;
 import com.woorifisa.won_card_channel_server.domain.card.dto.request.CardCoreApplicationRequest;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardApplicationCreateResponse;

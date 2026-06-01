@@ -36,22 +36,26 @@ public class RewardGetCurrentMonthService {
 
         return performanceSummaryRepository.findByUserUuidAndBaseMonth(userUuid, baseMonth)
                 .map(this::toResponse)
-                .orElseGet(() -> getPreviousPerformanceFromCardCore(userUuid));
+                .orElseGet(() -> getPreviousPerformanceFromCardCore(userUuid, baseMonth));
     }
 
-    private RewardGetCurrentResponse getPreviousPerformanceFromCardCore(UUID userUuid) {
+    private RewardGetCurrentResponse getPreviousPerformanceFromCardCore(UUID userUuid, String baseMonth) {
         try {
             ApiResponse<RewardGetCurrentResponse> coreResponse = cardCoreRewardApi.getCurrentMonthReward(userUuid);
             if (coreResponse == null || coreResponse.data() == null) {
                 throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND);
             }
 
-            return coreResponse.data();
+            RewardGetCurrentResponse coreData = coreResponse.data();
+            if (!baseMonth.equals(coreData.baseMonth())) {
+                throw new BusinessException(RewardErrorCode.INVALID_REWARD_RESPONSE);
+            }
+
+            return coreData;
         } catch (FeignException.BadRequest | FeignException.NotFound e) {
             throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
         } catch (FeignException e) {
-            //나중에 여기 로그찍는거 추가해야함. 일부러 사용자한테 계정계 문제있는거 안알려주려고 같게함
-            throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
+            throw new BusinessException(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE, e);
         }
     }
 

@@ -260,12 +260,31 @@ class RewardGetCurrentMonthServiceTest {
         assertThatThrownBy(() -> rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
-                .isEqualTo(RewardErrorCode.REWARD_LEDGER_NOT_FOUND);
+                .isEqualTo(RewardErrorCode.REWARD_INFORMATION_UNAVAILABLE);
+    }
+
+    @Test
+    @DisplayName("Core response baseMonth mismatch throws invalid reward response")
+    void getCurrentMonthRewardCoreBaseMonthMismatch() {
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
+                .willReturn(Optional.empty());
+        given(cardCoreRewardApi.getCurrentMonthReward(USER_UUID))
+                .willReturn(ApiResponse.of(SuccessStatus.OK, coreResponse("2026-01")));
+
+        assertThatThrownBy(() -> rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(RewardErrorCode.INVALID_REWARD_RESPONSE);
     }
 
     private RewardGetCurrentResponse coreResponse() {
+        return coreResponse(BASE_MONTH);
+    }
+
+    private RewardGetCurrentResponse coreResponse(String baseMonth) {
         return new RewardGetCurrentResponse(
-                BASE_MONTH,
+                baseMonth,
                 "기준 충족",
                 1_000_000L,
                 10_000L,

@@ -2,10 +2,6 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.global.config.SqsProperties;
 import com.woorifisa.won_card_channel_server.global.config.SweepOutboxPublisherProperties;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
@@ -20,10 +16,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -45,7 +38,9 @@ class SweepOutboxPublishServiceTest {
         sqsProperties = new SqsProperties(
                 "ap-northeast-2",
                 "http://localhost:4566",
-                "http://localhost:4566/000000000000/won-card-sweep-request-queue.fifo"
+                "http://localhost:4566/000000000000/won-card-sweep-request-queue.fifo",
+                "http://localhost:4566/000000000000/won-invest-sweep-result-queue.fifo"
+
         );
 
         publisherProperties = new SweepOutboxPublisherProperties(

@@ -31,6 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class AuthUserIntegrationTest {
+    private static final String SERVICE_ID = "WOORI-FISA-APP-01";
+    private static final String TRANSACTION_ID = "TX-20260512-LOG01";
+
 
     private static final UUID AUTH_USER_UUID_1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID USER_UUID_1 = UUID.fromString("33333333-3333-3333-3333-333333333333");
@@ -87,6 +90,8 @@ class AuthUserIntegrationTest {
     @Test
     void loginSuccessStoresSession() throws Exception {
         String response = mockMvc.perform(post("/api/auth/login")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"userId":"01012340214","userPw":"password123!"}
@@ -107,6 +112,8 @@ class AuthUserIntegrationTest {
     @Test
     void signupSuccessCreatesUserWithoutSession() throws Exception {
         String response = mockMvc.perform(post("/api/auth/signup")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -137,6 +144,8 @@ class AuthUserIntegrationTest {
     @Test
     void signupFailsWhenPhoneNumberDuplicated() throws Exception {
         mockMvc.perform(post("/api/auth/signup")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -155,6 +164,8 @@ class AuthUserIntegrationTest {
     @Test
     void signupFailsWhenTermsNotAgreed() throws Exception {
         mockMvc.perform(post("/api/auth/signup")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -173,6 +184,8 @@ class AuthUserIntegrationTest {
     @Test
     void loginFailsWhenWithdrawnUser() throws Exception {
         mockMvc.perform(post("/api/auth/login")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                                 {"userId":"01012345678","userPw":"password123!"}
@@ -184,6 +197,8 @@ class AuthUserIntegrationTest {
     @Test
     void reissueRotatesRefreshToken() throws Exception {
         String loginResponse = mockMvc.perform(post("/api/auth/login")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"userId":"01012340214","userPw":"password123!"}
@@ -195,6 +210,8 @@ class AuthUserIntegrationTest {
         String refreshToken = objectMapper.readTree(loginResponse).path("data").path("refreshToken").asText();
 
         String reissueResponse = mockMvc.perform(post("/api/auth/refresh")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"refreshToken":"%s"}
@@ -209,6 +226,8 @@ class AuthUserIntegrationTest {
         assertThat(rotatedRefreshToken).isNotEqualTo(refreshToken);
 
         mockMvc.perform(post("/api/auth/refresh")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                                 {"refreshToken":"%s"}
@@ -222,6 +241,8 @@ class AuthUserIntegrationTest {
         TokenBundle tokenBundle = login();
 
         mockMvc.perform(post("/api/auth/logout")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenBundle.accessToken())
                         .content("""
@@ -237,6 +258,8 @@ class AuthUserIntegrationTest {
         TokenBundle tokenBundle = login();
 
         mockMvc.perform(get("/api/users/me")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenBundle.accessToken())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -249,6 +272,8 @@ class AuthUserIntegrationTest {
         TokenBundle tokenBundle = login();
 
         mockMvc.perform(post("/api/users/me/withdraw")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenBundle.accessToken())
                         .content("""
@@ -266,6 +291,8 @@ class AuthUserIntegrationTest {
         TokenBundle tokenBundle = login();
 
         mockMvc.perform(patch("/api/users/me")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenBundle.accessToken())
                         .content("""
@@ -285,6 +312,8 @@ class AuthUserIntegrationTest {
                 .getEmailEnc();
 
         mockMvc.perform(patch("/api/users/me")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenBundle.accessToken())
                         .content("""
@@ -302,6 +331,8 @@ class AuthUserIntegrationTest {
         TokenBundle tokenBundle = login();
 
         mockMvc.perform(patch("/api/users/me")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenBundle.accessToken())
                         .content("""
@@ -314,6 +345,8 @@ class AuthUserIntegrationTest {
     @Test
     void protectedApiRequiresAuthorization() throws Exception {
         mockMvc.perform(get("/api/users/me")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTH_401_002"));
@@ -321,6 +354,8 @@ class AuthUserIntegrationTest {
 
     private TokenBundle login() throws Exception {
         String response = mockMvc.perform(post("/api/auth/login")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"userId":"01012340214","userPw":"password123!"}

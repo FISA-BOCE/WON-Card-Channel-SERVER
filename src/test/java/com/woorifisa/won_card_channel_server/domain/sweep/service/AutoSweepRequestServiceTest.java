@@ -200,7 +200,7 @@ class AutoSweepRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED);
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_ALREADY_REQUESTED);
 
         verify(cardChnSweepOutboxRepository, never()).save(any());
     }

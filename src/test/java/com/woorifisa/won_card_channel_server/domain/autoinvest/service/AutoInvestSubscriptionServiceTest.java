@@ -108,6 +108,7 @@ class AutoInvestSubscriptionServiceTest {
     @DisplayName("ETF 변경 시 selected ETF와 마지막 동기화 시각을 갱신한다")
     void changeSubscription() {
         CardChnCardSummary summary = cardSummary(101L);
+        LocalDateTime before = summary.getLastSyncedAt();
         given(cardSummaryRepository.findByUserUuid(userUuid)).willReturn(Optional.of(summary));
         given(investChannelAutoInvestApi.getEtf(101L))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -123,6 +124,7 @@ class AutoInvestSubscriptionServiceTest {
         );
 
         assertThat(summary.getSelectedEtfId()).isEqualTo(202L);
+        assertThat(summary.getLastSyncedAt()).isAfter(before);
         assertThat(response.cardUuid()).isEqualTo(cardUuid);
         assertThat(response.previousEtf().ticker()).isEqualTo("VOO");
         assertThat(response.newEtf().etfId()).isEqualTo(202L);
@@ -196,6 +198,38 @@ class AutoInvestSubscriptionServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(AutoInvestErrorCode.ETF_UNAVAILABLE);
+    }
+
+    @Test
+    @DisplayName("거래 불가능한 ETF면 최초 동기화 시 예외가 발생한다")
+    void createInitialSubscriptionWhenEtfNotTradable() {
+        givenAccountActive();
+        given(investChannelAutoInvestApi.getEtf(101L))
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(101L, "S&P 500 ETF", "VOO", false, true)
+                ));
+
+        assertThatThrownBy(() -> service.createInitialSubscription(userUuid, invstAccountUuid, 101L, "VOO"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(AutoInvestErrorCode.ETF_NOT_TRADABLE);
+    }
+
+    @Test
+    @DisplayName("소수점 매수가 불가능한 ETF면 최초 동기화 시 예외가 발생한다")
+    void createInitialSubscriptionWhenEtfFractionalBuyNotAllowed() {
+        givenAccountActive();
+        given(investChannelAutoInvestApi.getEtf(101L))
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(101L, "S&P 500 ETF", "VOO", true, false)
+                ));
+
+        assertThatThrownBy(() -> service.createInitialSubscription(userUuid, invstAccountUuid, 101L, "VOO"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(AutoInvestErrorCode.ETF_FRACTIONAL_BUY_NOT_ALLOWED);
     }
 
     private void givenAccountActive() {

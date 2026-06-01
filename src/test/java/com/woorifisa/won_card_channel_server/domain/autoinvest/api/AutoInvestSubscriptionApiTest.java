@@ -5,26 +5,31 @@ import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.request.AutoI
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.AutoInvestSubscriptionChangeResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.AutoInvestSubscriptionDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSubscriptionService;
+import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
+import com.woorifisa.won_card_channel_server.global.config.SecurityConfig;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
-import org.junit.jupiter.api.AfterEach;
+import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
+import com.woorifisa.won_card_channel_server.global.security.RestAccessDeniedHandler;
+import com.woorifisa.won_card_channel_server.global.security.RestAuthenticationEntryPoint;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -32,7 +37,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AutoInvestSubscriptionApi.class)
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
+@Import({
+        SecurityConfig.class,
+        RestAuthenticationEntryPoint.class,
+        RestAccessDeniedHandler.class
+})
 @TestPropertySource(properties = {
         "internal.invest-core.url=http://localhost:8083"
 })
@@ -54,16 +64,27 @@ class AutoInvestSubscriptionApiTest {
     @MockitoBean
     private AutoInvestSubscriptionService autoInvestSubscriptionService;
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Test
+    @DisplayName("인증 없이 자동투자 설정 조회 API를 호출하면 401을 반환한다")
+    void getSubscriptionWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/api/cards/{cardUuid}/auto-invest", CARD_UUID)
+                        .header("X-Service-ID", "WOORI-WON-APP")
+                        .header("X-Transaction-ID", "TX-20260528-SUB01"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_401_002"));
+
+        verify(autoInvestSubscriptionService, never()).getSubscription(any(AuthenticatedUser.class), any(UUID.class));
     }
 
     @Test
-    @DisplayName("자동투자 설정 조회 API는 200과 현재 설정 데이터를 반환한다")
+    @DisplayName("인증된 사용자의 자동투자 설정 조회 API는 200과 현재 설정 데이터를 반환한다")
     void getSubscription() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(toAuthentication(authenticatedUser()));
-
         AutoInvestSubscriptionDetailResponse response = new AutoInvestSubscriptionDetailResponse(
                 CARD_UUID,
                 new AutoInvestSubscriptionDetailResponse.CurrentEtf(
@@ -75,6 +96,8 @@ class AutoInvestSubscriptionApiTest {
                 true
         );
 
+        given(jwtTokenProvider.parse("test-token")).willReturn(authenticatedUser());
+        given(tokenBlacklistService.isBlacklisted("test-jti")).willReturn(false);
         given(autoInvestSubscriptionService.getSubscription(any(AuthenticatedUser.class), any(UUID.class))).willReturn(response);
 
         mockMvc.perform(get("/api/cards/{cardUuid}/auto-invest", CARD_UUID)
@@ -87,13 +110,20 @@ class AutoInvestSubscriptionApiTest {
                 .andExpect(jsonPath("$.data.cardUuid").value(CARD_UUID.toString()))
                 .andExpect(jsonPath("$.data.currentEtf.ticker").value("VOO"))
                 .andExpect(jsonPath("$.data.history").doesNotExist());
+
+        verify(autoInvestSubscriptionService).getSubscription(
+                argThat(user ->
+                        AUTH_USER_UUID.equals(user.authUserUuid())
+                                && USER_UUID.equals(user.userUuid())
+                                && "test-jti".equals(user.jti())
+                ),
+                eq(CARD_UUID)
+        );
     }
 
     @Test
     @DisplayName("자동투자 ETF 변경 API는 200과 변경 결과를 반환한다")
     void changeSubscription() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(toAuthentication(authenticatedUser()));
-
         AutoInvestSubscriptionChangeResponse response = new AutoInvestSubscriptionChangeResponse(
                 CARD_UUID,
                 new AutoInvestSubscriptionChangeResponse.PreviousEtf(
@@ -109,6 +139,8 @@ class AutoInvestSubscriptionApiTest {
                 )
         );
 
+        given(jwtTokenProvider.parse("test-token")).willReturn(authenticatedUser());
+        given(tokenBlacklistService.isBlacklisted("test-jti")).willReturn(false);
         given(autoInvestSubscriptionService.changeSubscription(
                 any(AuthenticatedUser.class),
                 any(UUID.class),
@@ -130,9 +162,5 @@ class AutoInvestSubscriptionApiTest {
 
     private AuthenticatedUser authenticatedUser() {
         return new AuthenticatedUser(AUTH_USER_UUID, USER_UUID, "test-jti");
-    }
-
-    private Authentication toAuthentication(AuthenticatedUser authenticatedUser) {
-        return new UsernamePasswordAuthenticationToken(authenticatedUser, null, List.of());
     }
 }

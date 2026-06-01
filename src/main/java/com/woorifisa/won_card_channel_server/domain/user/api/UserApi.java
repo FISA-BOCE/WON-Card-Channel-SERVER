@@ -8,6 +8,7 @@ import com.woorifisa.won_card_channel_server.domain.user.dto.response.GetMyUserR
 import com.woorifisa.won_card_channel_server.domain.user.dto.request.UpdateUserRequest;
 import com.woorifisa.won_card_channel_server.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,7 +32,13 @@ public class UserApi {
 
     @Operation(summary = "내 정보 조회", description = "마이페이지 내 정보 조회를 위한 API입니다.")
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<GetMyUserResponse>> getMyUser(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    public ResponseEntity<ApiResponse<GetMyUserResponse>> getMyUser(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId
+    ) {
         return ResponseEntity
                 .status(SuccessStatus.USER_ME_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.USER_ME_SUCCESS, userService.getMyUser(authenticatedUser)));
@@ -40,6 +48,10 @@ public class UserApi {
     @PostMapping("/me/withdraw")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody DeleteUserRequest request
     ) {
         userService.withdrawUser(authenticatedUser, request);
@@ -52,6 +64,10 @@ public class UserApi {
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody UpdateUserRequest request
     ) {
         userService.updateUser(authenticatedUser, request);

@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server.domain.autoinvest.service;
+package com.woorifisa.won_card_channel_server.domain.autoinvest.service.validate;
 
 import com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestEtfDetailsResponse;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.exception.code.AutoInvestErrorCode;
@@ -16,28 +16,34 @@ public class InvestEtfResponseValidator {
 
     private final Validator validator;
 
-    public InvestEtfDetailsResponse validateForAutoInvest(Long etfId, String ticker, ApiResponse<InvestEtfDetailsResponse> response) {
+    public InvestEtfDetailsResponse validateBasic(Long etfId, ApiResponse<InvestEtfDetailsResponse> response) {
         InvestEtfDetailsResponse data = response == null ? null : response.data();
         if (data == null) {
             throw new BusinessException(AutoInvestErrorCode.ETF_RESPONSE_INVALID);
         }
 
         Set<ConstraintViolation<InvestEtfDetailsResponse>> violations = validator.validate(data);
-        if (!violations.isEmpty()) {
+        if (!violations.isEmpty() || !etfId.equals(data.etfId())) {
             throw new BusinessException(AutoInvestErrorCode.ETF_RESPONSE_INVALID);
         }
+        return data;
+    }
 
-        if (!etfId.equals(data.etfId())) {
-            throw new BusinessException(AutoInvestErrorCode.ETF_RESPONSE_INVALID);
-        }
-        if (!data.ticker().equalsIgnoreCase(ticker)) {
-            throw new BusinessException(AutoInvestErrorCode.ETF_TICKER_MISMATCH);
-        }
+    public InvestEtfDetailsResponse validateSelectable(Long etfId, ApiResponse<InvestEtfDetailsResponse> response) {
+        InvestEtfDetailsResponse data = validateBasic(etfId, response);
         if (!Boolean.TRUE.equals(data.isTradeAvailable())) {
             throw new BusinessException(AutoInvestErrorCode.ETF_NOT_TRADABLE);
         }
         if (!Boolean.TRUE.equals(data.isFractionalAvailable())) {
             throw new BusinessException(AutoInvestErrorCode.ETF_FRACTIONAL_BUY_NOT_ALLOWED);
+        }
+        return data;
+    }
+
+    public InvestEtfDetailsResponse validateForAutoInvest(Long etfId, String ticker, ApiResponse<InvestEtfDetailsResponse> response) {
+        InvestEtfDetailsResponse data = validateSelectable(etfId, response);
+        if (!data.ticker().equalsIgnoreCase(ticker)) {
+            throw new BusinessException(AutoInvestErrorCode.ETF_TICKER_MISMATCH);
         }
         return data;
     }

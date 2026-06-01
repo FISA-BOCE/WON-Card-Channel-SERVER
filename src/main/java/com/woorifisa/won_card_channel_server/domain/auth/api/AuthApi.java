@@ -11,6 +11,7 @@ import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,7 +33,13 @@ public class AuthApi {
 
     @Operation(summary = "회원가입", description = "회원가입 API입니다.    \n비밀번호는 8자 이상, 16자 이하여야 합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<Void>> createUserRegistration(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<Void>> createUserRegistration(
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
+            @Valid @RequestBody RegisterUserRequest request
+    ) {
         authService.registerUser(request);
         return ResponseEntity
                 .status(SuccessStatus.SIGNUP_SUCCESS.getHttpStatus())
@@ -40,7 +48,13 @@ public class AuthApi {
 
     @Operation(summary = "로그인", description = "로그인 API입니다.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<CreateLoginResponse>> createUserLogin(@Valid @RequestBody CreateLoginRequest request) {
+    public ResponseEntity<ApiResponse<CreateLoginResponse>> createUserLogin(
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
+            @Valid @RequestBody CreateLoginRequest request
+    ) {
         return ResponseEntity
                 .status(SuccessStatus.LOGIN_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.LOGIN_SUCCESS, authService.authenticateUser(request)));
@@ -48,7 +62,13 @@ public class AuthApi {
 
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다.    \nRefresh Token을 통해 Access Token을 재발급합니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<CreateTokenReissueResponse>> createTokenReissue(@Valid @RequestBody CreateTokenReissueRequest request) {
+    public ResponseEntity<ApiResponse<CreateTokenReissueResponse>> createTokenReissue(
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
+            @Valid @RequestBody CreateTokenReissueRequest request
+    ) {
         return ResponseEntity
                 .status(SuccessStatus.TOKEN_REISSUE_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.TOKEN_REISSUE_SUCCESS, authService.reissueToken(request)));
@@ -58,6 +78,10 @@ public class AuthApi {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> deleteUserLogout(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
+            @Parameter(description = "트랜잭션 추적용 ID")
+            @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody DeleteLogoutRequest request
     ) {
         authService.logoutUser(authenticatedUser, request);

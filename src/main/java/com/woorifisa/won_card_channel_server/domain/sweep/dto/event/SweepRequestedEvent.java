@@ -1,6 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.dto.event;
 
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
 
 import java.time.LocalDateTime;
@@ -13,22 +13,22 @@ public record SweepRequestedEvent(
         Long etfId, LocalDateTime requestedAt
 ) {
 
-    public static SweepRequestedEvent from(CardChnSweepRequest sweepRequest, String eventId) {
+    public static SweepRequestedEvent from(Sweep sweep, String eventId) {
         return new SweepRequestedEvent(
                 eventId,
                 SweepEventType.SWEEP_REQUESTED.name(),
-                sweepRequest.getCorrelationId(),
-                sweepRequest.getIdempotencyKey(),
-                sweepRequest.getSweepRequestId(),
-                sweepRequest.getUserUuid(),
-                sweepRequest.getCardUserUuid(),
-                sweepRequest.getPerformanceId(),
-                sweepRequest.getPointLedgerId(),
-                sweepRequest.getBaseMonth(),
-                sweepRequest.getPointAmount(),
-                sweepRequest.getKrwAmount(),
-                sweepRequest.getEtfId(),
-                sweepRequest.getRequestedAt()
+                sweep.getCorrelationId(),
+                sweep.getIdempotencyKey(),
+                sweep.getSweepRequestId(),
+                sweep.getUserUuid(),
+                sweep.getCardUserUuid(),
+                sweep.getPerformanceId(),
+                sweep.getPointLedgerId(),
+                sweep.getBaseMonth(),
+                sweep.getPointAmount(),
+                sweep.getKrwAmount(),
+                sweep.getEtfId(),
+                sweep.getRequestedAt()
         );
     }
 }

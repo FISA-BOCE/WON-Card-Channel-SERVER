@@ -17,7 +17,7 @@ import com.woorifisa.won_card_channel_server.domain.ai.openai.service.OpenAiServ
 import com.woorifisa.won_card_channel_server.domain.ai.spend.model.SpendSummary;
 import com.woorifisa.won_card_channel_server.domain.ai.spend.repository.SpendSummaryRepository;
 import com.woorifisa.won_card_channel_server.domain.ai.chat.dto.response.ChatResponse;
-import com.woorifisa.won_card_channel_server.global.config.QueryIntent;
+import com.woorifisa.won_card_channel_server.global.enums.QueryIntent;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

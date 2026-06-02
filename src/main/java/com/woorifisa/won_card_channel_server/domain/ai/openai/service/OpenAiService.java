@@ -9,7 +9,7 @@ import com.woorifisa.won_card_channel_server.domain.ai.openai.dto.request.OpenAi
 import com.woorifisa.won_card_channel_server.domain.ai.openai.dto.response.OpenAiChatResponse;
 import com.woorifisa.won_card_channel_server.domain.ai.openai.exception.OpenAiErrorCode;
 import com.woorifisa.won_card_channel_server.global.config.OpenAiConfig.OpenAiProperties;
-import com.woorifisa.won_card_channel_server.global.config.QueryIntent;
+import com.woorifisa.won_card_channel_server.global.enums.QueryIntent;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

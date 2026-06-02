@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server.global.config;
+package com.woorifisa.won_card_channel_server.global.enums;
 
 public enum QueryIntent {
 

@@ -10,7 +10,7 @@ import com.woorifisa.won_card_channel_server.domain.ai.openai.service.OpenAiServ
 import com.woorifisa.won_card_channel_server.domain.ai.openai.service.OpenAiService.GenerateResult;
 import com.woorifisa.won_card_channel_server.domain.ai.spend.model.SpendSummary;
 import com.woorifisa.won_card_channel_server.domain.ai.spend.repository.SpendSummaryRepository;
-import com.woorifisa.won_card_channel_server.global.config.QueryIntent;
+import com.woorifisa.won_card_channel_server.global.enums.QueryIntent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.driver.Driver;

@@ -76,7 +76,7 @@ public class SweepResultInboxService {
         );
 
         inbox.markProcessing();
-        SweepResultInbox saved = inboxRepository.save(inbox);
+        SweepResultInbox saved = inboxRepository.saveAndFlush(inbox);
 
         return InboxClaimResult.claimed(saved.getInboxEventId());
     }

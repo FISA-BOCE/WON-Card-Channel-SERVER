@@ -22,15 +22,19 @@ public class SweepResultProcessService {
 
     // 복구 불가능한 메세지 필터링
     public void validate(SweepInvestmentResultEvent event) {
+        boolean completed = event != null && event.completed();
+        boolean failed = event != null && event.failed();
+
         if (event == null
                 || event.eventId() == null || event.eventId().isBlank()
                 || event.eventType() == null
                 || event.correlationId() == null || event.correlationId().isBlank()
                 || event.idempotencyKey() == null || event.idempotencyKey().isBlank()
                 || event.sweepRequestId() == null
+                || event.sweepExecutionId() == null
                 || event.pointLedgerId() == null
                 || event.cardUserUuid() == null
-                || (!event.completed() && !event.failed())) {
+                || completed == failed) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
     }

@@ -29,14 +29,18 @@ public class SweepResultInboxService {
     @Transactional
     public void markProcessed(Long inboxEventId) {
         SweepResultInbox inbox = inboxRepository.findById(inboxEventId)
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException(
+                        "스윕 결과 inbox를 찾을 수 없습니다. inboxEventId=" + inboxEventId
+                ));
         inbox.markProcessed();
     }
 
     @Transactional
     public void markFailed(Long inboxEventId, String errorMessage) {
         SweepResultInbox inbox = inboxRepository.findById(inboxEventId)
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException(
+                        "스윕 결과 inbox를 찾을 수 없습니다. inboxEventId=" + inboxEventId
+                ));
         inbox.markFailed(errorMessage);
     }
 

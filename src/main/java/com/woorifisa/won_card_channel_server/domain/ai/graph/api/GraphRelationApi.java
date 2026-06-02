@@ -10,6 +10,7 @@ import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,13 +41,18 @@ public class GraphRelationApi {
             @RequestParam(required = false) String merchant,
             @RequestParam(required = false) String category
     ) {
-        if (authenticatedUser == null) {
+        if (authenticatedUser == null || authenticatedUser.userUuid() == null) {
             throw new BusinessException(AuthErrorCode.AUTHENTICATION_REQUIRED);
         }
-        GraphRelationResponse response = graphRelationService.getGraphRelations(
-                authenticatedUser.userUuid(), queryType, period, merchant, category);
-        return ResponseEntity
-                .status(SuccessStatus.GRAPH_RELATION_SUCCESS.getHttpStatus())
-                .body(ApiResponse.of(SuccessStatus.GRAPH_RELATION_SUCCESS, response));
+        MDC.put("transactionId", transactionId);
+        try {
+            GraphRelationResponse response = graphRelationService.getGraphRelations(
+                    authenticatedUser.userUuid(), queryType, period, merchant, category);
+            return ResponseEntity
+                    .status(SuccessStatus.GRAPH_RELATION_SUCCESS.getHttpStatus())
+                    .body(ApiResponse.of(SuccessStatus.GRAPH_RELATION_SUCCESS, response));
+        } finally {
+            MDC.remove("transactionId");
+        }
     }
 }

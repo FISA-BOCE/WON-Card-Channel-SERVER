@@ -40,7 +40,10 @@ public enum SuccessStatus {
     CURRENT_SPEND_AMOUNT_FOUND(HttpStatus.OK, "SPEND_200_001", "당월 이용 금액 조회가 완료되었습니다."),
 
     // AI 챗봇
-    CHAT_SUCCESS(HttpStatus.OK, "AI_200_001", "답변이 생성되었습니다.");
+    CHAT_SUCCESS(HttpStatus.OK, "AI_200_001", "답변이 생성되었습니다."),
+
+    // AI 그래프
+    GRAPH_RELATION_SUCCESS(HttpStatus.OK, "GRAPH_200_001", "그래프 관계 데이터 조회가 완료되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

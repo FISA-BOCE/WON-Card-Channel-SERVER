@@ -93,8 +93,6 @@ public class GraphRelationService {
 
         try (Session session = cardNeo4jDriver.session()) {
             return session.run(cypher, params).list(Record::asMap);
-        } catch (BusinessException e) {
-            throw e;
         } catch (Exception e) {
             log.error("Neo4j query failed: queryType={}, userUuid={}", queryType, userUuid, e);
             throw new BusinessException(GraphErrorCode.GRAPH_DB_ERROR, e);

@@ -1,9 +1,9 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
-import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 class SweepOutboxClaimServiceTest {
 
     @Mock
-    private SweepOutboxRepository outboxRepository;
+    private CardChnSweepOutboxRepository outboxRepository;
 
     private SweepOutboxClaimService claimService;
 
@@ -37,7 +37,7 @@ class SweepOutboxClaimServiceTest {
     @DisplayName("발행 대상 Outbox를 조회해 PROCESSING 상태로 선점한다")
     void claimPublishTargets() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
 
         when(outboxRepository.findPublishTargets(
@@ -54,8 +54,8 @@ class SweepOutboxClaimServiceTest {
         assertThat(outbox.getPublishStatus()).isEqualTo(OutboxPublishStatus.PROCESSING);
     }
 
-    private SweepOutbox createPendingOutbox() {
-        return SweepOutbox.pending(
+    private CardChnSweepOutbox createPendingOutbox() {
+        return CardChnSweepOutbox.pending(
                 2L,
                 "CARD-SWEEP-988351d5-6242-4299-86ef-465cd9809874",
                 SweepEventType.SWEEP_REQUESTED,

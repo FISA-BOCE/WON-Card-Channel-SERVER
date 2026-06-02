@@ -11,9 +11,6 @@ public record SqsProperties(
         String endpoint,
 
         @NotBlank
-        String sweepRequestQueueUrl,
-
-        @NotBlank
-        String sweepResultQueueUrl
+        String sweepRequestQueueUrl
 ) {
 }

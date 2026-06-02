@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSelectionPromotionServiceImpl;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
@@ -13,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -23,14 +26,20 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class AutoSweepBatchService {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final Pattern BASE_MONTH_PATTERN = Pattern.compile("\\d{4}-\\d{2}");
 
     private final CardCoreRewardSweepApi cardCoreRewardSweepApi;
     private final CardChnCardSummaryRepository cardSummaryRepository;
     private final AutoSweepRequestService autoSweepRequestService;
+    private final AutoInvestSelectionPromotionServiceImpl autoInvestSelectionPromotionService;
 
     public AutoSweepBatchResponse requestMonthlyAutoSweeps(String baseMonth) {
         validateBaseMonth(baseMonth);
+
+        LocalDateTime now = LocalDateTime.now(KST);
+        int promotedCount = autoInvestSelectionPromotionService.promoteEffectivePendingSelections(now);
+        log.info("자동투자 예약 ETF 승격 완료. baseMonth={}, promotedCount={}", baseMonth, promotedCount);
 
         // Core 후보 조회 Feign 호출
         ApiResponse<CardCoreSweepCandidateResponse> apiResponse;

@@ -16,10 +16,11 @@ import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessEx
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import feign.FeignException;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -210,10 +211,23 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     }
 
     private LocalDateTime nextEffectiveFrom(LocalDateTime changedAt) {
-        return changedAt.plusMonths(1)
-                .with(TemporalAdjusters.firstDayOfMonth())
+        LocalDateTime cutoff = changedAt
+                .withDayOfMonth(16)
                 .toLocalDate()
                 .atStartOfDay();
+
+        if (changedAt.isBefore(cutoff)) {
+            return changedAt
+                    .withDayOfMonth(16)
+                    .toLocalDate()
+                    .atTime(0, 30);
+        }
+
+        return changedAt
+                .plusMonths(1)
+                .withDayOfMonth(16)
+                .toLocalDate()
+                .atTime(0, 30);
     }
 
     private LocalDateTime nowKst() {

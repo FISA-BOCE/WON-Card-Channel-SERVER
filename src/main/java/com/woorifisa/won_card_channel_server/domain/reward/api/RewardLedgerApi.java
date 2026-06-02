@@ -1,7 +1,9 @@
 package com.woorifisa.won_card_channel_server.domain.reward.api;
 
+import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardGetCurrentResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerDetailResponse;
 import com.woorifisa.won_card_channel_server.domain.reward.dto.response.RewardLedgerResponse;
+import com.woorifisa.won_card_channel_server.domain.reward.service.RewardGetCurrentMonthService;
 import com.woorifisa.won_card_channel_server.domain.reward.service.RewardLedgerService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RewardLedgerApi {
 
     private final RewardLedgerService rewardLedgerService;
+    private final RewardGetCurrentMonthService rewardGetCurrentMonthService;
 
     @Operation(summary = "자동 투자 리워드 목록 조회", description = "자동 투자 된 리워드 목록 조회 페이지에서 사용되는 API입니다.")
     @GetMapping("/api/cards/rewards/ledger")
@@ -50,4 +53,15 @@ public class RewardLedgerApi {
                 .body(ApiResponse.of(SuccessStatus.REWARD_LEDGER_DETAIL_FOUND, response));
     }
 
+    @Operation(summary = "당월 리워드 조회", description = "전월 카드 이용 실적과 리워드 상태를 조회합니다.")
+    @GetMapping("/api/cards/rewards/monthly")
+    public ResponseEntity<ApiResponse<RewardGetCurrentResponse>> getCurrentMonthReward(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        RewardGetCurrentResponse response = rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser);
+
+        return ResponseEntity
+                .status(SuccessStatus.PREVIOUS_PERFORMANCE_FOUND.getHttpStatus())
+                .body(ApiResponse.of(SuccessStatus.PREVIOUS_PERFORMANCE_FOUND, response));
+    }
 }

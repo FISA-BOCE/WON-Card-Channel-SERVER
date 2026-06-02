@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSelectionPromotionServiceImpl;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
@@ -15,12 +16,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class AutoSweepBatchServiceTest {
@@ -28,6 +31,7 @@ class AutoSweepBatchServiceTest {
     private CardCoreRewardSweepApi cardCoreRewardSweepApi;
     private CardChnCardSummaryRepository cardSummaryRepository;
     private AutoSweepRequestService autoSweepRequestService;
+    private AutoInvestSelectionPromotionServiceImpl autoInvestSelectionPromotionService;
     private AutoSweepBatchService autoSweepBatchService;
 
     private final UUID userUuid = UUID.fromString("a5324ba5-0ee3-44c6-b3d5-a951f9e94df5");
@@ -38,11 +42,13 @@ class AutoSweepBatchServiceTest {
         cardCoreRewardSweepApi = mock(CardCoreRewardSweepApi.class);
         cardSummaryRepository = mock(CardChnCardSummaryRepository.class);
         autoSweepRequestService = mock(AutoSweepRequestService.class);
+        autoInvestSelectionPromotionService = mock(AutoInvestSelectionPromotionServiceImpl.class);
 
         autoSweepBatchService = new AutoSweepBatchService(
                 cardCoreRewardSweepApi,
                 cardSummaryRepository,
-                autoSweepRequestService
+                autoSweepRequestService,
+                autoInvestSelectionPromotionService
         );
     }
 
@@ -85,6 +91,35 @@ class AutoSweepBatchServiceTest {
         assertThat(command.cardUserUuid()).isEqualTo(cardUserUuid);
         assertThat(command.pointLedgerId()).isEqualTo(1L);
         assertThat(command.etfId()).isEqualTo(100L);
+        verify(autoInvestSelectionPromotionService).promoteEffectivePendingSelections(any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("배치 시작 시 자동투자 예약 ETF 승격을 먼저 수행한 뒤 Core 후보를 조회한다")
+    void requestMonthlyAutoSweepsPromotesPendingSelectionBeforeLoadingCandidates() {
+        // given
+        when(autoInvestSelectionPromotionService.promoteEffectivePendingSelections(any(LocalDateTime.class)))
+                .thenReturn(2);
+        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
+                .thenReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        createCandidateResponse(List.of())
+                ));
+
+        // when
+        AutoSweepBatchResponse response =
+                autoSweepBatchService.requestMonthlyAutoSweeps("2026-05");
+
+        // then
+        assertThat(response.candidateCount()).isEqualTo(0);
+        assertThat(response.requestedCount()).isEqualTo(0);
+        assertThat(response.skippedCount()).isEqualTo(0);
+        assertThat(response.failedCount()).isEqualTo(0);
+
+        var inOrder = inOrder(autoInvestSelectionPromotionService, cardCoreRewardSweepApi);
+        inOrder.verify(autoInvestSelectionPromotionService)
+                .promoteEffectivePendingSelections(any(LocalDateTime.class));
+        inOrder.verify(cardCoreRewardSweepApi).getSweepCandidates("2026-05");
     }
 
     @Test
@@ -227,6 +262,7 @@ class AutoSweepBatchServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
 
+        verify(autoInvestSelectionPromotionService, never()).promoteEffectivePendingSelections(any());
         verify(cardCoreRewardSweepApi, never()).getSweepCandidates(any());
     }
 

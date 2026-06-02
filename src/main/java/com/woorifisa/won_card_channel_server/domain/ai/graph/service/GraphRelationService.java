@@ -43,7 +43,7 @@ public class GraphRelationService {
             "WHERE p.userUuid = $userUuid " +
             "AND p.paymentDate >= date() - duration({months: $periodMonths}) " +
             "RETURN c.name AS category, sum(p.amount) AS totalAmount " +
-            "ORDER BY totalAmount DESC";
+            "ORDER BY totalAmount DESC LIMIT 10";
 
     private static final String CYPHER_SPEND_BY_CATEGORY_WITH_FILTER =
             "MATCH (p:Payment)-[:BELONGS_TO]->(c:Category) " +
@@ -51,7 +51,7 @@ public class GraphRelationService {
             "AND p.paymentDate >= date() - duration({months: $periodMonths}) " +
             "AND c.name = $category " +
             "RETURN c.name AS category, sum(p.amount) AS totalAmount " +
-            "ORDER BY totalAmount DESC";
+            "ORDER BY totalAmount DESC LIMIT 10";
 
     private final Driver cardNeo4jDriver;
 
@@ -141,21 +141,18 @@ public class GraphRelationService {
         List<GraphNode> nodes = new ArrayList<>();
         List<GraphLink> links = new ArrayList<>();
 
+        long totalPoints = rows.stream().mapToLong(r -> toLong(r.getOrDefault("pointAmount", 0L))).sum();
+        nodes.add(new GraphNode("SPEND_01", "소비", merchant + " 결제"));
+        nodes.add(new GraphNode("POINT_01", "리워드", totalPoints + " 포인트 적립"));
+        links.add(new GraphLink("SPEND_01", "POINT_01", "EARNED"));
+
         for (int i = 0; i < rows.size(); i++) {
             Map<String, Object> row = rows.get(i);
-            String idx = String.format("%02d", i + 1);
-            String spendId = "SPEND_" + idx;
-            String pointId = "POINT_" + idx;
-            String assetId = "ASSET_" + idx;
-
-            long pointAmount = toLong(row.getOrDefault("pointAmount", 0L));
+            String assetId = "ASSET_" + String.format("%02d", i + 1);
             String etfName = (String) row.getOrDefault("etfName", "");
 
-            nodes.add(new GraphNode(spendId, "소비", merchant + " 결제"));
-            nodes.add(new GraphNode(pointId, "리워드", pointAmount + " 포인트 적립"));
             nodes.add(new GraphNode(assetId, "자산", etfName + " ETF"));
-            links.add(new GraphLink(spendId, pointId, "EARNED"));
-            links.add(new GraphLink(pointId, assetId, "CONVERTED_TO"));
+            links.add(new GraphLink("POINT_01", assetId, "CONVERTED_TO"));
         }
 
         String topEtf = rows.isEmpty() ? "" : (String) rows.get(0).getOrDefault("etfName", "");
@@ -221,22 +218,23 @@ public class GraphRelationService {
     }
 
     private int parsePeriodMonths(String period) {
-        if (period == null) return 1;
+        if (period == null) throw new BusinessException(GraphErrorCode.INVALID_PERIOD);
         return switch (period) {
+            case "1MONTH" -> 1;
             case "3MONTH" -> 3;
             case "6MONTH" -> 6;
             case "1YEAR" -> 12;
-            default -> 1;
+            default -> throw new BusinessException(GraphErrorCode.INVALID_PERIOD);
         };
     }
 
     private String parsePeriodLabel(String period) {
-        if (period == null) return "1개월";
         return switch (period) {
+            case "1MONTH" -> "1개월";
             case "3MONTH" -> "3개월";
             case "6MONTH" -> "6개월";
             case "1YEAR" -> "1년";
-            default -> "1개월";
+            default -> period;
         };
     }
 

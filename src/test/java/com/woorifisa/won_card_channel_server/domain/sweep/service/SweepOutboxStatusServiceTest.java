@@ -2,10 +2,10 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class SweepOutboxStatusServiceTest {
 
     @Mock
-    private SweepOutboxRepository outboxRepository;
+    private CardChnSweepOutboxRepository outboxRepository;
 
     private SweepOutboxStatusService statusService;
 
@@ -37,7 +37,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("PROCESSING 상태 Outbox이면 발행 메시지를 반환한다")
     void getPublishMessageSuccess() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
         outbox.markProcessing();
 
@@ -58,7 +58,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("PROCESSING 상태가 아니면 발행 메시지를 반환하지 않는다")
     void getPublishMessageInvalidState() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
 
         when(outboxRepository.findById(1L)).thenReturn(Optional.of(outbox));
@@ -91,7 +91,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("PROCESSING 상태 Outbox를 PUBLISHED 상태로 변경한다")
     void markPublishedSuccess() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
         outbox.markProcessing();
 
@@ -110,7 +110,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("PROCESSING 상태가 아니면 PUBLISHED 상태 변경을 건너뛴다")
     void markPublishedSkipWhenNotProcessing() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
 
         when(outboxRepository.findById(1L)).thenReturn(Optional.of(outbox));
@@ -127,7 +127,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("PROCESSING 상태 Outbox 발행 실패 시 RETRY 상태로 변경한다")
     void markPublishFailedRetry() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
         outbox.markProcessing();
 
@@ -147,7 +147,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("최대 재시도 횟수에 도달하면 FAILED 상태로 변경한다")
     void markPublishFailedMaxRetryReached() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
         outbox.markProcessing();
 
@@ -170,7 +170,7 @@ class SweepOutboxStatusServiceTest {
     @DisplayName("PROCESSING 상태가 아니면 발행 실패 상태 변경을 건너뛴다")
     void markPublishFailedSkipWhenNotProcessing() {
         // given
-        SweepOutbox outbox = createPendingOutbox();
+        CardChnSweepOutbox outbox = createPendingOutbox();
         setField(outbox, "outboxEventId", 1L);
 
         when(outboxRepository.findById(1L)).thenReturn(Optional.of(outbox));
@@ -184,8 +184,8 @@ class SweepOutboxStatusServiceTest {
         assertThat(outbox.getLastErrorMessage()).isNull();
     }
 
-    private SweepOutbox createPendingOutbox() {
-        return SweepOutbox.pending(
+    private CardChnSweepOutbox createPendingOutbox() {
+        return CardChnSweepOutbox.pending(
                 2L,
                 "CARD-SWEEP-1",
                 SweepEventType.SWEEP_REQUESTED,

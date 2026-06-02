@@ -5,15 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepRequestedEvent;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
-import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepRequestResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.CardCoreSweepRequestResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepRequestRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import feign.FeignException;
@@ -35,8 +35,8 @@ public class AutoSweepRequestService {
     private static final String EVENT_ID_PREFIX = "CARD-SWEEP-";
 
     private final CardCoreRewardSweepApi cardCoreRewardSweepApi;
-    private final SweepRepository sweepRepository;
-    private final SweepOutboxRepository sweepOutboxRepository;
+    private final CardChnSweepRequestRepository cardChnSweepRequestRepository;
+    private final CardChnSweepOutboxRepository cardChnSweepOutboxRepository;
     private final ObjectMapper objectMapper;
 
     private SweepRequestCreateResponse createSweepRequestForApi(AutoSweepTarget target) {
@@ -52,25 +52,25 @@ public class AutoSweepRequestService {
 
         try {
             // 스윕 요청 발행
-            Sweep request = Sweep.createPendingPublish(target, correlationId, idempotencyKey);
+            CardChnSweepRequest request = CardChnSweepRequest.createPendingPublish(target, correlationId, idempotencyKey);
 
             // 스윕 요청 DB 저장
-            Sweep savedSweep = sweepRepository.save(request);
+            CardChnSweepRequest savedSweepRequest = cardChnSweepRequestRepository.save(request);
 
             // 저장된 스윕 요청 기반으로 카드 -> 증권으로 보낼 이벤트 객체 생성
-            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweep, eventId);
+            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweepRequest, eventId);
 
             // SweepRequestedEvent 객체 JSON 문자열로 바꿈
             String payload = objectMapper.writeValueAsString(event);
 
             // outbox에 pending 상태로 저장
-            SweepOutbox outbox = SweepOutbox.pending(
-                    savedSweep.getSweepRequestId(), eventId, SweepEventType.SWEEP_REQUESTED
+            CardChnSweepOutbox outbox = CardChnSweepOutbox.pending(
+                    savedSweepRequest.getSweepRequestId(), eventId, SweepEventType.SWEEP_REQUESTED
                     , payload, correlationId, idempotencyKey);
 
-            sweepOutboxRepository.save(outbox);
+            cardChnSweepOutboxRepository.save(outbox);
 
-            return SweepRequestCreateResponse.from(savedSweep);
+            return SweepRequestCreateResponse.from(savedSweepRequest);
         } catch (DataIntegrityViolationException e) {
             throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
         } catch (JsonProcessingException e) {
@@ -152,19 +152,19 @@ public class AutoSweepRequestService {
         String eventId = EVENT_ID_PREFIX + UUID.randomUUID();
 
         try {
-            Sweep sweep = Sweep.createPendingPublish(
+            CardChnSweepRequest sweepRequest = CardChnSweepRequest.createPendingPublish(
                     target,
                     correlationId,
                     idempotencyKey
             );
 
-            Sweep savedSweep = sweepRepository.save(sweep);
+            CardChnSweepRequest savedSweepRequest = cardChnSweepRequestRepository.save(sweepRequest);
 
-            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweep, eventId);
+            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweepRequest, eventId);
             String payload = objectMapper.writeValueAsString(event);
 
-            SweepOutbox outbox = SweepOutbox.pending(
-                    savedSweep.getSweepRequestId(),
+            CardChnSweepOutbox outbox = CardChnSweepOutbox.pending(
+                    savedSweepRequest.getSweepRequestId(),
                     eventId,
                     SweepEventType.SWEEP_REQUESTED,
                     payload,
@@ -172,9 +172,9 @@ public class AutoSweepRequestService {
                     idempotencyKey
             );
 
-            sweepOutboxRepository.save(outbox);
+            cardChnSweepOutboxRepository.save(outbox);
 
-            return SweepRequestCreateResponse.from(savedSweep);
+            return SweepRequestCreateResponse.from(savedSweepRequest);
         } catch (DataIntegrityViolationException e) {
             if (isDuplicateAfterPreCheck(target.pointLedgerId(), idempotencyKey)) {
                 throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
@@ -187,8 +187,8 @@ public class AutoSweepRequestService {
     }
 
     private boolean isDuplicateAfterPreCheck(Long pointLedgerId, String idempotencyKey) {
-        return sweepRepository.existsByPointLedgerId(pointLedgerId)
-                || sweepRepository.existsByIdempotencyKey(idempotencyKey);
+        return cardChnSweepRequestRepository.existsByPointLedgerId(pointLedgerId)
+                || cardChnSweepRequestRepository.existsByIdempotencyKey(idempotencyKey);
     }
 
     private void validateTarget(AutoSweepTarget target) {
@@ -221,8 +221,8 @@ public class AutoSweepRequestService {
 
     // 중복 확인
     private void validateNotDuplicated(Long pointLedgerId, String idempotencyKey) {
-        if (sweepRepository.existsByPointLedgerId(pointLedgerId) ||
-                sweepRepository.existsByIdempotencyKey(idempotencyKey)) {
+        if (cardChnSweepRequestRepository.existsByPointLedgerId(pointLedgerId) ||
+                cardChnSweepRequestRepository.existsByIdempotencyKey(idempotencyKey)) {
             throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED);
         }
     }

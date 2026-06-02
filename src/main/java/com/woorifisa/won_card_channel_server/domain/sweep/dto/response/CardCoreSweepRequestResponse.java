@@ -1,4 +1,4 @@
-package com.woorifisa.won_card_channel_server.domain.sweep.external.dto;
+package com.woorifisa.won_card_channel_server.domain.sweep.dto.response;
 
 public record CardCoreSweepRequestResponse(
         Long pointLedgerId,

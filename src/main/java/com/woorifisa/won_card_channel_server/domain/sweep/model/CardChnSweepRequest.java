@@ -1,7 +1,7 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.model;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepProcessStatus;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepRequestStatus;
 import com.woorifisa.won_card_channel_server.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,7 +27,7 @@ import java.util.UUID;
                 @Index(name = "idx_card_chn_sweep_request_user_uuid", columnList = "user_uuid")
         })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Sweep extends BaseTimeEntity {
+public class CardChnSweepRequest extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,7 +62,7 @@ public class Sweep extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "request_status", nullable = false, length = 30)
-    private SweepProcessStatus requestStatus;
+    private SweepRequestStatus requestStatus;
 
     @Column(name = "correlation_id", nullable = false, length = 100)
     private String correlationId;
@@ -83,9 +83,9 @@ public class Sweep extends BaseTimeEntity {
     private String failReason;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Sweep(UUID userUuid, UUID cardUserUuid,
-                  Long performanceId, Long pointLedgerId, String baseMonth, Long pointAmount, Long krwAmount, Long etfId,
-                  SweepProcessStatus requestStatus, String correlationId, String idempotencyKey, LocalDateTime requestedAt
+    private CardChnSweepRequest(UUID userUuid, UUID cardUserUuid,
+                                Long performanceId, Long pointLedgerId, String baseMonth, Long pointAmount, Long krwAmount, Long etfId,
+                                SweepRequestStatus requestStatus, String correlationId, String idempotencyKey, LocalDateTime requestedAt
     ) {
         this.userUuid = userUuid;
         this.cardUserUuid = cardUserUuid;
@@ -101,10 +101,10 @@ public class Sweep extends BaseTimeEntity {
         this.requestedAt = requestedAt;
     }
 
-    public static Sweep createPendingPublish(
+    public static CardChnSweepRequest createPendingPublish(
             AutoSweepTarget target, String correlationId, String idempotencyKey
     ) {
-        return Sweep.builder()
+        return CardChnSweepRequest.builder()
                 .userUuid(target.userUuid())
                 .cardUserUuid(target.cardUserUuid())
                 .performanceId(target.performanceId())
@@ -113,31 +113,10 @@ public class Sweep extends BaseTimeEntity {
                 .pointAmount(target.pointAmount())
                 .krwAmount(target.krwAmount())
                 .etfId(target.etfId())
-                .requestStatus(SweepProcessStatus.PENDING_PUBLISH)
+                .requestStatus(SweepRequestStatus.PENDING_PUBLISH)
                 .correlationId(correlationId)
                 .idempotencyKey(idempotencyKey)
                 .requestedAt(LocalDateTime.now())
                 .build();
     }
-
-    public void markSucceeded() {
-        this.requestStatus = SweepProcessStatus.SUCCEEDED;
-        this.completedAt = LocalDateTime.now();
-        this.failReason = null;
-    }
-
-    public void markFailed(String failReason) {
-        this.requestStatus = SweepProcessStatus.FAILED;
-        this.completedAt = LocalDateTime.now();
-        this.failReason = truncate(failReason);
-    }
-
-    private String truncate(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        return value.length() > 500 ? value.substring(0, 500) : value;
-    }
-
 }

@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SweepOutbox extends BaseTimeEntity {
+public class CardChnSweepOutbox extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,7 +68,7 @@ public class SweepOutbox extends BaseTimeEntity {
     private LocalDateTime publishedAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private SweepOutbox(
+    private CardChnSweepOutbox(
             Long sweepRequestId, String eventId, SweepEventType eventType, String payload,
             OutboxPublishStatus publishStatus, String correlationId, String idempotencyKey,
             int retryCount, LocalDateTime nextRetryAt
@@ -84,11 +84,11 @@ public class SweepOutbox extends BaseTimeEntity {
         this.nextRetryAt = nextRetryAt;
     }
 
-    public static SweepOutbox pending(
+    public static CardChnSweepOutbox pending(
             Long sweepRequestId, String eventId, SweepEventType eventType, String payload,
             String correlationId, String idempotencyKey
     ) {
-        return SweepOutbox.builder()
+        return CardChnSweepOutbox.builder()
                 .sweepRequestId(sweepRequestId)
                 .eventId(eventId)
                 .eventType(eventType)

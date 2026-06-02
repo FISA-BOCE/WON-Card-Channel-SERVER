@@ -16,15 +16,19 @@ import com.woorifisa.won_card_channel_server.domain.auth.service.AuthService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClientService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.RefreshTokenService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
+import com.woorifisa.won_card_channel_server.domain.user.dto.request.InitializeUserMappingRequest;
+import com.woorifisa.won_card_channel_server.domain.user.external.CommonUserMappingApi;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
 import com.woorifisa.won_card_channel_server.global.security.RequestAccessTokenHolder;
 import com.woorifisa.won_card_channel_server.global.security.TextEncryptor;
 import com.woorifisa.won_card_channel_server.global.util.HashUtils;
+import feign.FeignException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Service
 @Validated
+@Slf4j
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
@@ -44,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RequestAccessTokenHolder requestAccessTokenHolder;
     private final TextEncryptor textEncryptor;
+    private final CommonUserMappingApi commonUserMappingApi;
 
     @Override
     @Transactional
@@ -67,6 +73,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
+        initializeCommonUserMapping(user);
     }
 
     @Override
@@ -180,6 +187,19 @@ public class AuthServiceImpl implements AuthService {
                 );
 
         return new TokenBundle(accessToken, refreshToken);
+    }
+
+    private void initializeCommonUserMapping(CardChnAuthUser user) {
+        try {
+            commonUserMappingApi.initializeUserMapping(new InitializeUserMappingRequest(user.getUserUuid()));
+        } catch (FeignException e) {
+            log.warn(
+                    "Common server initializeUserMapping Feign error [status={}, body={}]",
+                    e.status(),
+                    e.contentUTF8()
+            );
+            throw new BusinessException(AuthErrorCode.COMMON_USER_MAPPING_UNAVAILABLE, e);
+        }
     }
 
     private record TokenBundle(String accessToken, String refreshToken) {

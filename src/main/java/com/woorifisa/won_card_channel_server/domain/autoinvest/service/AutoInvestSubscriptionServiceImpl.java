@@ -35,6 +35,10 @@ import org.springframework.validation.annotation.Validated;
 public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscriptionService {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final int AUTO_INVEST_BATCH_DAY = 16;
+    private static final int CHANGE_CUTOFF_HOUR = 0;
+    private static final int BATCH_START_HOUR = 0;
+    private static final int BATCH_START_MINUTE = 30;
 
     private final CardChnCardSummaryRepository cardSummaryRepository;
     private final InvestChannelAutoInvestApi investChannelAutoInvestApi;
@@ -212,22 +216,22 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
 
     private LocalDateTime nextEffectiveFrom(LocalDateTime changedAt) {
         LocalDateTime cutoff = changedAt
-                .withDayOfMonth(16)
+                .withDayOfMonth(AUTO_INVEST_BATCH_DAY)
                 .toLocalDate()
-                .atStartOfDay();
+                .atTime(CHANGE_CUTOFF_HOUR, 0);
 
         if (changedAt.isBefore(cutoff)) {
             return changedAt
-                    .withDayOfMonth(16)
+                    .withDayOfMonth(AUTO_INVEST_BATCH_DAY)
                     .toLocalDate()
-                    .atTime(0, 30);
+                    .atTime(BATCH_START_HOUR, BATCH_START_MINUTE);
         }
 
         return changedAt
                 .plusMonths(1)
-                .withDayOfMonth(16)
+                .withDayOfMonth(AUTO_INVEST_BATCH_DAY)
                 .toLocalDate()
-                .atTime(0, 30);
+                .atTime(BATCH_START_HOUR, BATCH_START_MINUTE);
     }
 
     private LocalDateTime nowKst() {

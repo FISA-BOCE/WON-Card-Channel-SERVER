@@ -4,14 +4,11 @@ import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestm
 import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepResultRequest;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -45,13 +42,7 @@ public class SweepResultProcessService {
     }
 
     private void applyResultToCardCore(SweepInvestmentResultEvent event) {
-        CardCoreSweepResultRequest request = new CardCoreSweepResultRequest(
-                event.sweepRequestId(),
-                event.sweepExecutionId(),
-                event.correlationId(),
-                event.idempotencyKey(),
-                event.completed() ? "COMPLETED" : "FAILED"
-        );
+        CardCoreSweepResultRequest request = CardCoreSweepResultRequest.from(event);
 
         try {
             ApiResponse<?> response = cardCoreRewardSweepApi.applySweepResult(

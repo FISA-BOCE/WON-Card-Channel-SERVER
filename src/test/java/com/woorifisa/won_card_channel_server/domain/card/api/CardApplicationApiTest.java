@@ -57,7 +57,6 @@ class CardApplicationApiTest {
         SecurityContextHolder.getContext().setAuthentication(toAuthentication(authenticatedUser()));
 
         CardApplicationCreateRequest request = new CardApplicationCreateRequest(
-                1L,
                 new CardApplicationCreateRequest.ApplicantInfo(
                         "홍길동",
                         "HONG GIL DONG",

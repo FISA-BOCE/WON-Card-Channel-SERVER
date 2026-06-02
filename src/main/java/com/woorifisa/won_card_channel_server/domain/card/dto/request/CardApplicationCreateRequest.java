@@ -12,7 +12,6 @@ import java.util.UUID;
 
 // 프론트 요청 필드
 public record CardApplicationCreateRequest(
-        @NotNull @Positive Long cardProductId,
         @NotNull @Valid ApplicantInfo applicantInfo,
         @NotNull UUID investAccountUuid,
         @NotNull @Positive Long etfId,

@@ -92,6 +92,7 @@ class AutoInvestSubscriptionServiceTest {
         assertThat(response.cardUuid()).isEqualTo(cardUuid);
         assertThat(response.currentEtf().etfId()).isEqualTo(101L);
         assertThat(response.currentEtf().etfName()).isEqualTo("S&P 500 ETF");
+        assertThat(response.pendingEtf()).isNull();
     }
 
     @Test
@@ -106,7 +107,7 @@ class AutoInvestSubscriptionServiceTest {
     }
 
     @Test
-    @DisplayName("ETF 변경 시 selected ETF와 마지막 동기화 시각을 갱신한다")
+    @DisplayName("ETF 변경 시 현재 ETF는 유지하고 예약 ETF와 마지막 동기화 시각을 갱신한다")
     void changeSubscription() {
         CardChnCardSummary summary = cardSummary(101L);
         LocalDateTime before = summary.getLastSyncedAt();
@@ -124,11 +125,14 @@ class AutoInvestSubscriptionServiceTest {
                 new AutoInvestSubscriptionChangeRequest(202L)
         );
 
-        assertThat(summary.getSelectedEtfId()).isEqualTo(202L);
+        assertThat(summary.getSelectedEtfId()).isEqualTo(101L);
+        assertThat(summary.getPendingSelectedEtfId()).isEqualTo(202L);
+        assertThat(summary.getPendingEffectiveFrom()).isEqualTo(response.newEtf().effectiveFrom());
         assertThat(summary.getLastSyncedAt()).isAfter(before);
         assertThat(response.cardUuid()).isEqualTo(cardUuid);
         assertThat(response.previousEtf().ticker()).isEqualTo("VOO");
         assertThat(response.newEtf().etfId()).isEqualTo(202L);
+        assertThat(response.previousEtf().effectiveTo()).isEqualTo(response.newEtf().effectiveFrom());
     }
 
     @Test
@@ -143,6 +147,27 @@ class AutoInvestSubscriptionServiceTest {
                 authenticatedUser(),
                 cardUuid,
                 new AutoInvestSubscriptionChangeRequest(101L)
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(AutoInvestErrorCode.AUTO_INVEST_SAME_ETF);
+    }
+
+    @Test
+    @DisplayName("이미 예약된 ETF로 다시 변경하면 예외가 발생한다")
+    void changeSubscriptionWithSamePendingEtf() {
+        CardChnCardSummary summary = cardSummary(101L);
+        summary.reserveAutoInvestSelection(
+                202L,
+                LocalDateTime.of(2026, 6, 1, 0, 0),
+                LocalDateTime.of(2026, 5, 20, 9, 0)
+        );
+        given(cardSummaryRepository.findByUserUuid(userUuid)).willReturn(Optional.of(summary));
+
+        assertThatThrownBy(() -> service.changeSubscription(
+                authenticatedUser(),
+                cardUuid,
+                new AutoInvestSubscriptionChangeRequest(202L)
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")

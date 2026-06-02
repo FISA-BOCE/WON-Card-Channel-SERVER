@@ -66,14 +66,16 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
         }
 
         InvestEtfDetailsResponse etf = loadEtfDetails(selectedEtfId);
+        AutoInvestSubscriptionDetailResponse.PendingEtf pendingEtf = loadPendingEtf(summary);
         return new AutoInvestSubscriptionDetailResponse(
                 summary.getCardUuid(),
                 new AutoInvestSubscriptionDetailResponse.CurrentEtf(
                         etf.etfId(),
                         etf.etfName(),
                         etf.ticker(),
-                        summary.getLastSyncedAt()
+                        currentEffectiveFrom(summary)
                 ),
+                pendingEtf,
                 true
         );
     }
@@ -93,27 +95,29 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
         if (currentEtfId == null) {
             throw new BusinessException(AutoInvestErrorCode.AUTO_INVEST_CHANGE_TARGET_NOT_FOUND);
         }
-        if (currentEtfId.equals(request.etfId())) {
+        if (currentEtfId.equals(request.etfId())
+                || request.etfId().equals(summary.getPendingSelectedEtfId())) {
             throw new BusinessException(AutoInvestErrorCode.AUTO_INVEST_SAME_ETF);
         }
 
         InvestEtfDetailsResponse previousEtf = loadEtfDetails(currentEtfId);
         InvestEtfDetailsResponse newEtf = loadAutoInvestSelectableEtf(request.etfId());
         LocalDateTime changedAt = nowKst();
-        summary.updateAutoInvestSelection(newEtf.etfId(), changedAt);
+        LocalDateTime effectiveFrom = nextEffectiveFrom(changedAt);
+        summary.reserveAutoInvestSelection(newEtf.etfId(), effectiveFrom, changedAt);
 
         return new AutoInvestSubscriptionChangeResponse(
                 summary.getCardUuid(),
                 new AutoInvestSubscriptionChangeResponse.PreviousEtf(
                         previousEtf.etfName(),
                         previousEtf.ticker(),
-                        changedAt
+                        effectiveFrom
                 ),
                 new AutoInvestSubscriptionChangeResponse.NewEtf(
                         newEtf.etfId(),
                         newEtf.etfName(),
                         newEtf.ticker(),
-                        nextEffectiveFrom(changedAt)
+                        effectiveFrom
                 )
         );
     }
@@ -181,6 +185,28 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
         } catch (FeignException e) {
             throw new BusinessException(AutoInvestErrorCode.ETF_UNAVAILABLE, e);
         }
+    }
+
+    private AutoInvestSubscriptionDetailResponse.PendingEtf loadPendingEtf(CardChnCardSummary summary) {
+        Long pendingSelectedEtfId = summary.getPendingSelectedEtfId();
+        if (pendingSelectedEtfId == null || summary.getPendingEffectiveFrom() == null) {
+            return null;
+        }
+
+        InvestEtfDetailsResponse pendingEtf = loadEtfDetails(pendingSelectedEtfId);
+        return new AutoInvestSubscriptionDetailResponse.PendingEtf(
+                pendingEtf.etfId(),
+                pendingEtf.etfName(),
+                pendingEtf.ticker(),
+                summary.getPendingEffectiveFrom()
+        );
+    }
+
+    private LocalDateTime currentEffectiveFrom(CardChnCardSummary summary) {
+        if (summary.getPendingSelectedEtfId() != null && summary.getPendingEffectiveFrom() != null) {
+            return null;
+        }
+        return summary.getLastSyncedAt();
     }
 
     private LocalDateTime nextEffectiveFrom(LocalDateTime changedAt) {

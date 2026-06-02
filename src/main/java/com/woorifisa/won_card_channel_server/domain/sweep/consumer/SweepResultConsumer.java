@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.InboxClaimResult;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepInvestmentResultEvent;
@@ -51,13 +52,22 @@ public class SweepResultConsumer {
 
     private void handle(Message message) {
         try {
-            SweepInvestmentResultEvent event =
-                    objectMapper.readValue(message.body(), SweepInvestmentResultEvent.class);
+            SweepInvestmentResultEvent event;
+
+            try {
+                event = objectMapper.readValue(message.body(), SweepInvestmentResultEvent.class);
+            } catch (JsonProcessingException e) {
+                log.warn("역직렬화 불가능한 스윕 결과 메시지 스킵. messageId={}",
+                        message.messageId(), e);
+                deleteMessage(message);
+                return;
+            }
 
             try {
                 processService.validate(event);
             } catch (BusinessException e) {
-                log.warn("유효하지 않은 스윕 결과 메시지 스킵. messageId={}", message.messageId(), e);
+                log.warn("유효하지 않은 스윕 결과 메시지 스킵. messageId={}, eventId={}",
+                        message.messageId(), event.eventId(), e);
                 deleteMessage(message);
                 return;
             }
@@ -74,14 +84,19 @@ public class SweepResultConsumer {
             }
 
             try {
-                processService.process(claimResult.inboxEventId(), event);
+                processService.process(event);
                 inboxService.markProcessed(claimResult.inboxEventId());
                 deleteMessage(message);
 
                 log.info("스윕 결과 메시지 처리 완료. messageId={}, idempotencyKey={}",
                         message.messageId(), event.idempotencyKey());
             } catch (Exception e) {
-                inboxService.markFailed(claimResult.inboxEventId(), e.getMessage());
+                try {
+                    inboxService.markFailed(claimResult.inboxEventId(), e.getMessage());
+                } catch (Exception markFailedException) {
+                    log.error("스윕 결과 inbox 실패 상태 저장 실패. messageId={}, inboxEventId={}",
+                            message.messageId(), claimResult.inboxEventId(), markFailedException);
+                }
                 throw e;
             }
         } catch (Exception e) {

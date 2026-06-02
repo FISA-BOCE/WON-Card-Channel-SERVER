@@ -17,8 +17,10 @@ import com.woorifisa.won_card_channel_server.domain.auth.service.LedgerAuthClien
 import com.woorifisa.won_card_channel_server.domain.auth.service.RefreshTokenService;
 import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
 import com.woorifisa.won_card_channel_server.domain.user.dto.request.InitializeUserMappingRequest;
+import com.woorifisa.won_card_channel_server.domain.user.dto.response.GetMyUserMappingResponse;
 import com.woorifisa.won_card_channel_server.domain.user.external.CommonUserMappingApi;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
+import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
 import com.woorifisa.won_card_channel_server.global.security.RequestAccessTokenHolder;
@@ -191,15 +193,33 @@ public class AuthServiceImpl implements AuthService {
 
     private void initializeCommonUserMapping(CardChnAuthUser user) {
         try {
-            commonUserMappingApi.initializeUserMapping(new InitializeUserMappingRequest(user.getUserUuid()));
+            ApiResponse<GetMyUserMappingResponse> response = commonUserMappingApi.initializeUserMapping(
+                    new InitializeUserMappingRequest(user.getUserUuid())
+            );
+            if (isInvalidCommonUserMappingResponse(response)) {
+                log.warn(
+                        "Common server initializeUserMapping invalid response [status={}, code={}, hasData={}]",
+                        response == null ? null : response.status(),
+                        response == null ? null : response.code(),
+                        response != null && response.data() != null
+                );
+                throw new BusinessException(AuthErrorCode.COMMON_USER_MAPPING_UNAVAILABLE);
+            }
         } catch (FeignException e) {
             log.warn(
-                    "Common server initializeUserMapping Feign error [status={}, body={}]",
+                    "Common server initializeUserMapping Feign error [status={}, type={}]",
                     e.status(),
-                    e.contentUTF8()
+                    e.getClass().getSimpleName()
             );
             throw new BusinessException(AuthErrorCode.COMMON_USER_MAPPING_UNAVAILABLE, e);
         }
+    }
+
+    private boolean isInvalidCommonUserMappingResponse(ApiResponse<GetMyUserMappingResponse> response) {
+        return response == null
+                || response.status() < 200
+                || response.status() >= 300
+                || response.data() == null;
     }
 
     private record TokenBundle(String accessToken, String refreshToken) {

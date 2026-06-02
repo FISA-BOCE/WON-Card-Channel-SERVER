@@ -37,8 +37,8 @@ public class AutoSweepBatchService {
     public AutoSweepBatchResponse requestMonthlyAutoSweeps(String baseMonth) {
         validateBaseMonth(baseMonth);
 
-        LocalDateTime now = LocalDateTime.now(KST);
-        int promotedCount = autoInvestSelectionPromotionService.promoteEffectivePendingSelections(now);
+        LocalDateTime batchStartedAt = LocalDateTime.now(KST);
+        int promotedCount = autoInvestSelectionPromotionService.promoteEffectivePendingSelections(batchStartedAt);
         log.info("자동투자 예약 ETF 승격 완료. baseMonth={}, promotedCount={}", baseMonth, promotedCount);
 
         // Core 후보 조회 Feign 호출

@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public enum CommonErrorCode implements ErrorCode {
 
+    INVALID_REQUEST_FORMAT(HttpStatus.BAD_REQUEST, "COM_400_001", "요청 형식이 올바르지 않습니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "COM_400_002", "유효하지 않은 요청값입니다."),
 
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "COM_404_001", "요청한 데이터를 찾을 수 없습니다."),

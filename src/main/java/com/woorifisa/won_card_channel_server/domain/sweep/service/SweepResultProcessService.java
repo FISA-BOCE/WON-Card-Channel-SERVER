@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SweepResultProcessService {
 
     private final CardCoreRewardSweepApi cardCoreRewardSweepApi;
-    private final SweepRepository sweepRequestRepository;
+    private final SweepStatusUpdateService sweepStatusUpdateService;
 
     // 복구 불가능한 메세지 필터링
     public void validate(SweepInvestmentResultEvent event) {
@@ -39,19 +39,9 @@ public class SweepResultProcessService {
         }
     }
 
-    @Transactional
-    public void process(Long inboxEventId, SweepInvestmentResultEvent event) {
+    public void process(SweepInvestmentResultEvent event) {
+        sweepStatusUpdateService.update(event);
         applyResultToCardCore(event);
-
-        Sweep sweep = sweepRequestRepository.findByIdempotencyKey(event.idempotencyKey())
-                .orElseThrow(() -> new BusinessException(SweepErrorCode.SWEEP_REWARD_LEDGER_NOT_FOUND));
-
-        if (event.completed()) {
-            sweep.markSucceeded();
-            return;
-        }
-
-        sweep.markFailed(event.failureMessage());
     }
 
     private void applyResultToCardCore(SweepInvestmentResultEvent event) {

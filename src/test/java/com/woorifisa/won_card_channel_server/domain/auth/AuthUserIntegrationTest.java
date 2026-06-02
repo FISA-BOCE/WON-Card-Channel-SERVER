@@ -6,6 +6,10 @@ import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.model.UserStatus;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthSessionRepository;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
+import com.woorifisa.won_card_channel_server.domain.user.dto.response.GetMyUserMappingResponse;
+import com.woorifisa.won_card_channel_server.domain.user.external.CommonUserMappingApi;
+import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
+import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.TextEncryptor;
 import com.woorifisa.won_card_channel_server.global.util.HashUtils;
 import java.util.UUID;
@@ -18,9 +22,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -58,10 +65,29 @@ class AuthUserIntegrationTest {
     @Autowired
     private TextEncryptor textEncryptor;
 
+    @MockitoBean
+    private CommonUserMappingApi commonUserMappingApi;
+
     @BeforeEach
     void setUp() {
         sessionRepository.deleteAll();
         userRepository.deleteAll();
+
+        given(commonUserMappingApi.initializeUserMapping(any()))
+                .willAnswer(invocation -> {
+                    UUID userUuid = invocation.getArgument(0, com.woorifisa.won_card_channel_server.domain.user.dto.request.InitializeUserMappingRequest.class).userUuid();
+                    return ApiResponse.of(
+                            SuccessStatus.OK,
+                            new GetMyUserMappingResponse(
+                                    1L,
+                                    userUuid,
+                                    null,
+                                    null,
+                                    "NONE",
+                                    "NONE"
+                            )
+                    );
+                });
 
         userRepository.save(CardChnAuthUser.builder()
                 .authUserUuid(AUTH_USER_UUID_1)

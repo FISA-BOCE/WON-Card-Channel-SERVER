@@ -1,18 +1,18 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.dto.response;
 
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 
 public record SweepRequestCreateResponse(
         Long sweepRequestId, String requestStatus,
         Long pointLedgerId, Long krwAmount, Long etfId
 ) {
-    public static SweepRequestCreateResponse from(CardChnSweepRequest sweepRequest) {
+    public static SweepRequestCreateResponse from(Sweep sweep) {
         return new SweepRequestCreateResponse(
-                sweepRequest.getSweepRequestId(),
-                sweepRequest.getRequestStatus().name(),
-                sweepRequest.getPointLedgerId(),
-                sweepRequest.getKrwAmount(),
-                sweepRequest.getEtfId()
+                sweep.getSweepRequestId(),
+                sweep.getRequestStatus().name(),
+                sweep.getPointLedgerId(),
+                sweep.getKrwAmount(),
+                sweep.getEtfId()
         );
     }
 }

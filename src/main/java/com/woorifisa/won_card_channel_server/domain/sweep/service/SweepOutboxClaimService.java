@@ -1,9 +1,9 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SweepOutboxClaimService {
 
-    private final CardChnSweepOutboxRepository outboxRepository;
+    private final SweepOutboxRepository outboxRepository;
 
     @Transactional
     public List<Long> claimPublishTargets(int batchSize) {
@@ -25,16 +25,16 @@ public class SweepOutboxClaimService {
             throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_INVALID_BATCH_SIZE);
         }
 
-        List<CardChnSweepOutbox> targets = outboxRepository.findPublishTargets(
+        List<SweepOutbox> targets = outboxRepository.findPublishTargets(
                 List.of(OutboxPublishStatus.PENDING, OutboxPublishStatus.RETRY),
                 LocalDateTime.now(),
                 PageRequest.of(0, batchSize)
         );
 
-        targets.forEach(CardChnSweepOutbox::markProcessing);
+        targets.forEach(SweepOutbox::markProcessing);
 
         return targets.stream()
-                .map(CardChnSweepOutbox::getOutboxEventId)
+                .map(SweepOutbox::getOutboxEventId)
                 .toList();
     }
 }

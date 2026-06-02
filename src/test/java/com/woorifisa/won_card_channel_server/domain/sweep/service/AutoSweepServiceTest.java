@@ -4,17 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.CardCoreSweepRequestResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepRequestResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepOutbox;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.CardChnSweepRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
-import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepRequestStatus;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepOutboxRepository;
-import com.woorifisa.won_card_channel_server.domain.sweep.repository.CardChnSweepRequestRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepProcessStatus;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -31,11 +31,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class AutoSweepRequestServiceTest {
+class AutoSweepServiceTest {
 
     private CardCoreRewardSweepApi cardCoreRewardSweepApi;
-    private CardChnSweepRequestRepository cardChnSweepRequestRepository;
-    private CardChnSweepOutboxRepository cardChnSweepOutboxRepository;
+    private SweepRepository sweepRepository;
+    private SweepOutboxRepository sweepOutboxRepository;
     private ObjectMapper objectMapper;
     private AutoSweepRequestService autoSweepRequestService;
 
@@ -45,8 +45,8 @@ class AutoSweepRequestServiceTest {
     @BeforeEach
     void setUp() {
         cardCoreRewardSweepApi = mock(CardCoreRewardSweepApi.class);
-        cardChnSweepRequestRepository = mock(CardChnSweepRequestRepository.class);
-        cardChnSweepOutboxRepository = mock(CardChnSweepOutboxRepository.class);
+        sweepRepository = mock(SweepRepository.class);
+        sweepOutboxRepository = mock(SweepOutboxRepository.class);
 
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -54,8 +54,8 @@ class AutoSweepRequestServiceTest {
 
         autoSweepRequestService = new AutoSweepRequestService(
                 cardCoreRewardSweepApi,
-                cardChnSweepRequestRepository,
-                cardChnSweepOutboxRepository,
+                sweepRepository,
+                sweepOutboxRepository,
                 objectMapper
         );
     }
@@ -66,22 +66,22 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false, true);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false, false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
 
-        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+        when(sweepRepository.save(any(Sweep.class)))
                 .thenAnswer(invocation -> {
-                    CardChnSweepRequest sweepRequest = invocation.getArgument(0);
-                    setField(sweepRequest, "sweepRequestId", 1L);
-                    return sweepRequest;
+                    Sweep sweep = invocation.getArgument(0);
+                    setField(sweep, "sweepRequestId", 1L);
+                    return sweep;
                 });
 
-        when(cardChnSweepOutboxRepository.save(any(CardChnSweepOutbox.class)))
+        when(sweepOutboxRepository.save(any(SweepOutbox.class)))
                 .thenAnswer(invocation -> {
-                    CardChnSweepOutbox outbox = invocation.getArgument(0);
+                    SweepOutbox outbox = invocation.getArgument(0);
                     setField(outbox, "outboxEventId", 1L);
                     return outbox;
                 });
@@ -91,14 +91,14 @@ class AutoSweepRequestServiceTest {
 
         // then
         assertThat(response.sweepRequestId()).isEqualTo(1L);
-        assertThat(response.requestStatus()).isEqualTo(SweepRequestStatus.PENDING_PUBLISH.name());
+        assertThat(response.requestStatus()).isEqualTo(SweepProcessStatus.PENDING_PUBLISH.name());
         assertThat(response.pointLedgerId()).isEqualTo(1L);
         assertThat(response.krwAmount()).isEqualTo(12450L);
         assertThat(response.etfId()).isEqualTo(100L);
 
         verify(cardCoreRewardSweepApi).requestSweep(cardUserUuid, 1L);
-        verify(cardChnSweepRequestRepository).save(any(CardChnSweepRequest.class));
-        verify(cardChnSweepOutboxRepository).save(any(CardChnSweepOutbox.class));
+        verify(sweepRepository).save(any(Sweep.class));
+        verify(sweepOutboxRepository).save(any(SweepOutbox.class));
     }
 
     @Test
@@ -107,31 +107,31 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(2L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(2L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:2")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(2L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:2")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 2L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(2L, 9800L)));
 
-        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+        when(sweepRepository.save(any(Sweep.class)))
                 .thenAnswer(invocation -> {
-                    CardChnSweepRequest sweepRequest = invocation.getArgument(0);
-                    setField(sweepRequest, "sweepRequestId", 2L);
-                    return sweepRequest;
+                    Sweep sweep = invocation.getArgument(0);
+                    setField(sweep, "sweepRequestId", 2L);
+                    return sweep;
                 });
 
-        when(cardChnSweepOutboxRepository.save(any(CardChnSweepOutbox.class)))
+        when(sweepOutboxRepository.save(any(SweepOutbox.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ArgumentCaptor<CardChnSweepOutbox> outboxCaptor = ArgumentCaptor.forClass(CardChnSweepOutbox.class);
+        ArgumentCaptor<SweepOutbox> outboxCaptor = ArgumentCaptor.forClass(SweepOutbox.class);
 
         // when
         autoSweepRequestService.createSweepRequest(request);
 
         // then
-        verify(cardChnSweepOutboxRepository).save(outboxCaptor.capture());
+        verify(sweepOutboxRepository).save(outboxCaptor.capture());
 
-        CardChnSweepOutbox outbox = outboxCaptor.getValue();
+        SweepOutbox outbox = outboxCaptor.getValue();
 
         assertThat(outbox.getSweepRequestId()).isEqualTo(2L);
         assertThat(outbox.getEventId()).startsWith("CARD-SWEEP-");
@@ -151,7 +151,7 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(true);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(true);
 
         // when & then
         assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
@@ -159,8 +159,8 @@ class AutoSweepRequestServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_ALREADY_REQUESTED);
 
         verify(cardCoreRewardSweepApi, never()).requestSweep(any(), any());
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -169,8 +169,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(true);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(true);
 
         // when & then
         assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
@@ -178,8 +178,8 @@ class AutoSweepRequestServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_ALREADY_REQUESTED);
 
         verify(cardCoreRewardSweepApi, never()).requestSweep(any(), any());
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -188,21 +188,21 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false, true);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false, false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
 
-        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+        when(sweepRepository.save(any(Sweep.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 
         // when & then
         assertThatThrownBy(() -> autoSweepRequestService.createSweepRequest(request))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_ALREADY_REQUESTED);
+                .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED);
 
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -213,8 +213,8 @@ class AutoSweepRequestServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
 
         verify(cardCoreRewardSweepApi, never()).requestSweep(any(), any());
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -223,8 +223,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, null));
 
@@ -233,8 +233,8 @@ class AutoSweepRequestServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
 
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -243,8 +243,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 0L)));
 
@@ -253,8 +253,8 @@ class AutoSweepRequestServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
 
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -263,13 +263,13 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
 
-        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+        when(sweepRepository.save(any(Sweep.class)))
                 .thenThrow(new DataIntegrityViolationException("save failed"));
 
         // when & then
@@ -278,7 +278,7 @@ class AutoSweepRequestServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED);
 
         verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -287,20 +287,20 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
 
-        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+        when(sweepRepository.save(any(Sweep.class)))
                 .thenAnswer(invocation -> {
-                    CardChnSweepRequest sweepRequest = invocation.getArgument(0);
-                    setField(sweepRequest, "sweepRequestId", 1L);
-                    return sweepRequest;
+                    Sweep sweep = invocation.getArgument(0);
+                    setField(sweep, "sweepRequestId", 1L);
+                    return sweep;
                 });
 
-        when(cardChnSweepOutboxRepository.save(any(CardChnSweepOutbox.class)))
+        when(sweepOutboxRepository.save(any(SweepOutbox.class)))
                 .thenThrow(new DataIntegrityViolationException("outbox save failed"));
 
         // when & then
@@ -316,8 +316,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 0L)));
@@ -328,8 +328,8 @@ class AutoSweepRequestServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
 
         verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     @Test
@@ -338,13 +338,13 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, createSweepRequestCoreResponse(1L, 12450L)));
 
-        when(cardChnSweepRequestRepository.save(any(CardChnSweepRequest.class)))
+        when(sweepRepository.save(any(Sweep.class)))
                 .thenThrow(new DataIntegrityViolationException("save failed"));
 
         doThrow(new RuntimeException("cancel failed"))
@@ -365,8 +365,8 @@ class AutoSweepRequestServiceTest {
         // given
         AutoSweepCreateCommand request = createSweepRequestRequest(1L);
 
-        when(cardChnSweepRequestRepository.existsByPointLedgerId(1L)).thenReturn(false);
-        when(cardChnSweepRequestRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
+        when(sweepRepository.existsByPointLedgerId(1L)).thenReturn(false);
+        when(sweepRepository.existsByIdempotencyKey("SWEEP:POINT_LEDGER:1")).thenReturn(false);
 
         when(cardCoreRewardSweepApi.requestSweep(cardUserUuid, 1L))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, null));
@@ -377,8 +377,8 @@ class AutoSweepRequestServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
 
         verify(cardCoreRewardSweepApi, never()).cancelSweepRequest(any(), any());
-        verify(cardChnSweepRequestRepository, never()).save(any());
-        verify(cardChnSweepOutboxRepository, never()).save(any());
+        verify(sweepRepository, never()).save(any());
+        verify(sweepOutboxRepository, never()).save(any());
     }
 
     private AutoSweepCreateCommand createSweepRequestRequest(Long pointLedgerId) {

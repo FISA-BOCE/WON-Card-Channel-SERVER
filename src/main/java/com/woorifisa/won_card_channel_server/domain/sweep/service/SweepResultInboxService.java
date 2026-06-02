@@ -6,6 +6,7 @@ import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepResultInboxRepository;
 import com.woorifisa.won_card_channel_server.global.config.SweepResultConsumerProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +22,8 @@ public class SweepResultInboxService {
     @Transactional
     public InboxClaimResult claim(SweepInvestmentResultEvent event, String payload) {
         return inboxRepository.findByIdempotencyKeyForUpdate(event.idempotencyKey())
-                .map(existing -> claimExisting(existing))
-                .orElseGet(() -> claimNew(event, payload));
+                .map(this::claimExisting)
+                .orElseGet(() -> claimNewSafely(event, payload));
     }
 
     @Transactional
@@ -37,6 +38,16 @@ public class SweepResultInboxService {
         SweepResultInbox inbox = inboxRepository.findById(inboxEventId)
                 .orElseThrow();
         inbox.markFailed(errorMessage);
+    }
+
+    private InboxClaimResult claimNewSafely(SweepInvestmentResultEvent event, String payload) {
+        try {
+            return claimNew(event, payload);
+        } catch (DataIntegrityViolationException e) {
+            return inboxRepository.findByIdempotencyKeyForUpdate(event.idempotencyKey())
+                    .map(this::claimExisting)
+                    .orElseThrow(() -> e);
+        }
     }
 
     private InboxClaimResult claimExisting(SweepResultInbox inbox) {

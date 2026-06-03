@@ -193,7 +193,6 @@ class CardApplicationServiceTest {
     @DisplayName("필수 약관이 누락되면 예외가 발생한다")
     void applyCardWithoutRequiredTerms() {
         CardApplicationCreateRequest request = new CardApplicationCreateRequest(
-                1L,
                 new CardApplicationCreateRequest.ApplicantInfo(
                         "홍길동",
                         "HONG GIL DONG",
@@ -349,7 +348,6 @@ class CardApplicationServiceTest {
 
     private CardApplicationCreateRequest request() {
         return new CardApplicationCreateRequest(
-                1L,
                 new CardApplicationCreateRequest.ApplicantInfo(
                         "홍길동",
                         "HONG GIL DONG",

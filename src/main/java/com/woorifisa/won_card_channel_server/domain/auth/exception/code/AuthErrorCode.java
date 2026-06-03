@@ -18,7 +18,9 @@ public enum AuthErrorCode implements ErrorCode {
     WITHDRAWN_ACCOUNT(HttpStatus.FORBIDDEN, "AUTH_403_002", "탈퇴한 계정입니다."),
 
     ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "AUTH_409_001", "이미 탈퇴 처리된 계정입니다."),
-    DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "AUTH_409_002", "이미 가입된 휴대폰 번호입니다.");
+    DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "AUTH_409_002", "이미 가입된 휴대폰 번호입니다."),
+
+    COMMON_USER_MAPPING_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "AUTH_502_001", "공통 사용자 매핑 초기화에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

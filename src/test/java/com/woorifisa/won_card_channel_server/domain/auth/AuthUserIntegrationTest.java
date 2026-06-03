@@ -6,8 +6,16 @@ import com.woorifisa.won_card_channel_server.domain.auth.model.CardChnAuthUser;
 import com.woorifisa.won_card_channel_server.domain.auth.model.UserStatus;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthSessionRepository;
 import com.woorifisa.won_card_channel_server.domain.auth.repository.CardChnAuthUserRepository;
+import com.woorifisa.won_card_channel_server.domain.user.dto.response.GetMyUserMappingResponse;
+import com.woorifisa.won_card_channel_server.domain.user.external.CommonUserMappingApi;
+import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
+import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import com.woorifisa.won_card_channel_server.global.security.TextEncryptor;
 import com.woorifisa.won_card_channel_server.global.util.HashUtils;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +26,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -58,10 +71,29 @@ class AuthUserIntegrationTest {
     @Autowired
     private TextEncryptor textEncryptor;
 
+    @MockitoBean
+    private CommonUserMappingApi commonUserMappingApi;
+
     @BeforeEach
     void setUp() {
         sessionRepository.deleteAll();
         userRepository.deleteAll();
+
+        given(commonUserMappingApi.initializeUserMapping(any()))
+                .willAnswer(invocation -> {
+                    UUID userUuid = invocation.getArgument(0, com.woorifisa.won_card_channel_server.domain.user.dto.request.InitializeUserMappingRequest.class).userUuid();
+                    return ApiResponse.of(
+                            SuccessStatus.OK,
+                            new GetMyUserMappingResponse(
+                                    1L,
+                                    userUuid,
+                                    null,
+                                    null,
+                                    "NONE",
+                                    "NONE"
+                            )
+                    );
+                });
 
         userRepository.save(CardChnAuthUser.builder()
                 .authUserUuid(AUTH_USER_UUID_1)
@@ -139,6 +171,65 @@ class AuthUserIntegrationTest {
         assertThat(savedUser.getTelEnc()).isNotEqualTo("01099998888");
         assertThat(savedUser.getLoginId()).isEqualTo(HashUtils.sha256("01099998888"));
         assertThat(sessionRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void signupRollsBackWhenCommonUserMappingInitializationFails() throws Exception {
+        Request request = Request.create(
+                Request.HttpMethod.POST,
+                "http://common/internal/mappings/users",
+                Collections.emptyMap(),
+                null,
+                new RequestTemplate()
+        );
+        doThrow(new FeignException.BadGateway("Common server unavailable", request, null, null))
+                .when(commonUserMappingApi)
+                .initializeUserMapping(any());
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phoneNumber":"01077778888",
+                                  "userName":"연동실패회원",
+                                  "password":"signup123!",
+                                  "passwordConfirm":"signup123!",
+                                  "email":"mapping-fail@test.com",
+                                  "termsAgreed":true
+                                }
+                                """))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("AUTH_502_001"));
+
+        assertThat(userRepository.findByTelHash(HashUtils.sha256("01077778888"))).isEmpty();
+    }
+
+    @Test
+    void signupRollsBackWhenCommonUserMappingResponseHasNoData() throws Exception {
+        doReturn(new ApiResponse<>(201, null, "공통 사용자 매핑 초기화가 완료되었습니다.", null))
+                .when(commonUserMappingApi)
+                .initializeUserMapping(any());
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .header("X-Service-ID", SERVICE_ID)
+                        .header("X-Transaction-ID", TRANSACTION_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phoneNumber":"01066667777",
+                                  "userName":"응답검증회원",
+                                  "password":"signup123!",
+                                  "passwordConfirm":"signup123!",
+                                  "email":"invalid-mapping@test.com",
+                                  "termsAgreed":true
+                                }
+                                """))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("AUTH_502_001"));
+
+        assertThat(userRepository.findByTelHash(HashUtils.sha256("01066667777"))).isEmpty();
     }
 
     @Test

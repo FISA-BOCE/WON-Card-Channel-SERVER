@@ -16,10 +16,11 @@ import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessEx
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import feign.FeignException;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,10 @@ import org.springframework.validation.annotation.Validated;
 public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscriptionService {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final int AUTO_INVEST_BATCH_DAY = 16;
+    private static final int CHANGE_CUTOFF_HOUR = 0;
+    private static final int BATCH_START_HOUR = 0;
+    private static final int BATCH_START_MINUTE = 30;
 
     private final CardChnCardSummaryRepository cardSummaryRepository;
     private final InvestChannelAutoInvestApi investChannelAutoInvestApi;
@@ -210,10 +215,23 @@ public class AutoInvestSubscriptionServiceImpl implements AutoInvestSubscription
     }
 
     private LocalDateTime nextEffectiveFrom(LocalDateTime changedAt) {
-        return changedAt.plusMonths(1)
-                .with(TemporalAdjusters.firstDayOfMonth())
+        LocalDateTime cutoff = changedAt
+                .withDayOfMonth(AUTO_INVEST_BATCH_DAY)
                 .toLocalDate()
-                .atStartOfDay();
+                .atTime(CHANGE_CUTOFF_HOUR, 0);
+
+        if (changedAt.isBefore(cutoff)) {
+            return changedAt
+                    .withDayOfMonth(AUTO_INVEST_BATCH_DAY)
+                    .toLocalDate()
+                    .atTime(BATCH_START_HOUR, BATCH_START_MINUTE);
+        }
+
+        return changedAt
+                .plusMonths(1)
+                .withDayOfMonth(AUTO_INVEST_BATCH_DAY)
+                .toLocalDate()
+                .atTime(BATCH_START_HOUR, BATCH_START_MINUTE);
     }
 
     private LocalDateTime nowKst() {

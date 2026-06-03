@@ -75,6 +75,9 @@ class RewardLedgerServiceTest {
                                 "2026-05",
                                 12450L,
                                 "EARN",
+                                "NONE",
+                                null,
+                                null,
                                 LocalDateTime.of(2026, 5, 7, 14, 32)
                         )
                 )
@@ -89,6 +92,9 @@ class RewardLedgerServiceTest {
                                 "2026-05",
                                 12450L,
                                 "EARN",
+                                "NONE",
+                                null,
+                                null,
                                 LocalDateTime.of(2026, 5, 7, 14, 32)
                         )
                 )
@@ -371,6 +377,9 @@ class RewardLedgerServiceTest {
                 "2026-05",
                 "EARN",
                 12450L,
+                "NONE",
+                null,
+                null,
                 LocalDateTime.of(2026, 5, 7, 14, 32),
                 null
         );

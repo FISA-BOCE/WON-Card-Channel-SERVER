@@ -13,6 +13,9 @@ public record RewardLedgerResponse(
             String baseMonth,
             Long pointAmount,
             String type,
+            String sweepStatus,
+            String sweepFailureCode,
+            String sweepFailureMessage,
             LocalDateTime occurredAt
     ) {
     }

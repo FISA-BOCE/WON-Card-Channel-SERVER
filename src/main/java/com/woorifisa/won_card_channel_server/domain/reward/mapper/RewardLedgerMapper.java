@@ -30,6 +30,9 @@ public class RewardLedgerMapper {
                 response.baseMonth(),
                 response.type(),
                 response.pointAmount(),
+                response.sweepStatus(),
+                response.sweepFailureCode(),
+                response.sweepFailureMessage(),
                 response.occurredAt(),
                 toRewardDetail(response.detail())
 
@@ -54,6 +57,9 @@ public class RewardLedgerMapper {
                 item.baseMonth(),
                 item.pointAmount(),
                 item.type(),
+                item.sweepStatus(),
+                item.sweepFailureCode(),
+                item.sweepFailureMessage(),
                 item.occurredAt()
         );
     }

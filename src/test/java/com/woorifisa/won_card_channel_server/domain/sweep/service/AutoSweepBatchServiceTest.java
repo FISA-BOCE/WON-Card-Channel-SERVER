@@ -1,6 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
-import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSelectionPromotionServiceImpl;
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSelectionPromotionService;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
@@ -31,7 +31,7 @@ class AutoSweepBatchServiceTest {
     private CardCoreRewardSweepApi cardCoreRewardSweepApi;
     private CardChnCardSummaryRepository cardSummaryRepository;
     private AutoSweepRequestService autoSweepRequestService;
-    private AutoInvestSelectionPromotionServiceImpl autoInvestSelectionPromotionService;
+    private AutoInvestSelectionPromotionService autoInvestSelectionPromotionService;
     private AutoSweepBatchService autoSweepBatchService;
 
     private final UUID userUuid = UUID.fromString("a5324ba5-0ee3-44c6-b3d5-a951f9e94df5");
@@ -42,7 +42,7 @@ class AutoSweepBatchServiceTest {
         cardCoreRewardSweepApi = mock(CardCoreRewardSweepApi.class);
         cardSummaryRepository = mock(CardChnCardSummaryRepository.class);
         autoSweepRequestService = mock(AutoSweepRequestService.class);
-        autoInvestSelectionPromotionService = mock(AutoInvestSelectionPromotionServiceImpl.class);
+        autoInvestSelectionPromotionService = mock(AutoInvestSelectionPromotionService.class);
 
         autoSweepBatchService = new AutoSweepBatchService(
                 cardCoreRewardSweepApi,
@@ -117,9 +117,15 @@ class AutoSweepBatchServiceTest {
         assertThat(response.failedCount()).isEqualTo(0);
 
         var inOrder = inOrder(autoInvestSelectionPromotionService, cardCoreRewardSweepApi);
+        ArgumentCaptor<LocalDateTime> batchStartedAtCaptor =
+                ArgumentCaptor.forClass(LocalDateTime.class);
+
         inOrder.verify(autoInvestSelectionPromotionService)
-                .promoteEffectivePendingSelections(any(LocalDateTime.class));
+                .promoteEffectivePendingSelections(batchStartedAtCaptor.capture());
         inOrder.verify(cardCoreRewardSweepApi).getSweepCandidates("2026-05");
+
+        assertThat(batchStartedAtCaptor.getValue())
+                .isEqualTo(LocalDateTime.of(2026, 5, 16, 0, 30));
     }
 
     @Test

@@ -156,10 +156,14 @@ public class CardApplicationService {
             if (data == null || data.userUuid() == null || !userUuid.equals(data.userUuid())) {
                 throw new BusinessException(CardErrorCode.CARD_MAPPING_RESPONSE_INVALID);
             }
-            if (data.cardUserUuid() != null && isCardLinked(data.cardLinkStatus())) {
+            if (data.card() != null
+                    && data.card().cardUserUuid() != null
+                    && Boolean.TRUE.equals(data.card().isConnected())) {
                 throw new BusinessException(CardErrorCode.CARD_ALREADY_EXISTS);
             }
-            if (data.investUserUuid() == null || !isInvestLinked(data.investLinkStatus())) {
+            if (data.invest() == null
+                    || data.invest().investUserUuid() == null
+                    || !Boolean.TRUE.equals(data.invest().isConnected())) {
                 throw new BusinessException(CardErrorCode.CARD_INVEST_LINK_REQUIRED);
             }
 
@@ -168,18 +172,6 @@ public class CardApplicationService {
         } catch (FeignException e) {
             throw new BusinessException(CardErrorCode.CARD_MAPPING_UNAVAILABLE, e);
         }
-    }
-
-    private boolean isInvestLinked(String investLinkStatus) {
-        return investLinkStatus != null
-                && ("LINKED".equalsIgnoreCase(investLinkStatus)
-                || "ACTIVE".equalsIgnoreCase(investLinkStatus));
-    }
-
-    private boolean isCardLinked(String cardLinkStatus) {
-        return cardLinkStatus != null
-                && ("LINKED".equalsIgnoreCase(cardLinkStatus)
-                || "ACTIVE".equalsIgnoreCase(cardLinkStatus));
     }
 
     private CardCoreApplicationRequest buildCoreApplicationRequest(CardApplicationCreateRequest request) {

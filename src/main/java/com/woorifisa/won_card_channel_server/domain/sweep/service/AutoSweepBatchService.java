@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
+import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSelectionPromotionService;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -23,14 +25,22 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class AutoSweepBatchService {
 
+    private static final int MONTHLY_BATCH_DAY = 16;
+    private static final int MONTHLY_BATCH_HOUR = 0;
+    private static final int MONTHLY_BATCH_MINUTE = 30;
     private static final Pattern BASE_MONTH_PATTERN = Pattern.compile("\\d{4}-\\d{2}");
 
     private final CardCoreRewardSweepApi cardCoreRewardSweepApi;
     private final CardChnCardSummaryRepository cardSummaryRepository;
     private final AutoSweepRequestService autoSweepRequestService;
+    private final AutoInvestSelectionPromotionService autoInvestSelectionPromotionService;
 
     public AutoSweepBatchResponse requestMonthlyAutoSweeps(String baseMonth) {
         validateBaseMonth(baseMonth);
+
+        LocalDateTime batchStartedAt = calculateMonthlyBatchStartedAt(baseMonth);
+        int promotedCount = autoInvestSelectionPromotionService.promoteEffectivePendingSelections(batchStartedAt);
+        log.info("자동투자 예약 ETF 승격 완료. baseMonth={}, promotedCount={}", baseMonth, promotedCount);
 
         // Core 후보 조회 Feign 호출
         ApiResponse<CardCoreSweepCandidateResponse> apiResponse;
@@ -116,5 +126,11 @@ public class AutoSweepBatchService {
         } catch (DateTimeParseException e) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
+    }
+
+    private LocalDateTime calculateMonthlyBatchStartedAt(String baseMonth) {
+        return YearMonth.parse(baseMonth)
+                .atDay(MONTHLY_BATCH_DAY)
+                .atTime(MONTHLY_BATCH_HOUR, MONTHLY_BATCH_MINUTE);
     }
 }

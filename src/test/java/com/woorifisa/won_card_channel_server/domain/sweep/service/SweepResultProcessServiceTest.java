@@ -60,6 +60,8 @@ class SweepResultProcessServiceTest {
         assertThat(captor.getValue().correlationId()).isEqualTo("CORR-SWEEP-TEST-1");
         assertThat(captor.getValue().idempotencyKey()).isEqualTo("SWEEP:POINT_LEDGER:1");
         assertThat(captor.getValue().resultStatus()).isEqualTo("COMPLETED");
+        assertThat(captor.getValue().failureCode()).isNull();
+        assertThat(captor.getValue().failureMessage()).isNull();
     }
 
     @Test
@@ -81,6 +83,8 @@ class SweepResultProcessServiceTest {
         inOrder.verify(cardCoreRewardSweepApi).applySweepResult(eq(cardUserUuid), eq(1L), captor.capture());
 
         assertThat(captor.getValue().resultStatus()).isEqualTo("FAILED");
+        assertThat(captor.getValue().failureCode()).isEqualTo("INVEST_FAILED");
+        assertThat(captor.getValue().failureMessage()).isEqualTo("투자 실패");
     }
 
     @Test

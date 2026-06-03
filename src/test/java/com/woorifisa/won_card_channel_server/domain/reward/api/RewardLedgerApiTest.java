@@ -77,6 +77,9 @@ class RewardLedgerApiTest {
                                 "2026-05",
                                 12450L,
                                 "EARN",
+                                "FAILED",
+                                "SWEEP_FAIL_008",
+                                "매수 가능한 금액이 부족합니다.",
                                 LocalDateTime.of(2026, 5, 7, 14, 32)
                         )
                 )
@@ -101,7 +104,10 @@ class RewardLedgerApiTest {
                 .andExpect(jsonPath("$.data.ledgers[0].pointLedgerId").value(1001))
                 .andExpect(jsonPath("$.data.ledgers[0].baseMonth").value("2026-05"))
                 .andExpect(jsonPath("$.data.ledgers[0].pointAmount").value(12450))
-                .andExpect(jsonPath("$.data.ledgers[0].type").value("EARN"));
+                .andExpect(jsonPath("$.data.ledgers[0].type").value("EARN"))
+                .andExpect(jsonPath("$.data.ledgers[0].sweepStatus").value("FAILED"))
+                .andExpect(jsonPath("$.data.ledgers[0].sweepFailureCode").value("SWEEP_FAIL_008"))
+                .andExpect(jsonPath("$.data.ledgers[0].sweepFailureMessage").value("매수 가능한 금액이 부족합니다."));
     }
 
     @Test
@@ -149,6 +155,9 @@ class RewardLedgerApiTest {
                 "2026-05",
                 "EARN",
                 12450L,
+                "FAILED",
+                "SWEEP_FAIL_008",
+                "매수 가능한 금액이 부족합니다.",
                 LocalDateTime.of(2026, 5, 7, 14, 32),
                 new RewardLedgerDetailResponse.RewardDetail(
                         820000L,
@@ -177,6 +186,9 @@ class RewardLedgerApiTest {
                 .andExpect(jsonPath("$.data.baseMonth").value("2026-05"))
                 .andExpect(jsonPath("$.data.type").value("EARN"))
                 .andExpect(jsonPath("$.data.pointAmount").value(12450))
+                .andExpect(jsonPath("$.data.sweepStatus").value("FAILED"))
+                .andExpect(jsonPath("$.data.sweepFailureCode").value("SWEEP_FAIL_008"))
+                .andExpect(jsonPath("$.data.sweepFailureMessage").value("매수 가능한 금액이 부족합니다."))
                 .andExpect(jsonPath("$.data.detail.previousMonthSpendAmount").value(820000))
                 .andExpect(jsonPath("$.data.detail.targetSpendAmount").value(500000))
                 .andExpect(jsonPath("$.data.detail.shortfallAmount").value(0));

@@ -9,6 +9,7 @@ public record CardCoreRewardLedgerResponse(
         List<CardCoreRewardLedgerItem> ledgers
 ) {
     public record CardCoreRewardLedgerItem(Long pointLedgerId, String baseMonth, Long pointAmount,
-                                           String type, LocalDateTime occurredAt) {
+                                           String type, String sweepStatus, String sweepFailureCode,
+                                           String sweepFailureMessage, LocalDateTime occurredAt) {
     }
 }

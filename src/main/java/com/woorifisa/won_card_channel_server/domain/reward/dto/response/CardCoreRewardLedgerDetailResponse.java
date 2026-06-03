@@ -7,6 +7,9 @@ public record CardCoreRewardLedgerDetailResponse(
         String baseMonth,
         String type,
         Long pointAmount,
+        String sweepStatus,
+        String sweepFailureCode,
+        String sweepFailureMessage,
         LocalDateTime occurredAt,
         CardCoreRewardDetail detail
 ) {

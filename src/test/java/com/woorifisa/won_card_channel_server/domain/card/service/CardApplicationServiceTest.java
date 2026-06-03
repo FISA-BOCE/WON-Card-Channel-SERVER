@@ -100,7 +100,8 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
@@ -136,7 +137,8 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUserWithCardUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
@@ -151,8 +153,13 @@ class CardApplicationServiceTest {
                                 LocalDateTime.of(2026, 5, 28, 17, 0), "ACTIVE")));
         given(commonUserMappingApi.updateCardUserMapping(eq(userUuid), any(UpdateCardUserMappingRequest.class)))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, UUID.fromString("22222222-2222-2222-2222-222222222222"),
-                                UUID.fromString("66666666-6666-6666-6666-666666666666"), "LINKED", "LINKED")));
+                        mappingResponse(
+                                userUuid,
+                                UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                                true,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                                true
+                        )));
         service.applyCard(authenticatedUser(), request);
 
         verify(commonUserMappingApi).updateCardUserMapping(eq(userUuid), any(UpdateCardUserMappingRequest.class));
@@ -169,7 +176,8 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
@@ -223,7 +231,8 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
@@ -249,7 +258,8 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
@@ -284,7 +294,8 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, UUID.fromString("66666666-6666-6666-6666-666666666666"), null, "LINKED")));
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
@@ -309,7 +320,7 @@ class CardApplicationServiceTest {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new GetMyUserMappingResponse(1L, userUuid, null, null, null, "UNLINKED")));
+                        mappingResponse(userUuid, null, false, null, false)));
 
         assertThatThrownBy(() -> service.applyCard(authenticatedUser(), request()))
                 .isInstanceOf(BusinessException.class)
@@ -386,5 +397,33 @@ class CardApplicationServiceTest {
                         .body(body, StandardCharsets.UTF_8)
                         .build()
         );
+    }
+
+    private GetMyUserMappingResponse mappingResponse(
+            UUID userUuid,
+            UUID cardUserUuid,
+            boolean cardConnected,
+            UUID investUserUuid,
+            boolean investConnected
+    ) {
+        return new GetMyUserMappingResponse(
+                userUuid,
+                cardMapping(cardUserUuid, cardConnected),
+                investMapping(investUserUuid, investConnected)
+        );
+    }
+
+    private GetMyUserMappingResponse.CardMapping cardMapping(UUID cardUserUuid, boolean connected) {
+        if (cardUserUuid == null && !connected) {
+            return null;
+        }
+        return new GetMyUserMappingResponse.CardMapping(cardUserUuid, connected);
+    }
+
+    private GetMyUserMappingResponse.InvestMapping investMapping(UUID investUserUuid, boolean connected) {
+        if (investUserUuid == null && !connected) {
+            return null;
+        }
+        return new GetMyUserMappingResponse.InvestMapping(investUserUuid, connected);
     }
 }

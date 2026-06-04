@@ -213,14 +213,19 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("empty investment path result throws AIDB_404_001")
-    void investmentPathNotFound() {
+    @DisplayName("MY_POINT_INVESTMENT_PATH returns empty paths when no monthly investment exists")
+    void queryMyPointInvestmentPathWithoutMonthlyInvestment() {
         given(neo4jQueryRepository.findMonthlySweepRequests(USER_UUID, BASE_MONTH, DEFAULT_LIMIT))
                 .willReturn(List.of());
 
-        assertThatThrownBy(() -> service.query(request("MY_POINT_INVESTMENT_PATH", BASE_MONTH)))
-                .isInstanceOfSatisfying(BusinessException.class, e ->
-                        assertThat(e.getErrorCode()).isEqualTo(AiDbErrorCode.QUERY_RESULT_NOT_FOUND));
+        Neo4jQueryResponse response = service.query(request("MY_POINT_INVESTMENT_PATH", BASE_MONTH));
+
+        assertThat(response).isInstanceOf(MyPointInvestmentPathResponse.class);
+        MyPointInvestmentPathResponse result = (MyPointInvestmentPathResponse) response;
+        assertThat(result.queryType()).isEqualTo(Neo4jQueryType.MY_POINT_INVESTMENT_PATH);
+        assertThat(result.userUuid()).isEqualTo(USER_UUID);
+        assertThat(result.baseMonth()).isEqualTo(BASE_MONTH);
+        assertThat(result.investmentPaths()).isEmpty();
     }
 
     @Test

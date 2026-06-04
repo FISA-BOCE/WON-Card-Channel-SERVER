@@ -93,10 +93,6 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
                     DEFAULT_INVESTMENT_PATH_LIMIT
             );
 
-            if (rows.isEmpty()) {
-                throw new BusinessException(AiDbErrorCode.QUERY_RESULT_NOT_FOUND);
-            }
-
             return new MyPointInvestmentPathResponse(
                     Neo4jQueryType.MY_POINT_INVESTMENT_PATH,
                     request.userUuid(),

@@ -11,5 +11,5 @@ public record SameEtfAveragePointResponse(
         BigDecimal averagePointAmount,
         BigDecimal totalPointAmount,
         String baseMonth
-) {
+) implements Neo4jQueryResponse {
 }

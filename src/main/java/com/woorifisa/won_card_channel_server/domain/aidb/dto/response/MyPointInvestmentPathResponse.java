@@ -8,5 +8,5 @@ public record MyPointInvestmentPathResponse(
         UUID userUuid,
         String baseMonth,
         List<InvestmentPath> investmentPaths
-) {
+) implements Neo4jQueryResponse {
 }

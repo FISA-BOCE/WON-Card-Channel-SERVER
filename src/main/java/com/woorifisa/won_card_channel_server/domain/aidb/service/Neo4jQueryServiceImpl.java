@@ -4,6 +4,7 @@ import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRe
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.InvestmentPath;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.MyPointInvestmentPathResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jEtfResponse;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jQueryResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jQueryType;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SameEtfAveragePointResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecutionResponse;
@@ -28,7 +29,7 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
     private final CardAiNeo4jQueryRepository neo4jQueryRepository;
 
     @Override
-    public Object query(AiDbQueryRequest request) {
+    public Neo4jQueryResponse query(AiDbQueryRequest request) {
         Neo4jQueryType queryType = parseQueryType(request.queryType());
         validateBaseMonth(request.params().baseMonth());
 

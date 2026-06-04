@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRequest;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.InvestmentPath;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.MyPointInvestmentPathResponse;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jQueryResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jQueryType;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SameEtfAveragePointResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecutionStatus;
@@ -62,7 +63,7 @@ class Neo4jQueryServiceImplTest {
                         decimal("45001.50")
                 )));
 
-        Object response = service.query(request("SAME_ETF_AVERAGE_POINT", BASE_MONTH));
+        Neo4jQueryResponse response = service.query(request("SAME_ETF_AVERAGE_POINT", BASE_MONTH));
 
         assertThat(response).isInstanceOf(SameEtfAveragePointResponse.class);
         SameEtfAveragePointResponse result = (SameEtfAveragePointResponse) response;
@@ -123,7 +124,7 @@ class Neo4jQueryServiceImplTest {
         given(neo4jQueryRepository.findMonthlySweepRequests(USER_UUID, BASE_MONTH, DEFAULT_LIMIT))
                 .willReturn(List.of(executedRow, pendingRow));
 
-        Object response = service.query(request("MY_POINT_INVESTMENT_PATH", BASE_MONTH));
+        Neo4jQueryResponse response = service.query(request("MY_POINT_INVESTMENT_PATH", BASE_MONTH));
 
         assertThat(response).isInstanceOf(MyPointInvestmentPathResponse.class);
         MyPointInvestmentPathResponse result = (MyPointInvestmentPathResponse) response;

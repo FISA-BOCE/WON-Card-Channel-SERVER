@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,7 +39,7 @@ public class SweepOutboxPublishService {
                     .queueUrl(sqsProperties.sweepRequestQueueUrl())
                     .messageBody(message.payload())
                     .messageDeduplicationId(message.idempotencyKey())
-                    .messageGroupId("SWEEP_REQUESTED")
+                    .messageGroupId(createMessageGroupId(message.cardUserUuid()))
                     .build();
 
             sqsClient.sendMessage(request);
@@ -52,6 +54,11 @@ public class SweepOutboxPublishService {
             log.warn("스윕 Outbox 이벤트 발행 실패. outboxEventId={}, eventId={}, sweepRequestId={}",
                     message.outboxEventId(), message.eventId(), message.sweepRequestId(), e);
         }
+    }
+
+    private String createMessageGroupId(UUID cardUserUuid) {
+        int shard = Math.floorMod(cardUserUuid.hashCode(), publisherProperties.messageGroupShardCount());
+        return "sweep-user-" + shard;
     }
 
 }

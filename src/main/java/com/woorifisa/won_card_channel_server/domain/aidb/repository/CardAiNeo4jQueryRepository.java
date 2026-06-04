@@ -1,5 +1,9 @@
 package com.woorifisa.won_card_channel_server.domain.aidb.repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,7 +73,7 @@ public class CardAiNeo4jQueryRepository {
         this.cardNeo4jDriver = cardNeo4jDriver;
     }
 
-    public Optional<Map<String, Object>> findMonthlySameEtfAveragePointAmount(UUID userUuid, String baseMonth) {
+    public Optional<SameEtfAveragePointRow> findMonthlySameEtfAveragePointAmount(UUID userUuid, String baseMonth) {
         Map<String, Object> parameters = Map.of(
                 "userUuid", userUuid.toString(),
                 "baseMonth", baseMonth
@@ -77,13 +81,13 @@ public class CardAiNeo4jQueryRepository {
 
         try (var session = cardNeo4jDriver.session()) {
             return session.executeRead(tx -> tx.run(FIND_MONTHLY_SAME_ETF_AVERAGE_POINT_AMOUNT, parameters)
-                    .list(Record::asMap)
+                    .list(record -> toSameEtfAveragePointRow(record.asMap()))
                     .stream()
                     .findFirst());
         }
     }
 
-    public List<Map<String, Object>> findMonthlySweepRequests(UUID userUuid, String baseMonth, int limit) {
+    public List<MonthlySweepRequestRow> findMonthlySweepRequests(UUID userUuid, String baseMonth, int limit) {
         Map<String, Object> parameters = Map.of(
                 "userUuid", userUuid.toString(),
                 "baseMonth", baseMonth,
@@ -92,7 +96,113 @@ public class CardAiNeo4jQueryRepository {
 
         try (var session = cardNeo4jDriver.session()) {
             return session.executeRead(tx -> tx.run(FIND_MONTHLY_SWEEP_REQUESTS, parameters)
-                    .list(Record::asMap));
+                    .list(record -> toMonthlySweepRequestRow(record.asMap())));
         }
+    }
+
+    private SameEtfAveragePointRow toSameEtfAveragePointRow(Map<String, Object> row) {
+        return new SameEtfAveragePointRow(
+                toLong(row.get("selectedEtfId")),
+                toStringValue(row.get("selectedEtfTicker")),
+                toStringValue(row.get("selectedEtfName")),
+                toLong(row.get("sameEtfUserCount")),
+                toBigDecimal(row.get("averagePointAmount")),
+                toBigDecimal(row.get("totalPointAmount"))
+        );
+    }
+
+    private MonthlySweepRequestRow toMonthlySweepRequestRow(Map<String, Object> row) {
+        return new MonthlySweepRequestRow(
+                toLong(row.get("sweepRequestId")),
+                toBigDecimal(row.get("pointAmount")),
+                toBigDecimal(row.get("krwAmount")),
+                toStringValue(row.get("requestStatus")),
+                toLocalDateTime(row.get("requestedAt")),
+                toLocalDateTime(row.get("requestCompletedAt")),
+                toLong(row.get("etfId")),
+                toStringValue(row.get("ticker")),
+                toStringValue(row.get("etfName")),
+                toLong(row.get("sweepId")),
+                toStringValue(row.get("sweepStatus")),
+                toLocalDateTime(row.get("receivedAt")),
+                toLocalDateTime(row.get("startedAt")),
+                toLocalDateTime(row.get("executionCompletedAt")),
+                toStringValue(row.get("failReason"))
+        );
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.valueOf(value.toString());
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof BigDecimal bigDecimal) {
+            return bigDecimal;
+        }
+        if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
+            return BigDecimal.valueOf(((Number) value).longValue());
+        }
+        if (value instanceof Number number) {
+            return new BigDecimal(number.toString());
+        }
+        return new BigDecimal(value.toString());
+    }
+
+    private LocalDateTime toLocalDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDateTime localDateTime) {
+            return localDateTime;
+        }
+        if (value instanceof ZonedDateTime zonedDateTime) {
+            return zonedDateTime.toLocalDateTime();
+        }
+        if (value instanceof OffsetDateTime offsetDateTime) {
+            return offsetDateTime.toLocalDateTime();
+        }
+        return LocalDateTime.parse(value.toString());
+    }
+
+    private String toStringValue(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    public record SameEtfAveragePointRow(
+            Long selectedEtfId,
+            String selectedEtfTicker,
+            String selectedEtfName,
+            Long sameEtfUserCount,
+            BigDecimal averagePointAmount,
+            BigDecimal totalPointAmount
+    ) {
+    }
+
+    public record MonthlySweepRequestRow(
+            Long sweepRequestId,
+            BigDecimal pointAmount,
+            BigDecimal krwAmount,
+            String requestStatus,
+            LocalDateTime requestedAt,
+            LocalDateTime requestCompletedAt,
+            Long etfId,
+            String ticker,
+            String etfName,
+            Long sweepId,
+            String sweepStatus,
+            LocalDateTime receivedAt,
+            LocalDateTime startedAt,
+            LocalDateTime executionCompletedAt,
+            String failReason
+    ) {
     }
 }

@@ -332,6 +332,31 @@ class CardApplicationServiceTest {
         verify(autoInvestSubscriptionService, never()).createInitialSubscription(any(), any(), any(), any());
     }
 
+    @Test
+    @DisplayName("카드 연결 상태가 true인데 cardUserUuid가 없으면 잘못된 매핑 응답으로 처리한다")
+    void applyCardWithConnectedCardButMissingCardUserUuid() {
+        given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
+        given(commonUserMappingApi.getMappingStatus(userUuid))
+                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                        new GetMyUserMappingResponse(
+                                userUuid,
+                                new GetMyUserMappingResponse.CardMapping(null, true),
+                                new GetMyUserMappingResponse.InvestMapping(
+                                        UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                                        true
+                                )
+                        )));
+
+        assertThatThrownBy(() -> service.applyCard(authenticatedUser(), request()))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(CardErrorCode.CARD_MAPPING_RESPONSE_INVALID);
+
+        verify(investChannelAutoInvestApi, never()).getInvestmentAccount(any(), any());
+        verify(cardCoreCardApplicationApi, never()).applyCard(any(), any());
+        verify(autoInvestSubscriptionService, never()).createInitialSubscription(any(), any(), any(), any());
+    }
+
     private AuthenticatedUser authenticatedUser() {
         return new AuthenticatedUser(authUserUuid, userUuid, "test-jti");
     }

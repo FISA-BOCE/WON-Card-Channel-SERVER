@@ -156,9 +156,13 @@ public class CardApplicationService {
             if (data == null || data.userUuid() == null || !userUuid.equals(data.userUuid())) {
                 throw new BusinessException(CardErrorCode.CARD_MAPPING_RESPONSE_INVALID);
             }
-            if (data.card() != null
-                    && data.card().cardUserUuid() != null
-                    && Boolean.TRUE.equals(data.card().isConnected())) {
+            boolean isCardConnected = data.card() != null
+                    && Boolean.TRUE.equals(data.card().isConnected());
+
+            if (isCardConnected && data.card().cardUserUuid() == null) {
+                throw new BusinessException(CardErrorCode.CARD_MAPPING_RESPONSE_INVALID);
+            }
+            if (isCardConnected && data.card().cardUserUuid() != null) {
                 throw new BusinessException(CardErrorCode.CARD_ALREADY_EXISTS);
             }
             if (data.invest() == null

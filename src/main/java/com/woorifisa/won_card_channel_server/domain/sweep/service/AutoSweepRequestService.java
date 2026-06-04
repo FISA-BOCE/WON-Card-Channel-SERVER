@@ -3,6 +3,7 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.ReservedSweepCreateCommand;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepRequestedEvent;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepRequestResponse;
@@ -23,6 +24,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -106,6 +108,23 @@ public class AutoSweepRequestService {
         }
     }
 
+    @Transactional
+    public SweepRequestCreateResponse createSweepRequestFromReservedItem(ReservedSweepCreateCommand command) {
+        validateReservedCommand(command);
+        validateNotDuplicated(command.pointLedgerId(), command.idempotencyKey());
+
+        AutoSweepTarget target = AutoSweepTarget.of(command);
+        validateTarget(target);
+
+        return createSweepRequestAndOutbox(
+                target,
+                command.idempotencyKey(),
+                command.correlationId(),
+                command.eventId(),
+                command.requestedAt()
+        );
+    }
+
     private void compensateSweepRequest(UUID cardUserUuid, Long pointLedgerId) {
         try {
             cardCoreRewardSweepApi.cancelSweepRequest(cardUserUuid, pointLedgerId);
@@ -151,11 +170,29 @@ public class AutoSweepRequestService {
         String correlationId = UUID.randomUUID().toString();
         String eventId = EVENT_ID_PREFIX + UUID.randomUUID();
 
+        return createSweepRequestAndOutbox(
+                target,
+                idempotencyKey,
+                correlationId,
+                eventId,
+                LocalDateTime.now()
+        );
+    }
+
+    private SweepRequestCreateResponse createSweepRequestAndOutbox(
+            AutoSweepTarget target,
+            String idempotencyKey,
+            String correlationId,
+            String eventId,
+            LocalDateTime requestedAt
+    ) {
+
         try {
             Sweep sweep = Sweep.createPendingPublish(
                     target,
                     correlationId,
-                    idempotencyKey
+                    idempotencyKey,
+                    requestedAt
             );
 
             Sweep savedSweep = sweepRepository.save(sweep);
@@ -215,6 +252,24 @@ public class AutoSweepRequestService {
                 || request.cardUserUuid() == null
                 || request.pointLedgerId() == null
                 || request.etfId() == null) {
+            throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
+        }
+    }
+
+    private void validateReservedCommand(ReservedSweepCreateCommand command) {
+        if (command == null
+                || command.userUuid() == null
+                || command.cardUserUuid() == null
+                || command.performanceId() == null
+                || command.pointLedgerId() == null
+                || command.baseMonth() == null || command.baseMonth().isBlank()
+                || command.pointAmount() == null
+                || command.krwAmount() == null
+                || command.etfId() == null
+                || command.eventId() == null || command.eventId().isBlank()
+                || command.correlationId() == null || command.correlationId().isBlank()
+                || command.idempotencyKey() == null || command.idempotencyKey().isBlank()
+                || command.requestedAt() == null) {
             throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
         }
     }

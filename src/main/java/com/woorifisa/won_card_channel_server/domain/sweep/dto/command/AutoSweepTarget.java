@@ -21,4 +21,17 @@ public record AutoSweepTarget(
                 request.etfId()
         );
     }
+
+    public static AutoSweepTarget of(ReservedSweepCreateCommand command) {
+        return new AutoSweepTarget(
+                command.userUuid(),
+                command.cardUserUuid(),
+                command.performanceId(),
+                command.pointLedgerId(),
+                command.baseMonth(),
+                command.pointAmount(),
+                command.krwAmount(),
+                command.etfId()
+        );
+    }
 }

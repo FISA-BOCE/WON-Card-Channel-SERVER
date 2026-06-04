@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
+import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.global.config.SqsProperties;
 import com.woorifisa.won_card_channel_server.global.config.SweepOutboxPublisherProperties;
@@ -57,6 +58,10 @@ public class SweepOutboxPublishService {
     }
 
     private String createMessageGroupId(UUID cardUserUuid) {
+        if (cardUserUuid == null) {
+            throw new BusinessException(CardErrorCode.CARD_USER_NOT_FOUND);
+        }
+
         int shard = Math.floorMod(cardUserUuid.hashCode(), publisherProperties.messageGroupShardCount());
         return "sweep-user-" + shard;
     }

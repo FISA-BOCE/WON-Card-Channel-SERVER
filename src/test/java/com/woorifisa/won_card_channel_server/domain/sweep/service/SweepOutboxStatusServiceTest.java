@@ -2,10 +2,12 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,9 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,11 +30,14 @@ class SweepOutboxStatusServiceTest {
     @Mock
     private SweepOutboxRepository outboxRepository;
 
+    @Mock
+    private SweepRepository sweepRepository;
+
     private SweepOutboxStatusService statusService;
 
     @BeforeEach
     void setUp() {
-        statusService = new SweepOutboxStatusService(outboxRepository);
+        statusService = new SweepOutboxStatusService(outboxRepository, sweepRepository);
     }
 
     @Test
@@ -42,6 +49,9 @@ class SweepOutboxStatusServiceTest {
         outbox.markProcessing();
 
         when(outboxRepository.findById(1L)).thenReturn(Optional.of(outbox));
+        Sweep sweep = mock(Sweep.class);
+        when(sweep.getCardUserUuid()).thenReturn(UUID.fromString("22222222-2222-2222-2222-222222222222"));
+        when(sweepRepository.findById(2L)).thenReturn(Optional.of(sweep));
 
         // when
         SweepOutboxPublishMessage message = statusService.getPublishMessage(1L);
@@ -52,6 +62,7 @@ class SweepOutboxStatusServiceTest {
         assertThat(message.eventId()).isEqualTo("CARD-SWEEP-1");
         assertThat(message.payload()).contains("\"eventType\":\"SWEEP_REQUESTED\"");
         assertThat(message.idempotencyKey()).isEqualTo("SWEEP:POINT_LEDGER:1");
+        assertThat(message.cardUserUuid()).isEqualTo(UUID.fromString("22222222-2222-2222-2222-222222222222"));
     }
 
     @Test

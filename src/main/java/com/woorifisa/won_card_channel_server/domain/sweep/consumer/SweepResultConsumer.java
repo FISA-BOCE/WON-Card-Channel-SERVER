@@ -9,8 +9,8 @@ import com.woorifisa.won_card_channel_server.domain.sweep.service.SweepResultPro
 import com.woorifisa.won_card_channel_server.global.config.SqsProperties;
 import com.woorifisa.won_card_channel_server.global.config.SweepResultConsumerProperties;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -19,8 +19,9 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+import java.util.concurrent.Executor;
+
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class SweepResultConsumer {
 
@@ -30,7 +31,25 @@ public class SweepResultConsumer {
     private final ObjectMapper objectMapper;
     private final SweepResultInboxService inboxService;
     private final SweepResultProcessService processService;
+    private final Executor executor;
 
+    public SweepResultConsumer(
+            SqsClient sqsClient,
+            SqsProperties sqsProperties,
+            SweepResultConsumerProperties properties,
+            ObjectMapper objectMapper,
+            SweepResultInboxService inboxService,
+            SweepResultProcessService processService,
+            @Qualifier("sweepResultConsumerExecutor") Executor executor
+    ) {
+        this.sqsClient = sqsClient;
+        this.sqsProperties = sqsProperties;
+        this.properties = properties;
+        this.objectMapper = objectMapper;
+        this.inboxService = inboxService;
+        this.processService = processService;
+        this.executor = executor;
+    }
     @Scheduled(fixedDelayString = "${sweep.result.consumer.fixed-delay-ms:10000}")
     public void poll() {
         if (!properties.enabled()) {
@@ -46,7 +65,15 @@ public class SweepResultConsumer {
         );
 
         for (Message message : response.messages()) {
+            executor.execute(() -> handleSafely(message));
+        }
+    }
+
+    private void handleSafely(Message message) {
+        try {
             handle(message);
+        } catch (Exception e) {
+            log.warn("스윕 결과 메시지 worker 처리 실패. messageId={}", message.messageId(), e);
         }
     }
 

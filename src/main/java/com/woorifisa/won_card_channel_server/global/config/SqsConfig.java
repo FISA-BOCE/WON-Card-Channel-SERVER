@@ -15,6 +15,7 @@ import java.net.URI;
 @Configuration
 @EnableConfigurationProperties({
         SqsProperties.class,
+        SweepBatchProperties.class,
         SweepOutboxPublisherProperties.class,
         SweepResultConsumerProperties.class
 })

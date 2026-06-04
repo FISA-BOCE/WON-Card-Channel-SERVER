@@ -22,7 +22,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -56,6 +58,7 @@ public class AutoSweepBatchService {
         int requestedCount = 0;
         int skippedCount = 0;
         int failedCount = 0;
+        Set<Long> reservedPointLedgerIds = new HashSet<>();
 
         while (true) {
             CardCoreSweepReservationResponse reservation =
@@ -66,6 +69,8 @@ public class AutoSweepBatchService {
             if (reservedItems.isEmpty()) {
                 break;
             }
+
+            validateReservationItems(reservedItems, baseMonth, reservedPointLedgerIds);
 
             candidateCount += reservedItems.size();
 
@@ -199,7 +204,35 @@ public class AutoSweepBatchService {
             throw new BusinessException(SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
         }
 
+        if (!batchExecutionId.equals(apiResponse.data().batchExecutionId())) {
+            throw new BusinessException(SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
+        }
+
         return apiResponse.data();
+    }
+
+    private void validateReservationItems(
+            List<CardCoreSweepReservedItemResponse> reservedItems,
+            String baseMonth,
+            Set<Long> reservedPointLedgerIds
+    ) {
+        boolean hasNewReservedItem = false;
+
+        for (CardCoreSweepReservedItemResponse reservedItem : reservedItems) {
+            validateReservedItem(reservedItem);
+
+            if (!baseMonth.equals(reservedItem.baseMonth())) {
+                throw new BusinessException(SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
+            }
+
+            if (reservedPointLedgerIds.add(reservedItem.pointLedgerId())) {
+                hasNewReservedItem = true;
+            }
+        }
+
+        if (!hasNewReservedItem) {
+            throw new BusinessException(SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
+        }
     }
 
     private void validateReservedItem(CardCoreSweepReservedItemResponse reservedItem) {

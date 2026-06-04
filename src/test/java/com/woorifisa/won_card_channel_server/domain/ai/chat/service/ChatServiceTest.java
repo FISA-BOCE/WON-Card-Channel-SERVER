@@ -42,9 +42,7 @@ class ChatServiceTest {
     @Mock private SpendSummaryRepository spendSummaryRepository;
     @Mock private InvestSummaryRepository investSummaryRepository;
     @Mock private Driver cardNeo4jDriver;
-    @Mock private Driver securitiesNeo4jDriver;
     @Mock private Session cardSession;
-    @Mock private Session securitiesSession;
     @Mock private Result neo4jResult;
 
     private ChatService chatService;
@@ -56,8 +54,7 @@ class ChatServiceTest {
                 spendSummaryRepository,
                 investSummaryRepository,
                 new ObjectMapper(),
-                cardNeo4jDriver,
-                securitiesNeo4jDriver
+                cardNeo4jDriver
         );
     }
 
@@ -84,7 +81,7 @@ class ChatServiceTest {
     }
 
     @Test
-    @DisplayName("증권 MySQL 의도로 분류되면 InvestSummary와 증권 Neo4j를 함께 조회하고 답변을 생성한다")
+    @DisplayName("증권 MySQL 의도로 분류되면 InvestSummary를 조회하고 답변을 생성한다")
     @SuppressWarnings("unchecked")
     void processChat_증권MySQL의도_성공() {
         // given
@@ -92,11 +89,6 @@ class ChatServiceTest {
                 .willReturn(new ClassifyResult(QueryIntent.ETF_HOLDINGS, 0.88, Map.of()));
         given(investSummaryRepository.findByUserUuid(USER_UUID))
                 .willReturn(Optional.of(investSummary()));
-        given(securitiesNeo4jDriver.session()).willReturn(securitiesSession);
-        given(securitiesSession.run(anyString(), any(Map.class))).willReturn(neo4jResult);
-        given(neo4jResult.list(any())).willReturn(
-                List.of(Map.of("etfName", "TIGER 200", "quantity", 5L, "currentValue", 520000L))
-        );
         given(openAiService.generateResponse(anyString(), eq(QueryIntent.ETF_HOLDINGS), anyString()))
                 .willReturn(new GenerateResult("현재 ETF 보유 현황입니다.", List.of("수익률 비교해줘")));
 
@@ -105,7 +97,7 @@ class ChatServiceTest {
 
         // then
         assertThat(response.answer()).isEqualTo("현재 ETF 보유 현황입니다.");
-        assertThat(response.contextUsed()).containsExactlyInAnyOrder("INVESTMENT_DATA", "SECURITIES_GRAPH");
+        assertThat(response.contextUsed()).containsExactly("INVESTMENT_DATA");
         then(spendSummaryRepository).shouldHaveNoInteractions();
         then(cardNeo4jDriver).shouldHaveNoInteractions();
     }
@@ -214,41 +206,13 @@ class ChatServiceTest {
     }
 
     @Test
-    @DisplayName("증권 MySQL 조회 실패해도 증권 Neo4j 조회에 성공하면 partial 응답을 반환한다")
-    @SuppressWarnings("unchecked")
-    void processChat_증권MySQL실패_Neo4j성공_partial응답() {
-        // given
-        given(openAiService.classifyIntent("내 ETF 보유 현황"))
-                .willReturn(new ClassifyResult(QueryIntent.ETF_HOLDINGS, 0.85, Map.of()));
-        given(investSummaryRepository.findByUserUuid(USER_UUID))
-                .willThrow(new RuntimeException("MySQL 연결 실패"));
-        given(securitiesNeo4jDriver.session()).willReturn(securitiesSession);
-        given(securitiesSession.run(anyString(), any(Map.class))).willReturn(neo4jResult);
-        given(neo4jResult.list(any())).willReturn(
-                List.of(Map.of("etfName", "TIGER 200", "quantity", 5L, "currentValue", 520000L))
-        );
-        given(openAiService.generateResponse(anyString(), eq(QueryIntent.ETF_HOLDINGS), anyString()))
-                .willReturn(new GenerateResult("그래프 기반 ETF 보유 현황입니다.", List.of("수익률 알려줘")));
-
-        // when
-        ChatResponse response = chatService.processChat("내 ETF 보유 현황", USER_UUID);
-
-        // then
-        assertThat(response.answer()).isEqualTo("그래프 기반 ETF 보유 현황입니다.");
-        assertThat(response.contextUsed()).containsExactly("SECURITIES_GRAPH");
-        then(spendSummaryRepository).shouldHaveNoInteractions();
-        then(cardNeo4jDriver).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("증권 Neo4j 조회 실패해도 증권 MySQL 조회에 성공하면 partial 응답을 반환한다")
-    void processChat_증권Neo4j실패_MySQL성공_partial응답() {
+    @DisplayName("증권 MySQL 조회에 성공하면 ETF 응답을 반환한다")
+    void processChat_증권MySQL성공_ETF응답() {
         // given
         given(openAiService.classifyIntent("내 ETF 보유 현황"))
                 .willReturn(new ClassifyResult(QueryIntent.ETF_HOLDINGS, 0.85, Map.of()));
         given(investSummaryRepository.findByUserUuid(USER_UUID))
                 .willReturn(Optional.of(investSummary()));
-        given(securitiesNeo4jDriver.session()).willThrow(new RuntimeException("Neo4j 연결 실패"));
         given(openAiService.generateResponse(anyString(), eq(QueryIntent.ETF_HOLDINGS), anyString()))
                 .willReturn(new GenerateResult("MySQL 기반 ETF 보유 현황입니다.", List.of("수익률 알려줘")));
 

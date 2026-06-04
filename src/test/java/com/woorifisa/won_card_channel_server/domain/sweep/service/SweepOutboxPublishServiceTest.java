@@ -129,6 +129,34 @@ class SweepOutboxPublishServiceTest {
         verify(statusService, never()).markPublishFailed(any(), any(), anyInt());
     }
 
+    @Test
+    @DisplayName("cardUserUuid가 없으면 SQS 발행 없이 Outbox 실패 상태를 반영한다")
+    void publishFailWhenCardUserUuidIsNull() {
+        // given
+        SweepOutboxPublishMessage message = new SweepOutboxPublishMessage(
+                1L,
+                2L,
+                "CARD-SWEEP-988351d5-6242-4299-86ef-465cd9809874",
+                "{\"eventType\":\"SWEEP_REQUESTED\",\"pointLedgerId\":1,\"etfId\":100}",
+                "SWEEP:POINT_LEDGER:1",
+                null
+        );
+
+        when(statusService.getPublishMessage(1L)).thenReturn(message);
+
+        // when
+        publishService.publish(1L);
+
+        // then
+        verify(sqsClient, never()).sendMessage(any(SendMessageRequest.class));
+        verify(statusService, never()).markPublished(any());
+        verify(statusService).markPublishFailed(
+                eq(1L),
+                contains("cardUserUuid must not be null"),
+                eq(3)
+        );
+    }
+
     private SweepOutboxPublishMessage createPublishMessage() {
         return new SweepOutboxPublishMessage(
                 1L,

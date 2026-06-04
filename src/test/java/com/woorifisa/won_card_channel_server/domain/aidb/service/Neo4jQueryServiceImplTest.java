@@ -157,7 +157,7 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("unsupported queryType throws CHAT_400_003")
+    @DisplayName("unsupported queryType throws AIDB_400_003")
     void unsupportedQueryType() {
         assertThatThrownBy(() -> service.query(request("UNKNOWN_QUERY", BASE_MONTH)))
                 .isInstanceOfSatisfying(BusinessException.class, e ->
@@ -167,7 +167,7 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("invalid baseMonth throws CHAT_400_004")
+    @DisplayName("invalid baseMonth throws AIDB_400_004")
     void invalidBaseMonth() {
         assertThatThrownBy(() -> service.query(request("SAME_ETF_AVERAGE_POINT", "2025-99")))
                 .isInstanceOfSatisfying(BusinessException.class, e ->
@@ -177,7 +177,7 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("empty same ETF average result throws CHAT_404_001")
+    @DisplayName("empty same ETF average result throws AIDB_404_001")
     void sameEtfAveragePointNotFound() {
         given(neo4jQueryRepository.findMonthlySameEtfAveragePointAmount(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
@@ -188,7 +188,7 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("empty investment path result throws CHAT_404_001")
+    @DisplayName("empty investment path result throws AIDB_404_001")
     void investmentPathNotFound() {
         given(neo4jQueryRepository.findMonthlySweepRequests(USER_UUID, BASE_MONTH, DEFAULT_LIMIT))
                 .willReturn(List.of());
@@ -199,7 +199,7 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("Neo4jException is mapped to CHAT_500_002")
+    @DisplayName("Neo4jException is mapped to AIDB_500_002")
     void graphQueryFailed() {
         given(neo4jQueryRepository.findMonthlySameEtfAveragePointAmount(USER_UUID, BASE_MONTH))
                 .willThrow(new ServiceUnavailableException("neo4j down"));
@@ -250,3 +250,4 @@ class Neo4jQueryServiceImplTest {
         return new BigDecimal(value);
     }
 }
+

@@ -98,7 +98,7 @@ class AiDbQueryApiTest {
                         .content(requestJson("UNKNOWN_QUERY", "2025-06")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.code").value("CHAT_400_003"))
+                .andExpect(jsonPath("$.code").value("AIDB_400_003"))
                 .andExpect(jsonPath("$.message").value("지원하지 않는 queryType입니다."));
     }
 
@@ -114,5 +114,6 @@ class AiDbQueryApiTest {
         return new BigDecimal(value);
     }
 }
+
 
 

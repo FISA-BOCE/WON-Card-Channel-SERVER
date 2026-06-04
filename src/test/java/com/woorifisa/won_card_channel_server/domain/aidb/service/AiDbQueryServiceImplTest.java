@@ -107,7 +107,7 @@ class AiDbQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("unsupported queryType throws CHAT_400_003")
+    @DisplayName("unsupported queryType throws AIDB_400_003")
     void unsupportedQueryType() {
         assertThatThrownBy(() -> service.query(request("UNKNOWN_QUERY", BASE_MONTH)))
                 .isInstanceOfSatisfying(BusinessException.class, e ->
@@ -115,7 +115,7 @@ class AiDbQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("null queryType throws CHAT_400_003")
+    @DisplayName("null queryType throws AIDB_400_003")
     void nullQueryType() {
         assertThatThrownBy(() -> service.query(request(null, BASE_MONTH)))
                 .isInstanceOfSatisfying(BusinessException.class, e ->
@@ -123,7 +123,7 @@ class AiDbQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("invalid baseMonth throws CHAT_400_004")
+    @DisplayName("invalid baseMonth throws AIDB_400_004")
     void invalidBaseMonth() {
         assertThatThrownBy(() -> service.query(request("CARD_MONTHLY_TOTAL_SPEND", "2025-99")))
                 .isInstanceOfSatisfying(BusinessException.class, e ->
@@ -131,7 +131,7 @@ class AiDbQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("no query result throws CHAT_404_001")
+    @DisplayName("no query result throws AIDB_404_001")
     void resultNotFound() {
         given(spendSummaryRepository.findCurrentMonthEarnedAmountByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
@@ -142,7 +142,7 @@ class AiDbQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("DataAccessException is mapped to CHAT_500_001")
+    @DisplayName("DataAccessException is mapped to AIDB_500_001")
     void mysqlQueryFailed() {
         given(spendSummaryRepository.findCurrentMonthEarnedAmountByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
                 .willThrow(new DataRetrievalFailureException("db down"));
@@ -171,3 +171,4 @@ class AiDbQueryServiceImplTest {
         return new BigDecimal(value);
     }
 }
+

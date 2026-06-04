@@ -11,7 +11,9 @@ import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Investment
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.MyPointInvestmentPathResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jQueryType;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SameEtfAveragePointResponse;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecutionStatus;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecutionResponse;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepRequestStatus;
 import com.woorifisa.won_card_channel_server.domain.aidb.exception.AiDbErrorCode;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.MonthlySweepRequestRow;
@@ -88,14 +90,14 @@ class Neo4jQueryServiceImplTest {
                 100L,
                 decimal("12000"),
                 decimal("12000"),
-                "SUCCEEDED",
+                SweepRequestStatus.COMPLETED,
                 requestedAt,
                 requestCompletedAt,
                 1L,
                 "SPY",
                 "SPDR S&P 500 ETF Trust",
                 200L,
-                "SUCCEEDED",
+                SweepExecutionStatus.COMPLETED,
                 receivedAt,
                 startedAt,
                 executionCompletedAt,
@@ -105,7 +107,7 @@ class Neo4jQueryServiceImplTest {
                 101L,
                 decimal("8000"),
                 decimal("8000"),
-                "PENDING",
+                SweepRequestStatus.READY,
                 requestedAt.plusDays(1),
                 null,
                 2L,
@@ -134,7 +136,7 @@ class Neo4jQueryServiceImplTest {
         assertThat(executedPath.sweepRequestId()).isEqualTo(100L);
         assertThat(executedPath.pointAmount()).isEqualByComparingTo("12000");
         assertThat(executedPath.krwAmount()).isEqualByComparingTo("12000");
-        assertThat(executedPath.requestStatus()).isEqualTo("SUCCEEDED");
+        assertThat(executedPath.requestStatus()).isEqualTo(SweepRequestStatus.COMPLETED);
         assertThat(executedPath.requestedAt()).isEqualTo(requestedAt);
         assertThat(executedPath.completedAt()).isEqualTo(requestCompletedAt);
         assertThat(executedPath.targetEtf().ticker()).isEqualTo("SPY");
@@ -142,7 +144,7 @@ class Neo4jQueryServiceImplTest {
         SweepExecutionResponse execution = executedPath.execution();
         assertThat(execution).isNotNull();
         assertThat(execution.sweepId()).isEqualTo(200L);
-        assertThat(execution.sweepStatus()).isEqualTo("SUCCEEDED");
+        assertThat(execution.sweepStatus()).isEqualTo(SweepExecutionStatus.COMPLETED);
         assertThat(execution.receivedAt()).isEqualTo(receivedAt);
         assertThat(execution.startedAt()).isEqualTo(startedAt);
         assertThat(execution.completedAt()).isEqualTo(executionCompletedAt);
@@ -231,7 +233,7 @@ class Neo4jQueryServiceImplTest {
                 100L,
                 decimal("12000"),
                 decimal("12000"),
-                "SUCCEEDED",
+                SweepRequestStatus.COMPLETED,
                 LocalDateTime.of(2025, 6, 10, 9, 30),
                 LocalDateTime.of(2025, 6, 10, 9, 35),
                 1L,

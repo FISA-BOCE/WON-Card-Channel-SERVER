@@ -7,7 +7,7 @@ public record InvestmentPath(
         Long sweepRequestId,
         BigDecimal pointAmount,
         BigDecimal krwAmount,
-        String requestStatus,
+        SweepRequestStatus requestStatus,
         LocalDateTime requestedAt,
         LocalDateTime completedAt,
         Neo4jEtfResponse targetEtf,

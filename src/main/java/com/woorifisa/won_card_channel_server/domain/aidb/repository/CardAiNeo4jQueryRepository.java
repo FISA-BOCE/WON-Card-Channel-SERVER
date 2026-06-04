@@ -1,5 +1,7 @@
 package com.woorifisa.won_card_channel_server.domain.aidb.repository;
 
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecutionStatus;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepRequestStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -21,7 +23,7 @@ public class CardAiNeo4jQueryRepository {
             MATCH (other:User)-[:SELECTED]->(etf)
             WHERE other.userUuid <> me.userUuid
             MATCH (other)-[:REQUESTED_SWEEP]->(sr:SweepRequest)-[:TARGETS]->(etf)
-            WHERE sr.requestStatus = 'SUCCEEDED'
+            WHERE sr.requestStatus = $completedRequestStatus
               AND sr.baseMonth = $baseMonth
             WITH
                 me,
@@ -76,7 +78,8 @@ public class CardAiNeo4jQueryRepository {
     public Optional<SameEtfAveragePointRow> findMonthlySameEtfAveragePointAmount(UUID userUuid, String baseMonth) {
         Map<String, Object> parameters = Map.of(
                 "userUuid", userUuid.toString(),
-                "baseMonth", baseMonth
+                "baseMonth", baseMonth,
+                "completedRequestStatus", SweepRequestStatus.COMPLETED.name()
         );
 
         try (var session = cardNeo4jDriver.session()) {
@@ -116,14 +119,14 @@ public class CardAiNeo4jQueryRepository {
                 toLong(row.get("sweepRequestId")),
                 toBigDecimal(row.get("pointAmount")),
                 toBigDecimal(row.get("krwAmount")),
-                toStringValue(row.get("requestStatus")),
+                toSweepRequestStatus(row.get("requestStatus")),
                 toLocalDateTime(row.get("requestedAt")),
                 toLocalDateTime(row.get("requestCompletedAt")),
                 toLong(row.get("etfId")),
                 toStringValue(row.get("ticker")),
                 toStringValue(row.get("etfName")),
                 toLong(row.get("sweepId")),
-                toStringValue(row.get("sweepStatus")),
+                toSweepExecutionStatus(row.get("sweepStatus")),
                 toLocalDateTime(row.get("receivedAt")),
                 toLocalDateTime(row.get("startedAt")),
                 toLocalDateTime(row.get("executionCompletedAt")),
@@ -177,6 +180,14 @@ public class CardAiNeo4jQueryRepository {
         return value == null ? null : value.toString();
     }
 
+    private SweepRequestStatus toSweepRequestStatus(Object value) {
+        return value == null ? null : SweepRequestStatus.valueOf(value.toString());
+    }
+
+    private SweepExecutionStatus toSweepExecutionStatus(Object value) {
+        return value == null ? null : SweepExecutionStatus.valueOf(value.toString());
+    }
+
     public record SameEtfAveragePointRow(
             Long selectedEtfId,
             String selectedEtfTicker,
@@ -191,14 +202,14 @@ public class CardAiNeo4jQueryRepository {
             Long sweepRequestId,
             BigDecimal pointAmount,
             BigDecimal krwAmount,
-            String requestStatus,
+            SweepRequestStatus requestStatus,
             LocalDateTime requestedAt,
             LocalDateTime requestCompletedAt,
             Long etfId,
             String ticker,
             String etfName,
             Long sweepId,
-            String sweepStatus,
+            SweepExecutionStatus sweepStatus,
             LocalDateTime receivedAt,
             LocalDateTime startedAt,
             LocalDateTime executionCompletedAt,

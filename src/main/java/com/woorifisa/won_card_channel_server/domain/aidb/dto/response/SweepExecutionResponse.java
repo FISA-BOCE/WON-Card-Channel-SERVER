@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record SweepExecutionResponse(
         Long sweepId,
-        String sweepStatus,
+        SweepExecutionStatus sweepStatus,
         LocalDateTime receivedAt,
         LocalDateTime startedAt,
         LocalDateTime completedAt,

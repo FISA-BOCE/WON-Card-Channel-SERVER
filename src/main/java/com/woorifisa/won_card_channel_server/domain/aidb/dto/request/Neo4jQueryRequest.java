@@ -20,7 +20,7 @@ public record Neo4jQueryRequest(
 
     public record Params(
             @NotBlank
-            @Pattern(regexp = "^\\d{4}-\\d{2}$")
+            @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])$")
             String baseMonth
     ) {
     }

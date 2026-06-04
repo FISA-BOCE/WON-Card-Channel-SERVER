@@ -1,8 +1,10 @@
 package com.woorifisa.won_card_channel_server.domain.aidb.api;
 
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRequest;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.Neo4jQueryRequest;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.AiDbQueryResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.service.AiDbQueryService;
+import com.woorifisa.won_card_channel_server.domain.aidb.service.Neo4jQueryService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AiDbQueryApi {
 
     private final AiDbQueryService aiDbQueryService;
+    private final Neo4jQueryService neo4jQueryService;
 
     @Operation(summary = "Mysql에 쿼리하여 데이터를 불러와 AI 서버에 전달합니다.")
     @PostMapping("/mysql/query")
@@ -29,6 +32,18 @@ public class AiDbQueryApi {
             @Valid @RequestBody AiDbQueryRequest request
     ) {
         AiDbQueryResponse<?> response = aiDbQueryService.query(request);
+
+        return ResponseEntity
+                .status(SuccessStatus.OK.getHttpStatus())
+                .body(ApiResponse.of(SuccessStatus.OK, response));
+    }
+
+    @Operation(summary = "Query card Neo4j graph DB")
+    @PostMapping("/graph/query")
+    public ResponseEntity<ApiResponse<Object>> queryGraph(
+            @Valid @RequestBody Neo4jQueryRequest request
+    ) {
+        Object response = neo4jQueryService.query(request);
 
         return ResponseEntity
                 .status(SuccessStatus.OK.getHttpStatus())

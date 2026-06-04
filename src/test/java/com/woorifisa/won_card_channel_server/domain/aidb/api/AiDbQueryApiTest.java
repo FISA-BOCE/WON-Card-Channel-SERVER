@@ -15,6 +15,7 @@ import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.AiDbQueryT
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.CardMonthlyTotalSpendResult;
 import com.woorifisa.won_card_channel_server.domain.aidb.exception.AiDbErrorCode;
 import com.woorifisa.won_card_channel_server.domain.aidb.service.AiDbQueryService;
+import com.woorifisa.won_card_channel_server.domain.aidb.service.Neo4jQueryService;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.exception.handler.GlobalExceptionHandler;
 import java.math.BigDecimal;
@@ -35,6 +36,9 @@ class AiDbQueryApiTest {
     @Mock
     private AiDbQueryService aiDbQueryService;
 
+    @Mock
+    private Neo4jQueryService neo4jQueryService;
+
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
@@ -42,7 +46,7 @@ class AiDbQueryApiTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new AiDbQueryApi(aiDbQueryService))
+                .standaloneSetup(new AiDbQueryApi(aiDbQueryService, neo4jQueryService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }

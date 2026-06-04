@@ -26,6 +26,7 @@ public class CardAiNeo4jQueryRepository {
                 sum(sr.pointAmount) AS userTotalPointAmount
             RETURN
                 me.displayName AS userName,
+                etf.etfId AS selectedEtfId,
                 etf.ticker AS selectedEtfTicker,
                 etf.etfName AS selectedEtfName,
                 $baseMonth AS baseMonth,
@@ -48,13 +49,15 @@ public class CardAiNeo4jQueryRepository {
                 sr.krwAmount AS krwAmount,
                 sr.requestStatus AS requestStatus,
                 sr.requestedAt AS requestedAt,
+                sr.completedAt AS requestCompletedAt,
                 etf.etfId AS etfId,
                 etf.ticker AS ticker,
                 etf.etfName AS etfName,
                 se.sweepId AS sweepId,
                 se.sweepStatus AS sweepStatus,
                 se.receivedAt AS receivedAt,
-                se.completedAt AS completedAt,
+                se.startedAt AS startedAt,
+                se.completedAt AS executionCompletedAt,
                 se.failReason AS failReason
             ORDER BY sr.requestedAt DESC
             LIMIT $limit

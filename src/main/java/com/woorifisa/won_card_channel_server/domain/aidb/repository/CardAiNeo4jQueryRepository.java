@@ -20,13 +20,16 @@ public class CardAiNeo4jQueryRepository {
 
     private static final String FIND_MONTHLY_SAME_ETF_AVERAGE_POINT_AMOUNT = """
             MATCH (me:User {userUuid: $userUuid})-[:SELECTED]->(etf:ETF)
+            WITH DISTINCT me, etf
             CALL {
                 WITH me, etf
                 MATCH (other:User)-[:SELECTED]->(etf)
                 WHERE other.userUuid <> me.userUuid
+                WITH DISTINCT other, etf
                 MATCH (other)-[:REQUESTED_SWEEP]->(sr:SweepRequest)-[:TARGETS]->(etf)
                 WHERE sr.requestStatus = $completedRequestStatus
                   AND sr.baseMonth = $baseMonth
+                WITH DISTINCT other, sr
                 WITH other, sum(sr.pointAmount) AS userTotalPointAmount
                 RETURN
                     count(other) AS sameEtfUserCount,
@@ -49,6 +52,7 @@ public class CardAiNeo4jQueryRepository {
                   -[:REQUESTED_SWEEP]->(sr:SweepRequest)
                   -[:TARGETS]->(etf:ETF)
             WHERE sr.baseMonth = $baseMonth
+            WITH DISTINCT u, sr, etf
             OPTIONAL MATCH (sr)-[:EXECUTED_AS]->(se:SweepExecution)
             RETURN
                 u.displayName AS userName,

@@ -79,6 +79,28 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
+    @DisplayName("SAME_ETF_AVERAGE_POINT returns zero summary when no other user selected same ETF")
+    void querySameEtfAveragePointWithoutOtherUsers() {
+        given(neo4jQueryRepository.findMonthlySameEtfAveragePointAmount(USER_UUID, BASE_MONTH))
+                .willReturn(Optional.of(new SameEtfAveragePointRow(
+                        1L,
+                        "SPY",
+                        "SPDR S&P 500 ETF Trust",
+                        0L,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO
+                )));
+
+        Neo4jQueryResponse response = service.query(request("SAME_ETF_AVERAGE_POINT", BASE_MONTH));
+
+        assertThat(response).isInstanceOf(SameEtfAveragePointResponse.class);
+        SameEtfAveragePointResponse result = (SameEtfAveragePointResponse) response;
+        assertThat(result.sameEtfUserCount()).isZero();
+        assertThat(result.averagePointAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(result.totalPointAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
     @DisplayName("MY_POINT_INVESTMENT_PATH returns investment paths with optional execution")
     void queryMyPointInvestmentPath() {
         LocalDateTime requestedAt = LocalDateTime.of(2025, 6, 10, 9, 30);
@@ -180,8 +202,8 @@ class Neo4jQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("empty same ETF average result throws AIDB_404_001")
-    void sameEtfAveragePointNotFound() {
+    @DisplayName("missing selected ETF result throws AIDB_404_001")
+    void selectedEtfNotFound() {
         given(neo4jQueryRepository.findMonthlySameEtfAveragePointAmount(USER_UUID, BASE_MONTH))
                 .willReturn(Optional.empty());
 

@@ -20,25 +20,28 @@ public class CardAiNeo4jQueryRepository {
 
     private static final String FIND_MONTHLY_SAME_ETF_AVERAGE_POINT_AMOUNT = """
             MATCH (me:User {userUuid: $userUuid})-[:SELECTED]->(etf:ETF)
-            MATCH (other:User)-[:SELECTED]->(etf)
-            WHERE other.userUuid <> me.userUuid
-            MATCH (other)-[:REQUESTED_SWEEP]->(sr:SweepRequest)-[:TARGETS]->(etf)
-            WHERE sr.requestStatus = $completedRequestStatus
-              AND sr.baseMonth = $baseMonth
-            WITH
-                me,
-                etf,
-                other,
-                sum(sr.pointAmount) AS userTotalPointAmount
+            CALL {
+                WITH me, etf
+                MATCH (other:User)-[:SELECTED]->(etf)
+                WHERE other.userUuid <> me.userUuid
+                MATCH (other)-[:REQUESTED_SWEEP]->(sr:SweepRequest)-[:TARGETS]->(etf)
+                WHERE sr.requestStatus = $completedRequestStatus
+                  AND sr.baseMonth = $baseMonth
+                WITH other, sum(sr.pointAmount) AS userTotalPointAmount
+                RETURN
+                    count(other) AS sameEtfUserCount,
+                    coalesce(avg(userTotalPointAmount), 0) AS averagePointAmount,
+                    coalesce(sum(userTotalPointAmount), 0) AS totalPointAmount
+            }
             RETURN
                 me.displayName AS userName,
                 etf.etfId AS selectedEtfId,
                 etf.ticker AS selectedEtfTicker,
                 etf.etfName AS selectedEtfName,
                 $baseMonth AS baseMonth,
-                count(other) AS sameEtfUserCount,
-                avg(userTotalPointAmount) AS averagePointAmount,
-                sum(userTotalPointAmount) AS totalPointAmount
+                sameEtfUserCount AS sameEtfUserCount,
+                averagePointAmount AS averagePointAmount,
+                totalPointAmount AS totalPointAmount
             """;
 
     private static final String FIND_MONTHLY_SWEEP_REQUESTS = """

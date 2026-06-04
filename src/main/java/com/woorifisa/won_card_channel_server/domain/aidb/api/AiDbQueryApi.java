@@ -1,7 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.aidb.api;
 
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRequest;
-import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.Neo4jQueryRequest;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.AiDbQueryResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.service.AiDbQueryService;
 import com.woorifisa.won_card_channel_server.domain.aidb.service.Neo4jQueryService;
@@ -41,7 +40,7 @@ public class AiDbQueryApi {
     @Operation(summary = "Query card Neo4j graph DB")
     @PostMapping("/graph/query")
     public ResponseEntity<ApiResponse<Object>> queryGraph(
-            @Valid @RequestBody Neo4jQueryRequest request
+            @Valid @RequestBody AiDbQueryRequest request
     ) {
         Object response = neo4jQueryService.query(request);
 

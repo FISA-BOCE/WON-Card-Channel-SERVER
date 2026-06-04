@@ -1,6 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.aidb.service;
 
-import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.Neo4jQueryRequest;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRequest;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.InvestmentPath;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.MyPointInvestmentPathResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jEtfResponse;
@@ -28,7 +28,7 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
     private final CardAiNeo4jQueryRepository neo4jQueryRepository;
 
     @Override
-    public Object query(Neo4jQueryRequest request) {
+    public Object query(AiDbQueryRequest request) {
         Neo4jQueryType queryType = parseQueryType(request.queryType());
         validateBaseMonth(request.params().baseMonth());
 
@@ -54,7 +54,7 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
         }
     }
 
-    private SameEtfAveragePointResponse querySameEtfAveragePoint(Neo4jQueryRequest request) {
+    private SameEtfAveragePointResponse querySameEtfAveragePoint(AiDbQueryRequest request) {
         try {
             SameEtfAveragePointRow row = neo4jQueryRepository.findMonthlySameEtfAveragePointAmount(
                             request.userUuid(),
@@ -84,7 +84,7 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
         }
     }
 
-    private MyPointInvestmentPathResponse queryMyPointInvestmentPath(Neo4jQueryRequest request) {
+    private MyPointInvestmentPathResponse queryMyPointInvestmentPath(AiDbQueryRequest request) {
         try {
             List<MonthlySweepRequestRow> rows = neo4jQueryRepository.findMonthlySweepRequests(
                     request.userUuid(),

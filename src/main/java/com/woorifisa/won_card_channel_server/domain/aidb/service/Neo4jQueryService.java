@@ -1,8 +1,8 @@
 package com.woorifisa.won_card_channel_server.domain.aidb.service;
 
-import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.Neo4jQueryRequest;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRequest;
 
 public interface Neo4jQueryService {
 
-    Object query(Neo4jQueryRequest request);
+    Object query(AiDbQueryRequest request);
 }

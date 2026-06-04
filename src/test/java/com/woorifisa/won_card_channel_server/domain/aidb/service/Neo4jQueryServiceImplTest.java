@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.Neo4jQueryRequest;
+import com.woorifisa.won_card_channel_server.domain.aidb.dto.request.AiDbQueryRequest;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.InvestmentPath;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.MyPointInvestmentPathResponse;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.Neo4jQueryType;
@@ -222,8 +222,8 @@ class Neo4jQueryServiceImplTest {
         verify(neo4jQueryRepository).findMonthlySweepRequests(USER_UUID, BASE_MONTH, DEFAULT_LIMIT);
     }
 
-    private Neo4jQueryRequest request(String queryType, String baseMonth) {
-        return new Neo4jQueryRequest(queryType, USER_UUID, new Neo4jQueryRequest.Params(baseMonth));
+    private AiDbQueryRequest request(String queryType, String baseMonth) {
+        return new AiDbQueryRequest(USER_UUID, queryType, new AiDbQueryRequest.Params(baseMonth));
     }
 
     private MonthlySweepRequestRow monthlySweepRequestRow() {

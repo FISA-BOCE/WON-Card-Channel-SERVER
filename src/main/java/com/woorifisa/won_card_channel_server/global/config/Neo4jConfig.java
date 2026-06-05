@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties({Neo4jConfig.CardNeo4jProperties.class, Neo4jConfig.SecuritiesNeo4jProperties.class})
+@EnableConfigurationProperties(Neo4jConfig.CardNeo4jProperties.class)
 public class Neo4jConfig {
 
     @Bean(destroyMethod = "close")
@@ -17,14 +17,6 @@ public class Neo4jConfig {
         return GraphDatabase.driver(props.uri(), AuthTokens.basic(props.username(), props.password()));
     }
 
-    @Bean(destroyMethod = "close")
-    public Driver securitiesNeo4jDriver(SecuritiesNeo4jProperties props) {
-        return GraphDatabase.driver(props.uri(), AuthTokens.basic(props.username(), props.password()));
-    }
-
     @ConfigurationProperties(prefix = "neo4j.card")
     public record CardNeo4jProperties(String uri, String username, String password) {}
-
-    @ConfigurationProperties(prefix = "neo4j.securities")
-    public record SecuritiesNeo4jProperties(String uri, String username, String password) {}
 }

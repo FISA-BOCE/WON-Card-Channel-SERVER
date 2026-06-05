@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cards/*/auto-invest").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/cards/*/auto-invest").authenticated()
                         .requestMatchers("/api/users", "/api/users/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/ai/chat").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/chats").authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)

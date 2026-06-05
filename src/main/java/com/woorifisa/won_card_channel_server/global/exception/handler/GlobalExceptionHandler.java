@@ -1,8 +1,10 @@
 package com.woorifisa.won_card_channel_server.global.exception.handler;
 
+import com.woorifisa.won_card_channel_server.domain.chat.exception.code.ChatErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
 import com.woorifisa.won_card_channel_server.global.response.ErrorResponse;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +68,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(CommonErrorCode.METHOD_NOT_ALLOWED.getHttpStatus())
                 .body(ErrorResponse.of(CommonErrorCode.METHOD_NOT_ALLOWED));
+    }
+
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<ErrorResponse> handleWebClientResponseException(WebClientResponseException e) {
+        log.error("webclient error: status={}, url={}", e.getStatusCode(), e.getRequest() != null ? e.getRequest().getURI() : "unknown");
+        return ResponseEntity
+                .status(ChatErrorCode.COMMON_WAS_ERROR.getHttpStatus())
+                .body(ErrorResponse.of(ChatErrorCode.COMMON_WAS_ERROR));
     }
 
     @ExceptionHandler(Exception.class)

@@ -18,7 +18,11 @@ public class CommonWasClient {
         ApiResponse<ChatResponse> response = commonWasWebClient.post()
                 .uri("/internal/chats")
                 .header("X-User-UUID", userUuid)
-                .header("X-Transaction-ID", transactionId)
+                .headers(headers -> {
+                    if (transactionId != null) {
+                        headers.add("X-Transaction-ID", transactionId);
+                    }
+                })
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<ChatResponse>>() {})

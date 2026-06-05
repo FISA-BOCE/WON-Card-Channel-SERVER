@@ -4,6 +4,7 @@ import com.woorifisa.won_card_channel_server.domain.chat.exception.code.ChatErro
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.code.ErrorCode;
 import com.woorifisa.won_card_channel_server.global.response.ErrorResponse;
+import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
@@ -73,6 +74,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WebClientResponseException.class)
     public ResponseEntity<ErrorResponse> handleWebClientResponseException(WebClientResponseException e) {
         log.error("webclient error: status={}, url={}", e.getStatusCode(), e.getRequest() != null ? e.getRequest().getURI() : "unknown");
+        return ResponseEntity
+                .status(ChatErrorCode.COMMON_WAS_ERROR.getHttpStatus())
+                .body(ErrorResponse.of(ChatErrorCode.COMMON_WAS_ERROR));
+    }
+
+    @ExceptionHandler(WebClientException.class)
+    public ResponseEntity<ErrorResponse> handleWebClientException(WebClientException e) {
+        log.error("webclient request error: {}", e.getMessage());
         return ResponseEntity
                 .status(ChatErrorCode.COMMON_WAS_ERROR.getHttpStatus())
                 .body(ErrorResponse.of(ChatErrorCode.COMMON_WAS_ERROR));

@@ -24,7 +24,16 @@ class RewardLedgerMapperTest {
         CardCoreRewardLedgerResponse coreResponse = new CardCoreRewardLedgerResponse(
                 2026,
                 1245000L,
-                List.of(new CardCoreRewardLedgerResponse.CardCoreRewardLedgerItem(1001L, "2026-05", 12450L, "EARN", occurredAt))
+                List.of(new CardCoreRewardLedgerResponse.CardCoreRewardLedgerItem(
+                        1001L,
+                        "2026-05",
+                        12450L,
+                        "EARN",
+                        "FAILED",
+                        "SWEEP_FAIL_008",
+                        "매수 가능한 금액이 부족합니다.",
+                        occurredAt
+                ))
         );
 
         // when
@@ -41,6 +50,9 @@ class RewardLedgerMapperTest {
         assertThat(item.baseMonth()).isEqualTo("2026-05");
         assertThat(item.pointAmount()).isEqualTo(12450L);
         assertThat(item.type()).isEqualTo("EARN");
+        assertThat(item.sweepStatus()).isEqualTo("FAILED");
+        assertThat(item.sweepFailureCode()).isEqualTo("SWEEP_FAIL_008");
+        assertThat(item.sweepFailureMessage()).isEqualTo("매수 가능한 금액이 부족합니다.");
         assertThat(item.occurredAt()).isEqualTo(occurredAt);
 
     }
@@ -85,7 +97,17 @@ class RewardLedgerMapperTest {
                 new CardCoreRewardLedgerDetailResponse.CardCoreRewardDetail(820000L, 500000L, 0L);
 
         CardCoreRewardLedgerDetailResponse coreResponse =
-                new CardCoreRewardLedgerDetailResponse(1L, "2026-05", "EARN", 12450L, occurredAt, coreDetail);
+                new CardCoreRewardLedgerDetailResponse(
+                        1L,
+                        "2026-05",
+                        "EARN",
+                        12450L,
+                        "FAILED",
+                        "SWEEP_FAIL_008",
+                        "매수 가능한 금액이 부족합니다.",
+                        occurredAt,
+                        coreDetail
+                );
 
         // when
         RewardLedgerDetailResponse response = rewardLedgerMapper.toDetailResponse(coreResponse);
@@ -95,6 +117,9 @@ class RewardLedgerMapperTest {
         assertThat(response.baseMonth()).isEqualTo("2026-05");
         assertThat(response.type()).isEqualTo("EARN");
         assertThat(response.pointAmount()).isEqualTo(12450L);
+        assertThat(response.sweepStatus()).isEqualTo("FAILED");
+        assertThat(response.sweepFailureCode()).isEqualTo("SWEEP_FAIL_008");
+        assertThat(response.sweepFailureMessage()).isEqualTo("매수 가능한 금액이 부족합니다.");
         assertThat(response.occurredAt()).isEqualTo(occurredAt);
 
         RewardLedgerDetailResponse.RewardDetail detail = response.detail();

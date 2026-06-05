@@ -20,7 +20,11 @@ public record CardCoreSweepResultRequest(
         String idempotencyKey,
 
         @NotBlank
-        String resultStatus
+        String resultStatus,
+
+        String failureCode,
+
+        String failureMessage
 ) {
     public static CardCoreSweepResultRequest from(SweepInvestmentResultEvent event) {
         return new CardCoreSweepResultRequest(
@@ -28,7 +32,9 @@ public record CardCoreSweepResultRequest(
                 event.sweepExecutionId(),
                 event.correlationId(),
                 event.idempotencyKey(),
-                event.completed() ? "COMPLETED" : "FAILED"
+                event.completed() ? "COMPLETED" : "FAILED",
+                event.failureCode(),
+                event.failureMessage()
         );
     }
 }

@@ -219,7 +219,8 @@ public class AuthServiceImpl implements AuthService {
         return response == null
                 || response.status() < 200
                 || response.status() >= 300
-                || response.data() == null;
+                || response.data() == null
+                || response.data().userUuid() == null;
     }
 
     private record TokenBundle(String accessToken, String refreshToken) {

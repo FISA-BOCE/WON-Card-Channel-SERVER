@@ -85,12 +85,9 @@ class AuthUserIntegrationTest {
                     return ApiResponse.of(
                             SuccessStatus.OK,
                             new GetMyUserMappingResponse(
-                                    1L,
                                     userUuid,
                                     null,
-                                    null,
-                                    "NONE",
-                                    "NONE"
+                                    null
                             )
                     );
                 });

@@ -8,14 +8,12 @@ import com.woorifisa.won_card_channel_server.domain.aidb.service.Neo4jQueryServi
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +27,8 @@ public class AiDbQueryApi {
     @Operation(summary = "Mysql에 쿼리하여 데이터를 불러와 AI 서버에 전달합니다.")
     @PostMapping("/mysql/query")
     public ResponseEntity<ApiResponse<AiDbQueryResponse<?>>> query(
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
             @Valid @RequestBody AiDbQueryRequest request
     ) {
         AiDbQueryResponse<?> response = aiDbQueryService.query(request);
@@ -41,6 +41,8 @@ public class AiDbQueryApi {
     @Operation(summary = "Query card Neo4j graph DB")
     @PostMapping("/graph/query")
     public ResponseEntity<ApiResponse<Neo4jQueryResponse>> queryGraph(
+            @Parameter(description = "호출 서비스 식별자", required = true)
+            @RequestHeader("X-Service-ID") String serviceId,
             @Valid @RequestBody AiDbQueryRequest request
     ) {
         Neo4jQueryResponse response = neo4jQueryService.query(request);

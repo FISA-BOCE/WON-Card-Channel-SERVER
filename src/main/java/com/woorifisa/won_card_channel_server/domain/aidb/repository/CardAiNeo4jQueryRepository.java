@@ -72,33 +72,43 @@ public class CardAiNeo4jQueryRepository {
 
     private SameEtfAveragePointRow toSameEtfAveragePointRow(Map<String, Object> row) {
         return new SameEtfAveragePointRow(
-                toLong(row.get("selectedEtfId")),
-                toStringValue(row.get("selectedEtfTicker")),
-                toStringValue(row.get("selectedEtfName")),
-                toLong(row.get("sameEtfUserCount")),
-                toBigDecimal(row.get("averagePointAmount")),
-                toBigDecimal(row.get("totalPointAmount"))
+                toLong(required(row, "selectedEtfId")),
+                toStringValue(required(row, "selectedEtfTicker")),
+                toStringValue(required(row, "selectedEtfName")),
+                toLong(required(row, "sameEtfUserCount")),
+                toBigDecimal(required(row, "averagePointAmount")),
+                toBigDecimal(required(row, "totalPointAmount"))
         );
     }
 
     private MonthlySweepRequestRow toMonthlySweepRequestRow(Map<String, Object> row) {
+        Object sweepId = row.get("sweepId");
+
         return new MonthlySweepRequestRow(
-                toLong(row.get("sweepRequestId")),
-                toBigDecimal(row.get("pointAmount")),
-                toBigDecimal(row.get("krwAmount")),
-                toSweepRequestStatus(row.get("requestStatus")),
-                toLocalDateTime(row.get("requestedAt")),
+                toLong(required(row, "sweepRequestId")),
+                toBigDecimal(required(row, "pointAmount")),
+                toBigDecimal(required(row, "krwAmount")),
+                toSweepRequestStatus(required(row, "requestStatus")),
+                toLocalDateTime(required(row, "requestedAt")),
                 toLocalDateTime(row.get("requestCompletedAt")),
-                toLong(row.get("etfId")),
-                toStringValue(row.get("ticker")),
-                toStringValue(row.get("etfName")),
-                toLong(row.get("sweepId")),
-                toSweepExecutionStatus(row.get("sweepStatus")),
+                toLong(required(row, "etfId")),
+                toStringValue(required(row, "ticker")),
+                toStringValue(required(row, "etfName")),
+                toLong(sweepId),
+                toSweepExecutionStatus(sweepId == null ? row.get("sweepStatus") : required(row, "sweepStatus")),
                 toLocalDateTime(row.get("receivedAt")),
                 toLocalDateTime(row.get("startedAt")),
                 toLocalDateTime(row.get("executionCompletedAt")),
                 toStringValue(row.get("failReason"))
         );
+    }
+
+    private Object required(Map<String, Object> row, String fieldName) {
+        Object value = row.get(fieldName);
+        if (value == null) {
+            throw new Neo4jQueryMappingException("Missing required Neo4j field: " + fieldName);
+        }
+        return value;
     }
 
     private Long toLong(Object value) {
@@ -176,6 +186,10 @@ public class CardAiNeo4jQueryRepository {
     }
 
     public static class Neo4jQueryMappingException extends RuntimeException {
+
+        public Neo4jQueryMappingException(String message) {
+            super(message);
+        }
 
         public Neo4jQueryMappingException(String message, Throwable cause) {
             super(message, cause);

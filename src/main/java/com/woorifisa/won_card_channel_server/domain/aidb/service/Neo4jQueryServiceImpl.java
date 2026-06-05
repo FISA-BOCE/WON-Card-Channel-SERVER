@@ -11,6 +11,7 @@ import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecu
 import com.woorifisa.won_card_channel_server.domain.aidb.exception.AiDbErrorCode;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.MonthlySweepRequestRow;
+import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.Neo4jQueryMappingException;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.SameEtfAveragePointRow;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import java.time.YearMonth;
@@ -80,6 +81,8 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
             );
         } catch (BusinessException e) {
             throw e;
+        } catch (Neo4jQueryMappingException e) {
+            throw new BusinessException(AiDbErrorCode.GRAPH_QUERY_FAILED, e);
         } catch (Neo4jException e) {
             throw new BusinessException(AiDbErrorCode.GRAPH_QUERY_FAILED, e);
         }
@@ -103,6 +106,8 @@ public class Neo4jQueryServiceImpl implements Neo4jQueryService {
             );
         } catch (BusinessException e) {
             throw e;
+        } catch (Neo4jQueryMappingException e) {
+            throw new BusinessException(AiDbErrorCode.GRAPH_QUERY_FAILED, e);
         } catch (Neo4jException e) {
             throw new BusinessException(AiDbErrorCode.GRAPH_QUERY_FAILED, e);
         }

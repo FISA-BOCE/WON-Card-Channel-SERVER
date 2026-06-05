@@ -18,6 +18,7 @@ import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepReque
 import com.woorifisa.won_card_channel_server.domain.aidb.exception.AiDbErrorCode;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.MonthlySweepRequestRow;
+import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.Neo4jQueryMappingException;
 import com.woorifisa.won_card_channel_server.domain.aidb.repository.CardAiNeo4jQueryRepository.SameEtfAveragePointRow;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import java.math.BigDecimal;
@@ -238,6 +239,23 @@ class Neo4jQueryServiceImplTest {
                 .isInstanceOfSatisfying(BusinessException.class, e -> {
                     assertThat(e.getErrorCode()).isEqualTo(AiDbErrorCode.GRAPH_QUERY_FAILED);
                     assertThat(e.getCause()).isInstanceOf(ServiceUnavailableException.class);
+                });
+    }
+
+    @Test
+    @DisplayName("Neo4j query mapping exception is mapped to AIDB_500_002")
+    void graphQueryMappingFailed() {
+        Neo4jQueryMappingException mappingException = new Neo4jQueryMappingException(
+                "invalid datetime",
+                new IllegalArgumentException("bad value")
+        );
+        given(neo4jQueryRepository.findMonthlySweepRequests(USER_UUID, BASE_MONTH, DEFAULT_LIMIT))
+                .willThrow(mappingException);
+
+        assertThatThrownBy(() -> service.query(request("MY_POINT_INVESTMENT_PATH", BASE_MONTH)))
+                .isInstanceOfSatisfying(BusinessException.class, e -> {
+                    assertThat(e.getErrorCode()).isEqualTo(AiDbErrorCode.GRAPH_QUERY_FAILED);
+                    assertThat(e.getCause()).isSameAs(mappingException);
                 });
     }
 

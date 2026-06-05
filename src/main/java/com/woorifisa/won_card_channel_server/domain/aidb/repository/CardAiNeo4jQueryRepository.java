@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -104,42 +105,54 @@ public class CardAiNeo4jQueryRepository {
         if (value == null) {
             return null;
         }
-        if (value instanceof Number number) {
-            return number.longValue();
+        try {
+            if (value instanceof Number number) {
+                return number.longValue();
+            }
+            return Long.valueOf(value.toString());
+        } catch (NumberFormatException e) {
+            throw new Neo4jQueryMappingException("Failed to convert Neo4j value to Long: " + value, e);
         }
-        return Long.valueOf(value.toString());
     }
 
     private BigDecimal toBigDecimal(Object value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof BigDecimal bigDecimal) {
-            return bigDecimal;
+        try {
+            if (value instanceof BigDecimal bigDecimal) {
+                return bigDecimal;
+            }
+            if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
+                return BigDecimal.valueOf(((Number) value).longValue());
+            }
+            if (value instanceof Number number) {
+                return new BigDecimal(number.toString());
+            }
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            throw new Neo4jQueryMappingException("Failed to convert Neo4j value to BigDecimal: " + value, e);
         }
-        if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
-            return BigDecimal.valueOf(((Number) value).longValue());
-        }
-        if (value instanceof Number number) {
-            return new BigDecimal(number.toString());
-        }
-        return new BigDecimal(value.toString());
     }
 
     private LocalDateTime toLocalDateTime(Object value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof LocalDateTime localDateTime) {
-            return localDateTime;
+        try {
+            if (value instanceof LocalDateTime localDateTime) {
+                return localDateTime;
+            }
+            if (value instanceof ZonedDateTime zonedDateTime) {
+                return zonedDateTime.toLocalDateTime();
+            }
+            if (value instanceof OffsetDateTime offsetDateTime) {
+                return offsetDateTime.toLocalDateTime();
+            }
+            return LocalDateTime.parse(value.toString());
+        } catch (DateTimeParseException e) {
+            throw new Neo4jQueryMappingException("Failed to convert Neo4j value to LocalDateTime: " + value, e);
         }
-        if (value instanceof ZonedDateTime zonedDateTime) {
-            return zonedDateTime.toLocalDateTime();
-        }
-        if (value instanceof OffsetDateTime offsetDateTime) {
-            return offsetDateTime.toLocalDateTime();
-        }
-        return LocalDateTime.parse(value.toString());
     }
 
     private String toStringValue(Object value) {
@@ -147,11 +160,26 @@ public class CardAiNeo4jQueryRepository {
     }
 
     private SweepRequestStatus toSweepRequestStatus(Object value) {
-        return value == null ? null : SweepRequestStatus.valueOf(value.toString());
+        try {
+            return value == null ? null : SweepRequestStatus.valueOf(value.toString());
+        } catch (IllegalArgumentException e) {
+            throw new Neo4jQueryMappingException("Failed to convert Neo4j value to SweepRequestStatus: " + value, e);
+        }
     }
 
     private SweepExecutionStatus toSweepExecutionStatus(Object value) {
-        return value == null ? null : SweepExecutionStatus.valueOf(value.toString());
+        try {
+            return value == null ? null : SweepExecutionStatus.valueOf(value.toString());
+        } catch (IllegalArgumentException e) {
+            throw new Neo4jQueryMappingException("Failed to convert Neo4j value to SweepExecutionStatus: " + value, e);
+        }
+    }
+
+    public static class Neo4jQueryMappingException extends RuntimeException {
+
+        public Neo4jQueryMappingException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     public record SameEtfAveragePointRow(

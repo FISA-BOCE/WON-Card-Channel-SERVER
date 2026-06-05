@@ -2,7 +2,10 @@ package com.woorifisa.won_card_channel_server.domain.aidb.repository;
 
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepExecutionStatus;
 import com.woorifisa.won_card_channel_server.domain.aidb.dto.response.SweepRequestStatus;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -13,73 +16,29 @@ import java.util.UUID;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Record;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class CardAiNeo4jQueryRepository {
 
-    private static final String FIND_MONTHLY_SAME_ETF_AVERAGE_POINT_AMOUNT = """
-            MATCH (me:User {userUuid: $userUuid})-[:SELECTED]->(etf:ETF)
-            WITH DISTINCT me, etf
-            CALL {
-                WITH me, etf
-                MATCH (other:User)-[:SELECTED]->(etf)
-                WHERE other.userUuid <> me.userUuid
-                WITH DISTINCT other, etf
-                MATCH (other)-[:REQUESTED_SWEEP]->(sr:SweepRequest)-[:TARGETS]->(etf)
-                WHERE sr.requestStatus = $completedRequestStatus
-                  AND sr.baseMonth = $baseMonth
-                WITH DISTINCT other, sr
-                WITH other, sum(sr.pointAmount) AS userTotalPointAmount
-                RETURN
-                    count(other) AS sameEtfUserCount,
-                    coalesce(avg(userTotalPointAmount), 0) AS averagePointAmount,
-                    coalesce(sum(userTotalPointAmount), 0) AS totalPointAmount
-            }
-            RETURN
-                me.displayName AS userName,
-                etf.etfId AS selectedEtfId,
-                etf.ticker AS selectedEtfTicker,
-                etf.etfName AS selectedEtfName,
-                $baseMonth AS baseMonth,
-                sameEtfUserCount AS sameEtfUserCount,
-                averagePointAmount AS averagePointAmount,
-                totalPointAmount AS totalPointAmount
-            """;
-
-    private static final String FIND_MONTHLY_SWEEP_REQUESTS = """
-            MATCH (u:User {userUuid: $userUuid})
-                  -[:REQUESTED_SWEEP]->(sr:SweepRequest)
-                  -[:TARGETS]->(etf:ETF)
-            WHERE sr.baseMonth = $baseMonth
-            WITH DISTINCT u, sr, etf
-            OPTIONAL MATCH (sr)-[:EXECUTED_AS]->(se:SweepExecution)
-            RETURN
-                u.displayName AS userName,
-                sr.sweepRequestId AS sweepRequestId,
-                sr.baseMonth AS baseMonth,
-                sr.pointAmount AS pointAmount,
-                sr.krwAmount AS krwAmount,
-                sr.requestStatus AS requestStatus,
-                sr.requestedAt AS requestedAt,
-                sr.completedAt AS requestCompletedAt,
-                etf.etfId AS etfId,
-                etf.ticker AS ticker,
-                etf.etfName AS etfName,
-                se.sweepId AS sweepId,
-                se.sweepStatus AS sweepStatus,
-                se.receivedAt AS receivedAt,
-                se.startedAt AS startedAt,
-                se.completedAt AS executionCompletedAt,
-                se.failReason AS failReason
-            ORDER BY sr.requestedAt DESC
-            LIMIT $limit
-            """;
+    private static final String FIND_MONTHLY_SAME_ETF_AVERAGE_POINT_AMOUNT =
+            loadQuery("neo4j/queries/find-monthly-same-etf-average-point-amount.cypher");
+    private static final String FIND_MONTHLY_SWEEP_REQUESTS =
+            loadQuery("neo4j/queries/find-monthly-sweep-requests.cypher");
 
     private final Driver cardNeo4jDriver;
 
     public CardAiNeo4jQueryRepository(@Qualifier("cardNeo4jDriver") Driver cardNeo4jDriver) {
         this.cardNeo4jDriver = cardNeo4jDriver;
+    }
+
+    private static String loadQuery(String path) {
+        try (var inputStream = new ClassPathResource(path).getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to load Neo4j query: " + path, e);
+        }
     }
 
     public Optional<SameEtfAveragePointRow> findMonthlySameEtfAveragePointAmount(UUID userUuid, String baseMonth) {

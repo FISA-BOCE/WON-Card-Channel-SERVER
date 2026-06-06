@@ -152,7 +152,7 @@ class SweepOutboxPublishServiceTest {
         verify(statusService, never()).markPublished(any());
         verify(statusService).markPublishFailed(
                 eq(1L),
-                contains("cardUserUuid must not be null"),
+                contains("카드 사용자 정보를 찾을 수 없습니다."),
                 eq(3)
         );
     }

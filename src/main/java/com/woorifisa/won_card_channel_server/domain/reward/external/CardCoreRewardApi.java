@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 
-@FeignClient(name = "card-core", contextId = "cardCoreRewardApi", url = "${internal.card-core.url}")
+@FeignClient(name = "card-core", contextId = "cardCoreRewardApi", url = "${internal.services.card-core.base-url}")
 public interface CardCoreRewardApi {
 
     @GetMapping("/internal/cards/rewards/ledger")

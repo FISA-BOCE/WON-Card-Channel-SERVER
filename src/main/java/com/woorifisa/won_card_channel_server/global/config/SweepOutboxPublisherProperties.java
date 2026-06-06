@@ -14,6 +14,14 @@ public record SweepOutboxPublisherProperties(
         int maxRetryCount,
 
         @Positive
-        long fixedDelayMs
+        long fixedDelayMs,
+
+        @Positive
+        int messageGroupShardCount
 ) {
+    public SweepOutboxPublisherProperties {
+        if (messageGroupShardCount <= 0) {
+            messageGroupShardCount = 64;
+        }
+    }
 }

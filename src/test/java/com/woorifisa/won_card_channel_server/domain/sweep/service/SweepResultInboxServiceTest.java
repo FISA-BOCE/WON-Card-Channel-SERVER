@@ -26,7 +26,7 @@ class SweepResultInboxServiceTest {
         inboxRepository = mock(SweepResultInboxRepository.class);
         service = new SweepResultInboxService(
                 inboxRepository,
-                new SweepResultConsumerProperties(true, 10000, 10, 5, 300)
+                new SweepResultConsumerProperties(true, 10, 5, 300L, 8)
         );
     }
 

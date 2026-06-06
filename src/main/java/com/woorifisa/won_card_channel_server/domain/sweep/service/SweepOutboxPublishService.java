@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
+import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.global.config.SqsProperties;
 import com.woorifisa.won_card_channel_server.global.config.SweepOutboxPublisherProperties;
@@ -9,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +40,7 @@ public class SweepOutboxPublishService {
                     .queueUrl(sqsProperties.sweepRequestQueueUrl())
                     .messageBody(message.payload())
                     .messageDeduplicationId(message.idempotencyKey())
-                    .messageGroupId("SWEEP_REQUESTED")
+                    .messageGroupId(createMessageGroupId(message.cardUserUuid()))
                     .build();
 
             sqsClient.sendMessage(request);
@@ -52,6 +55,15 @@ public class SweepOutboxPublishService {
             log.warn("스윕 Outbox 이벤트 발행 실패. outboxEventId={}, eventId={}, sweepRequestId={}",
                     message.outboxEventId(), message.eventId(), message.sweepRequestId(), e);
         }
+    }
+
+    private String createMessageGroupId(UUID cardUserUuid) {
+        if (cardUserUuid == null) {
+            throw new BusinessException(CardErrorCode.CARD_USER_NOT_FOUND);
+        }
+
+        int shard = Math.floorMod(cardUserUuid.hashCode(), publisherProperties.messageGroupShardCount());
+        return "sweep-user-" + shard;
     }
 
 }

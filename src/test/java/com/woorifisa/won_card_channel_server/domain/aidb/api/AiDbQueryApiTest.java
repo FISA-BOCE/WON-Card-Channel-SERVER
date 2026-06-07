@@ -68,6 +68,7 @@ class AiDbQueryApiTest {
                 .query(any(AiDbQueryRequest.class));
 
         mockMvc.perform(post("/internal/card/db/mysql/query")
+                        .header("X-Service-ID", "test-ai-service")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson("CARD_MONTHLY_TOTAL_SPEND", "2025-06")))
                 .andExpect(status().isOk())
@@ -94,6 +95,7 @@ class AiDbQueryApiTest {
                 .willThrow(new BusinessException(AiDbErrorCode.UNSUPPORTED_QUERY_TYPE));
 
         mockMvc.perform(post("/internal/card/db/mysql/query")
+                        .header("X-Service-ID", "test-ai-service")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson("UNKNOWN_QUERY", "2025-06")))
                 .andExpect(status().isBadRequest())
@@ -114,6 +116,5 @@ class AiDbQueryApiTest {
         return new BigDecimal(value);
     }
 }
-
 
 

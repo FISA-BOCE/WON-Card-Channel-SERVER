@@ -1,6 +1,7 @@
 package com.woorifisa.won_card_channel_server.global.config;
 
 import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
+import com.woorifisa.won_card_channel_server.global.security.InternalApiAuthFilter;
 import com.woorifisa.won_card_channel_server.global.security.JwtAuthenticationFilter;
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
 import com.woorifisa.won_card_channel_server.global.security.RestAccessDeniedHandler;
@@ -26,6 +27,7 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtTokenProvider jwtTokenProvider,
             TokenBlacklistService tokenBlacklistService,
+            InternalApiAuthFilter internalApiAuthFilter,
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
@@ -36,7 +38,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh", "/internal/cards/sweep-requests","/internal/cards/sweep-requests/auto", "/internal/card/db/mysql/query", "/internal/card/db/graph/query").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards").authenticated()
@@ -58,6 +61,7 @@ public class SecurityConfig {
                         ),
                         UsernamePasswordAuthenticationFilter.class
                 )
+                .addFilterBefore(internalApiAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults());
 
         return http.build();

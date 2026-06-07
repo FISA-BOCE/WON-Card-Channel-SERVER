@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.UUID;
 
-@FeignClient(name = "card-core-application", contextId = "cardCoreCardApplicationApi", url = "${internal.card-core.url}")
+@FeignClient(name = "card-core-application", contextId = "cardCoreCardApplicationApi", url = "${internal.services.card-core.base-url}")
 public interface CardCoreCardApplicationApi {
 
     @PostMapping("/internal/cards/applications")

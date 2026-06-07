@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-@FeignClient(name = "card-core-card", contextId = "card-core-spend", url = "${internal.card-core.url}")
+@FeignClient(name = "card-core-card", contextId = "card-core-spend", url = "${internal.services.card-core.base-url}")
 public interface CardCoreSpendApi {
 
     @GetMapping("/internal/cards/spend-summary")

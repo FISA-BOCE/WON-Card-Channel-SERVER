@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         RestAccessDeniedHandler.class
 })
 @TestPropertySource(properties = {
-        "internal.invest-core.url=http://localhost:8083"
+        "internal.services.invest-channel.base-url=http://localhost:8083"
 })
 class AutoInvestSubscriptionApiTest {
 

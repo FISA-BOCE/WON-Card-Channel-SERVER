@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@FeignClient(name = "card-core", contextId = "cardCoreRewardSweepApi", url = "${internal.card-core.url}")
+@FeignClient(name = "card-core", contextId = "cardCoreRewardSweepApi", url = "${internal.services.card-core.base-url}")
 public interface CardCoreRewardSweepApi {
 
     @PostMapping("/internal/cards/rewards/ledger/{pointLedgerId}/sweep-request")

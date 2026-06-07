@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.UUID;
 
-@FeignClient(name = "invest-channel-auto-invest", url = "${internal.invest-core.url}")
+@FeignClient(name = "invest-channel-auto-invest", url = "${internal.services.invest-channel.base-url}")
 public interface InvestChannelAutoInvestApi {
 
     @GetMapping("/internal/invest/accounts/{investAccountUuid}")

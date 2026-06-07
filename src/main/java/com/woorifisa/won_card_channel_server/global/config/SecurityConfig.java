@@ -38,8 +38,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh", "/internal/cards/sweep-requests", "/internal/cards/sweep-requests/auto").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/internal/card/db/mysql/query", "/internal/card/db/graph/query").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards").authenticated()
@@ -49,12 +49,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cards/*/auto-invest").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/cards/*/auto-invest").authenticated()
                         .requestMatchers("/api/users", "/api/users/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/chats").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/ai/chat").authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
-                .addFilterBefore(internalApiAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(
                         new JwtAuthenticationFilter(
                                 jwtTokenProvider,
@@ -62,6 +61,7 @@ public class SecurityConfig {
                         ),
                         UsernamePasswordAuthenticationFilter.class
                 )
+                .addFilterBefore(internalApiAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults());
 
         return http.build();

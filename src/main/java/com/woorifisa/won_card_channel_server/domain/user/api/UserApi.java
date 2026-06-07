@@ -34,8 +34,6 @@ public class UserApi {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<GetMyUserResponse>> getMyUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId
     ) {
@@ -48,8 +46,6 @@ public class UserApi {
     @PostMapping("/me/withdraw")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody DeleteUserRequest request
@@ -64,8 +60,6 @@ public class UserApi {
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody UpdateUserRequest request

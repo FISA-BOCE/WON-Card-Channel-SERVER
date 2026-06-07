@@ -36,8 +36,6 @@ public class AutoInvestSubscriptionApi {
     @GetMapping("/{cardUuid}/auto-invest")
     public ResponseEntity<ApiResponse<AutoInvestSubscriptionDetailResponse>> getSubscription(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Parameter(description = "조회할 카드 UUID")
@@ -55,8 +53,6 @@ public class AutoInvestSubscriptionApi {
     @PatchMapping("/{cardUuid}/auto-invest")
     public ResponseEntity<ApiResponse<AutoInvestSubscriptionChangeResponse>> changeSubscription(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Parameter(description = "변경할 카드 UUID")

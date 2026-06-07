@@ -31,8 +31,6 @@ public class CardApplicationApi {
     @PostMapping
     public ResponseEntity<ApiResponse<CardApplicationCreateResponse>> applyCard(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody CardApplicationCreateRequest request

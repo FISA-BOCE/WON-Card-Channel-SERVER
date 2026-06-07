@@ -3,11 +3,16 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 import com.woorifisa.won_card_channel_server.domain.autoinvest.service.AutoInvestSelectionPromotionService;
 import com.woorifisa.won_card_channel_server.domain.card.model.CardChnCardSummary;
 import com.woorifisa.won_card_channel_server.domain.card.repository.CardChnCardSummaryRepository;
-import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.ReservedSweepCreateCommand;
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.AutoSweepBatchResponse;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
-import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepCandidateResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepBatchStartRequest;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepBatchStartResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepCancelResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepReservationResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepReservedItemResponse;
+import com.woorifisa.won_card_channel_server.global.config.SweepBatchProperties;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
@@ -36,6 +41,7 @@ class AutoSweepBatchServiceTest {
 
     private final UUID userUuid = UUID.fromString("a5324ba5-0ee3-44c6-b3d5-a951f9e94df5");
     private final UUID cardUserUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    private final LocalDateTime requestedAt = LocalDateTime.of(2026, 5, 16, 0, 30);
 
     @BeforeEach
     void setUp() {
@@ -48,30 +54,36 @@ class AutoSweepBatchServiceTest {
                 cardCoreRewardSweepApi,
                 cardSummaryRepository,
                 autoSweepRequestService,
-                autoInvestSelectionPromotionService
+                autoInvestSelectionPromotionService,
+                new SweepBatchProperties(500)
         );
     }
 
     @Test
-    @DisplayName("Core 후보와 카드 요약 ETF가 있으면 단건 스윕 요청을 생성한다")
+    @DisplayName("Core reservation 항목에 userUuid와 ETF를 보강해 Channel 요청을 생성한다")
     void requestMonthlyAutoSweepsSuccess() {
         // given
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
+        when(cardCoreRewardSweepApi.startSweepBatch(any(CardCoreSweepBatchStartRequest.class)))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createBatchStartResponse()));
+        when(cardCoreRewardSweepApi.reserveSweepBatch(10L, 500))
                 .thenReturn(ApiResponse.of(
                         SuccessStatus.OK,
-                        createCandidateResponse(List.of(createCandidate(1L, cardUserUuid, 12450L)))
+                        createReservationResponse(List.of(createReservedItem(1L, cardUserUuid, 12450L)))
+                ))
+                .thenReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        createReservationResponse(List.of())
                 ));
 
         CardChnCardSummary cardSummary = mock(CardChnCardSummary.class);
         when(cardSummary.getUserUuid()).thenReturn(userUuid);
-        when(cardSummary.getCardUserUuid()).thenReturn(cardUserUuid);
         when(cardSummary.getSelectedEtfId()).thenReturn(100L);
 
         when(cardSummaryRepository.findByCardUserUuid(cardUserUuid))
                 .thenReturn(Optional.of(cardSummary));
 
-        ArgumentCaptor<AutoSweepCreateCommand> commandCaptor =
-                ArgumentCaptor.forClass(AutoSweepCreateCommand.class);
+        ArgumentCaptor<ReservedSweepCreateCommand> commandCaptor =
+                ArgumentCaptor.forClass(ReservedSweepCreateCommand.class);
 
         // when
         AutoSweepBatchResponse response =
@@ -84,27 +96,30 @@ class AutoSweepBatchServiceTest {
         assertThat(response.skippedCount()).isEqualTo(0);
         assertThat(response.failedCount()).isEqualTo(0);
 
-        verify(autoSweepRequestService).createSweepRequest(commandCaptor.capture());
+        verify(autoSweepRequestService).createSweepRequestFromReservedItem(commandCaptor.capture());
 
-        AutoSweepCreateCommand command = commandCaptor.getValue();
+        ReservedSweepCreateCommand command = commandCaptor.getValue();
         assertThat(command.userUuid()).isEqualTo(userUuid);
         assertThat(command.cardUserUuid()).isEqualTo(cardUserUuid);
         assertThat(command.pointLedgerId()).isEqualTo(1L);
         assertThat(command.etfId()).isEqualTo(100L);
+        assertThat(command.eventId()).isEqualTo("CARD-SWEEP-1");
+        assertThat(command.correlationId()).isEqualTo("CARD-SWEEP-CORR-1");
+        assertThat(command.idempotencyKey()).isEqualTo("CARD_SWEEP:1:2026-05");
+        assertThat(command.requestedAt()).isEqualTo(requestedAt);
         verify(autoInvestSelectionPromotionService).promoteEffectivePendingSelections(any(LocalDateTime.class));
     }
 
     @Test
-    @DisplayName("배치 시작 시 자동투자 예약 ETF 승격을 먼저 수행한 뒤 Core 후보를 조회한다")
-    void requestMonthlyAutoSweepsPromotesPendingSelectionBeforeLoadingCandidates() {
+    @DisplayName("배치 시작 시 자동투자 예약 ETF 승격 후 Core batch start를 호출한다")
+    void requestMonthlyAutoSweepsPromotesPendingSelectionBeforeStartingBatch() {
         // given
         when(autoInvestSelectionPromotionService.promoteEffectivePendingSelections(any(LocalDateTime.class)))
                 .thenReturn(2);
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
-                .thenReturn(ApiResponse.of(
-                        SuccessStatus.OK,
-                        createCandidateResponse(List.of())
-                ));
+        when(cardCoreRewardSweepApi.startSweepBatch(any(CardCoreSweepBatchStartRequest.class)))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createBatchStartResponse()));
+        when(cardCoreRewardSweepApi.reserveSweepBatch(10L, 500))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createReservationResponse(List.of())));
 
         // when
         AutoSweepBatchResponse response =
@@ -119,25 +134,33 @@ class AutoSweepBatchServiceTest {
         var inOrder = inOrder(autoInvestSelectionPromotionService, cardCoreRewardSweepApi);
         ArgumentCaptor<LocalDateTime> batchStartedAtCaptor =
                 ArgumentCaptor.forClass(LocalDateTime.class);
+        ArgumentCaptor<CardCoreSweepBatchStartRequest> startRequestCaptor =
+                ArgumentCaptor.forClass(CardCoreSweepBatchStartRequest.class);
 
         inOrder.verify(autoInvestSelectionPromotionService)
                 .promoteEffectivePendingSelections(batchStartedAtCaptor.capture());
-        inOrder.verify(cardCoreRewardSweepApi).getSweepCandidates("2026-05");
+        inOrder.verify(cardCoreRewardSweepApi).startSweepBatch(startRequestCaptor.capture());
 
         assertThat(batchStartedAtCaptor.getValue())
                 .isEqualTo(LocalDateTime.of(2026, 5, 16, 0, 30));
+        assertThat(startRequestCaptor.getValue().baseMonth()).isEqualTo("2026-05");
+        assertThat(startRequestCaptor.getValue().chunkSize()).isEqualTo(500);
     }
 
     @Test
-    @DisplayName("카드 요약이 없으면 후보를 skip한다")
+    @DisplayName("카드 요약이 없으면 Core cancel을 호출하고 skip한다")
     void requestMonthlyAutoSweepsSkipWhenCardSummaryNotFound() {
         // given
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
+        when(cardCoreRewardSweepApi.startSweepBatch(any(CardCoreSweepBatchStartRequest.class)))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createBatchStartResponse()));
+        when(cardCoreRewardSweepApi.reserveSweepBatch(10L, 500))
                 .thenReturn(ApiResponse.of(
                         SuccessStatus.OK,
-                        createCandidateResponse(List.of(createCandidate(1L, cardUserUuid, 12450L)))
-                ));
-
+                        createReservationResponse(List.of(createReservedItem(1L, cardUserUuid, 12450L)))
+                ))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createReservationResponse(List.of())));
+        when(cardCoreRewardSweepApi.cancelSweepRequest(cardUserUuid, 1L))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, new CardCoreSweepCancelResponse(1L, "NONE")));
         when(cardSummaryRepository.findByCardUserUuid(cardUserUuid))
                 .thenReturn(Optional.empty());
 
@@ -151,59 +174,32 @@ class AutoSweepBatchServiceTest {
         assertThat(response.skippedCount()).isEqualTo(1);
         assertThat(response.failedCount()).isEqualTo(0);
 
-        verify(autoSweepRequestService, never()).createSweepRequest(any());
+        verify(autoSweepRequestService, never()).createSweepRequestFromReservedItem(any());
+        verify(cardCoreRewardSweepApi).cancelSweepRequest(cardUserUuid, 1L);
     }
 
     @Test
-    @DisplayName("카드 요약에 ETF 설정이 없으면 후보를 skip한다")
-    void requestMonthlyAutoSweepsSkipWhenEtfIdMissing() {
-        // given
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
-                .thenReturn(ApiResponse.of(
-                        SuccessStatus.OK,
-                        createCandidateResponse(List.of(createCandidate(1L, cardUserUuid, 12450L)))
-                ));
-
-        CardChnCardSummary cardSummary = mock(CardChnCardSummary.class);
-        when(cardSummary.getUserUuid()).thenReturn(userUuid);
-        when(cardSummary.getSelectedEtfId()).thenReturn(null);
-
-        when(cardSummaryRepository.findByCardUserUuid(cardUserUuid))
-                .thenReturn(Optional.of(cardSummary));
-
-        // when
-        AutoSweepBatchResponse response =
-                autoSweepBatchService.requestMonthlyAutoSweeps("2026-05");
-
-        // then
-        assertThat(response.candidateCount()).isEqualTo(1);
-        assertThat(response.requestedCount()).isEqualTo(0);
-        assertThat(response.skippedCount()).isEqualTo(1);
-        assertThat(response.failedCount()).isEqualTo(0);
-
-        verify(autoSweepRequestService, never()).createSweepRequest(any());
-    }
-
-    @Test
-    @DisplayName("이미 요청된 원장은 skip한다")
+    @DisplayName("이미 Channel 요청이 있으면 Core cancel 없이 skip한다")
     void requestMonthlyAutoSweepsSkipWhenAlreadyRequested() {
         // given
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
+        when(cardCoreRewardSweepApi.startSweepBatch(any(CardCoreSweepBatchStartRequest.class)))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createBatchStartResponse()));
+        when(cardCoreRewardSweepApi.reserveSweepBatch(10L, 500))
                 .thenReturn(ApiResponse.of(
                         SuccessStatus.OK,
-                        createCandidateResponse(List.of(createCandidate(1L, cardUserUuid, 12450L)))
-                ));
+                        createReservationResponse(List.of(createReservedItem(1L, cardUserUuid, 12450L)))
+                ))
+                .thenReturn(ApiResponse.of(SuccessStatus.OK, createReservationResponse(List.of())));
 
         CardChnCardSummary cardSummary = mock(CardChnCardSummary.class);
         when(cardSummary.getUserUuid()).thenReturn(userUuid);
         when(cardSummary.getSelectedEtfId()).thenReturn(100L);
-
         when(cardSummaryRepository.findByCardUserUuid(cardUserUuid))
                 .thenReturn(Optional.of(cardSummary));
 
         doThrow(new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED))
                 .when(autoSweepRequestService)
-                .createSweepRequest(any(AutoSweepCreateCommand.class));
+                .createSweepRequestFromReservedItem(any(ReservedSweepCreateCommand.class));
 
         // when
         AutoSweepBatchResponse response =
@@ -214,45 +210,14 @@ class AutoSweepBatchServiceTest {
         assertThat(response.requestedCount()).isEqualTo(0);
         assertThat(response.skippedCount()).isEqualTo(1);
         assertThat(response.failedCount()).isEqualTo(0);
+        verify(cardCoreRewardSweepApi, never()).cancelSweepRequest(any(), any());
     }
 
     @Test
-    @DisplayName("단건 요청 생성 중 일반 비즈니스 예외가 발생하면 failedCount가 증가한다")
-    void requestMonthlyAutoSweepsFailedWhenCreateRequestFails() {
-        // given
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
-                .thenReturn(ApiResponse.of(
-                        SuccessStatus.OK,
-                        createCandidateResponse(List.of(createCandidate(1L, cardUserUuid, 12450L)))
-                ));
-
-        CardChnCardSummary cardSummary = mock(CardChnCardSummary.class);
-        when(cardSummary.getUserUuid()).thenReturn(userUuid);
-        when(cardSummary.getSelectedEtfId()).thenReturn(100L);
-
-        when(cardSummaryRepository.findByCardUserUuid(cardUserUuid))
-                .thenReturn(Optional.of(cardSummary));
-
-        doThrow(new BusinessException(SweepErrorCode.SWEEP_CORE_UNAVAILABLE))
-                .when(autoSweepRequestService)
-                .createSweepRequest(any(AutoSweepCreateCommand.class));
-
-        // when
-        AutoSweepBatchResponse response =
-                autoSweepBatchService.requestMonthlyAutoSweeps("2026-05");
-
-        // then
-        assertThat(response.candidateCount()).isEqualTo(1);
-        assertThat(response.requestedCount()).isEqualTo(0);
-        assertThat(response.skippedCount()).isEqualTo(0);
-        assertThat(response.failedCount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Core 후보 응답 data가 null이면 예외가 발생한다")
+    @DisplayName("Core batch start 응답 data가 null이면 예외가 발생한다")
     void requestMonthlyAutoSweepsCoreResponseDataNull() {
         // given
-        when(cardCoreRewardSweepApi.getSweepCandidates("2026-05"))
+        when(cardCoreRewardSweepApi.startSweepBatch(any(CardCoreSweepBatchStartRequest.class)))
                 .thenReturn(ApiResponse.of(SuccessStatus.OK, null));
 
         // when & then
@@ -269,27 +234,44 @@ class AutoSweepBatchServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", SweepErrorCode.SWEEP_INVALID_REQUEST);
 
         verify(autoInvestSelectionPromotionService, never()).promoteEffectivePendingSelections(any());
-        verify(cardCoreRewardSweepApi, never()).getSweepCandidates(any());
+        verify(cardCoreRewardSweepApi, never()).startSweepBatch(any());
     }
 
-    private CardCoreSweepCandidateResponse createCandidateResponse(
-            List<CardCoreSweepCandidateResponse.CardCoreSweepCandidateItem> candidates
+    private CardCoreSweepBatchStartResponse createBatchStartResponse() {
+        return new CardCoreSweepBatchStartResponse(10L, "2026-05", "RUNNING", 0L);
+    }
+
+    private CardCoreSweepReservationResponse createReservationResponse(
+            List<CardCoreSweepReservedItemResponse> reservedItems
     ) {
-        return new CardCoreSweepCandidateResponse("2026-05", candidates);
+        return new CardCoreSweepReservationResponse(
+                10L,
+                "2026-05",
+                reservedItems.isEmpty() ? "COMPLETED" : "RUNNING",
+                reservedItems.size(),
+                reservedItems.isEmpty() ? 1L : reservedItems.get(reservedItems.size() - 1).pointLedgerId(),
+                reservedItems
+        );
     }
 
-    private CardCoreSweepCandidateResponse.CardCoreSweepCandidateItem createCandidate(
+    private CardCoreSweepReservedItemResponse createReservedItem(
             Long pointLedgerId,
             UUID cardUserUuid,
             Long amount
     ) {
-        return new CardCoreSweepCandidateResponse.CardCoreSweepCandidateItem(
+        return new CardCoreSweepReservedItemResponse(
                 pointLedgerId,
+                "SWEEP_REQUESTED",
+                "CARD-SWEEP-" + pointLedgerId,
+                "CARD-SWEEP-CORR-" + pointLedgerId,
+                "CARD_SWEEP:%d:2026-05".formatted(pointLedgerId),
                 cardUserUuid,
                 10L,
+                pointLedgerId,
                 "2026-05",
                 amount,
-                amount
+                amount,
+                requestedAt
         );
     }
 }

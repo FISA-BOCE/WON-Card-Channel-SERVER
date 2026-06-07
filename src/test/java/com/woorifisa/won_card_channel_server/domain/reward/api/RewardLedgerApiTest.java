@@ -26,15 +26,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(RewardLedgerApi.class)
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "internal.card-core.url=http://localhost:8082",
-        "internal.invest-core.url=http://localhost:8083"
+        "internal.services.card-core.base-url=http://localhost:8082",
+        "internal.services.invest-channel.base-url=http://localhost:8083"
 })
 class RewardLedgerApiTest {
 

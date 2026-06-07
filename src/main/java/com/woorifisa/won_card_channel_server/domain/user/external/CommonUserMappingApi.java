@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @FeignClient(
         name = "common-user-mapping",
-        url = "${internal.common.url:http://localhost:8080}",
+        url = "${internal.services.common.base-url}",
         configuration = CommonUserMappingFeignConfig.class
 )
 public interface CommonUserMappingApi {

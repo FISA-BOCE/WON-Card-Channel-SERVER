@@ -2,8 +2,10 @@ package com.woorifisa.won_card_channel_server.domain.sweep.service;
 
 import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.SweepOutboxPublishMessage;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SweepOutboxStatusService {
 
     private final SweepOutboxRepository outboxRepository;
+    private final SweepRepository sweepRepository;
 
     @Transactional(readOnly = true)
     public SweepOutboxPublishMessage getPublishMessage(Long outboxEventId) {
@@ -25,12 +28,16 @@ public class SweepOutboxStatusService {
             throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_INVALID_PUBLISH_STATE);
         }
 
+        Sweep sweep = sweepRepository.findById(outbox.getSweepRequestId())
+                .orElseThrow(() -> new BusinessException(SweepErrorCode.SWEEP_REQUEST_NOT_FOUND));
+
         return new SweepOutboxPublishMessage(
                 outbox.getOutboxEventId(),
                 outbox.getSweepRequestId(),
                 outbox.getEventId(),
                 outbox.getPayload(),
-                outbox.getIdempotencyKey()
+                outbox.getIdempotencyKey(),
+                sweep.getCardUserUuid()
         );
     }
 

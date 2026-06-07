@@ -104,6 +104,12 @@ public class Sweep extends BaseTimeEntity {
     public static Sweep createPendingPublish(
             AutoSweepTarget target, String correlationId, String idempotencyKey
     ) {
+        return createPendingPublish(target, correlationId, idempotencyKey, LocalDateTime.now());
+    }
+
+    public static Sweep createPendingPublish(
+            AutoSweepTarget target, String correlationId, String idempotencyKey, LocalDateTime requestedAt
+    ) {
         return Sweep.builder()
                 .userUuid(target.userUuid())
                 .cardUserUuid(target.cardUserUuid())
@@ -116,7 +122,7 @@ public class Sweep extends BaseTimeEntity {
                 .requestStatus(SweepProcessStatus.PENDING_PUBLISH)
                 .correlationId(correlationId)
                 .idempotencyKey(idempotencyKey)
-                .requestedAt(LocalDateTime.now())
+                .requestedAt(requestedAt == null ? LocalDateTime.now() : requestedAt)
                 .build();
     }
 

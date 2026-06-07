@@ -52,6 +52,7 @@ dependencies {
 
 	// open feign
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+	implementation 'io.github.openfeign:feign-okhttp'
 
 	// sqs
 	implementation 'software.amazon.awssdk:sqs:2.30.31'

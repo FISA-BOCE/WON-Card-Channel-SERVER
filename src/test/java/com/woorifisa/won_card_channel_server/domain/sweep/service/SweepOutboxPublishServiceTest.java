@@ -16,6 +16,8 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -47,7 +49,8 @@ class SweepOutboxPublishServiceTest {
                 true,
                 20,
                 3,
-                10000L
+                10000L,
+                64
         );
 
         publishService = new SweepOutboxPublishService(
@@ -85,7 +88,7 @@ class SweepOutboxPublishServiceTest {
                 .isEqualTo("http://localhost:4566/000000000000/won-card-sweep-request-queue.fifo");
         assertThat(request.messageBody()).contains("\"eventType\":\"SWEEP_REQUESTED\"");
         assertThat(request.messageDeduplicationId()).isEqualTo("SWEEP:POINT_LEDGER:1");
-        assertThat(request.messageGroupId()).isEqualTo("SWEEP_REQUESTED");
+        assertThat(request.messageGroupId()).startsWith("sweep-user-");
     }
 
     @Test
@@ -126,15 +129,43 @@ class SweepOutboxPublishServiceTest {
         verify(statusService, never()).markPublishFailed(any(), any(), anyInt());
     }
 
+    @Test
+    @DisplayName("cardUserUuid가 없으면 SQS 발행 없이 Outbox 실패 상태를 반영한다")
+    void publishFailWhenCardUserUuidIsNull() {
+        // given
+        SweepOutboxPublishMessage message = new SweepOutboxPublishMessage(
+                1L,
+                2L,
+                "CARD-SWEEP-988351d5-6242-4299-86ef-465cd9809874",
+                "{\"eventType\":\"SWEEP_REQUESTED\",\"pointLedgerId\":1,\"etfId\":100}",
+                "SWEEP:POINT_LEDGER:1",
+                null
+        );
+
+        when(statusService.getPublishMessage(1L)).thenReturn(message);
+
+        // when
+        publishService.publish(1L);
+
+        // then
+        verify(sqsClient, never()).sendMessage(any(SendMessageRequest.class));
+        verify(statusService, never()).markPublished(any());
+        verify(statusService).markPublishFailed(
+                eq(1L),
+                contains("카드 사용자 정보를 찾을 수 없습니다."),
+                eq(3)
+        );
+    }
+
     private SweepOutboxPublishMessage createPublishMessage() {
         return new SweepOutboxPublishMessage(
                 1L,
                 2L,
                 "CARD-SWEEP-988351d5-6242-4299-86ef-465cd9809874",
                 "{\"eventType\":\"SWEEP_REQUESTED\",\"pointLedgerId\":1,\"etfId\":100}",
-                "SWEEP:POINT_LEDGER:1"
+                "SWEEP:POINT_LEDGER:1",
+                UUID.fromString("22222222-2222-2222-2222-222222222222")
         );
     }
 
 }
-

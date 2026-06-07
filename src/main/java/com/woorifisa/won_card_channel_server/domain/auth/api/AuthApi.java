@@ -34,8 +34,6 @@ public class AuthApi {
     @Operation(summary = "회원가입", description = "회원가입 API입니다.    \n비밀번호는 8자 이상, 16자 이하여야 합니다.")
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> createUserRegistration(
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody RegisterUserRequest request
@@ -49,8 +47,6 @@ public class AuthApi {
     @Operation(summary = "로그인", description = "로그인 API입니다.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<CreateLoginResponse>> createUserLogin(
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody CreateLoginRequest request
@@ -63,8 +59,6 @@ public class AuthApi {
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API입니다.    \nRefresh Token을 통해 Access Token을 재발급합니다.")
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<CreateTokenReissueResponse>> createTokenReissue(
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody CreateTokenReissueRequest request
@@ -78,8 +72,6 @@ public class AuthApi {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> deleteUserLogout(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Parameter(description = "호출 서비스 식별자", required = true)
-            @RequestHeader("X-Service-ID") String serviceId,
             @Parameter(description = "트랜잭션 추적용 ID")
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody DeleteLogoutRequest request

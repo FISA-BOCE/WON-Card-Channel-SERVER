@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class WebClientConfig {
 
-    @Value("${external.common-was.url}")
+    @Value("${internal.services.common.base-url}")
     private String commonWasUrl;
 
     @Bean

@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/cards/applications/invest-accounts").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/spend-summary").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/rewards/monthly").authenticated()

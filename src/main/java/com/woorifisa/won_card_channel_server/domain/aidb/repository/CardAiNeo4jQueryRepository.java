@@ -17,10 +17,12 @@ import java.util.UUID;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Record;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@ConditionalOnProperty(prefix = "features.neo4j", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class CardAiNeo4jQueryRepository {
 
     private static final String FIND_MONTHLY_SAME_ETF_AVERAGE_POINT_AMOUNT =

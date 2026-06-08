@@ -12,12 +12,19 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/card/db")
+@ConditionalOnProperty(
+        prefix = "features",
+        name = {"aidb.enabled", "neo4j.enabled"},
+        havingValue = "true",
+        matchIfMissing = true
+)
 @Tag(name = "Internal AI DB Query API", description = "AI 서버로 부터 DB 조회 요청을 수행합니다.")
 public class AiDbQueryApi {
 

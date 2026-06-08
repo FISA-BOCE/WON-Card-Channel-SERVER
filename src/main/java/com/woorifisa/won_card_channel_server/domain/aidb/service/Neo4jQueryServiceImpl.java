@@ -19,10 +19,12 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.neo4j.driver.exceptions.Neo4jException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "features.neo4j", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class Neo4jQueryServiceImpl implements Neo4jQueryService {
 
     private static final int DEFAULT_INVESTMENT_PATH_LIMIT = 20;

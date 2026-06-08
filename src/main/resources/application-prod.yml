@@ -1,0 +1,79 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    neo4j:
+      enabled: false
+
+features:
+  aidb:
+    enabled: false
+  neo4j:
+    enabled: false
+
+internal:
+  service-id: won-card-channel
+  api-key: ${INTERNAL_API_KEY}
+  allowed-service-ids: won-admin,won-ai-server
+  services:
+    card-core:
+      base-url: ${CARD_CORE_BASE_URL:http://dummy-card-core:8080}
+    invest-channel:
+      base-url: ${INVEST_CHANNEL_BASE_URL:http://dummy-invest-channel:8080}
+    common:
+      base-url: ${COMMON_BASE_URL:http://dummy-common:8080}
+
+aws:
+  sqs:
+    region: ${AWS_REGION:ap-northeast-2}
+    endpoint: ${AWS_SQS_ENDPOINT:}
+    sweep-request-queue-url: ${SQS_SWEEP_REQUEST_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/000000000000/dummy-request.fifo}
+    sweep-result-queue-url: ${SQS_SWEEP_RESULT_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/000000000000/dummy-result.fifo}
+
+sweep:
+  result:
+    consumer:
+      enabled: false
+      fixed-delay-ms: 10000
+      max-messages: 10
+      wait-time-seconds: 1
+      processing-timeout-seconds: 300
+      worker-count: 8
+
+  outbox:
+    publisher:
+      enabled: false
+      batch-size: 500
+      max-retry-count: 5
+      fixed-delay-ms: 10000
+      message-group-shard-count: 64
+
+  batch:
+    reservation-size: 500
+
+app:
+  security:
+    jwt-secret: ${JWT_SECRET}
+    crypto-secret: ${CRYPTO_SECRET}
+    access-token-expiration-seconds: 3600
+    refresh-token-expiration-seconds: 1209600

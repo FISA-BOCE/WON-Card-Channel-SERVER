@@ -16,10 +16,10 @@ public class CommonWasClient {
 
     private final WebClient commonWasWebClient;
 
-    @Value("${internal.channel.service-id}")
+    @Value("${internal.service-id}")
     private String serviceId;
 
-    @Value("${internal.channel.api-key}")
+    @Value("${internal.api-key}")
     private String internalApiKey;
 
     public ChatResponse sendChat(@NonNull String userUuid, String transactionId, ChatRequest request) {

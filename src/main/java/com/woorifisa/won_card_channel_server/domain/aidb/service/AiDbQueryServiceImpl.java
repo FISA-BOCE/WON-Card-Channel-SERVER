@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@ConditionalOnProperty(prefix = "features.aidb", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AiDbQueryServiceImpl implements AiDbQueryService {
 
     private final CardChnAiSpendSummaryRepository spendSummaryRepository;

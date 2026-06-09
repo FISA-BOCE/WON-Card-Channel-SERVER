@@ -3,7 +3,11 @@ package com.woorifisa.won_card_channel_server.domain.card.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woorifisa.won_card_channel_server.domain.card.dto.request.CardApplicationCreateRequest;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardApplicationCreateResponse;
+import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardApplicationInvestAccountsResponse;
+import com.woorifisa.won_card_channel_server.domain.card.service.CardApplicationInvestAccountService;
 import com.woorifisa.won_card_channel_server.domain.card.service.CardApplicationService;
+import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
+import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,8 +27,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,9 +54,48 @@ class CardApplicationApiTest {
     @MockitoBean
     private CardApplicationService cardApplicationService;
 
+    @MockitoBean
+    private CardApplicationInvestAccountService cardApplicationInvestAccountService;
+
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("인증 없이 카드 신청용 증권 계좌 목록 API를 호출하면 401을 반환한다")
+    void getInvestAccountsWithoutAuthentication() throws Exception {
+        given(cardApplicationInvestAccountService.getInvestAccounts(isNull()))
+                .willThrow(new BusinessException(AuthErrorCode.AUTHENTICATION_REQUIRED));
+
+        mockMvc.perform(get("/api/cards/applications/invest-accounts")
+                        .header("X-Transaction-ID", "TX-20260604-CARD-INVEST01"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_401_002"));
+    }
+
+    @Test
+    @DisplayName("카드 신청용 증권 계좌 목록 API는 200과 계좌 목록을 반환한다")
+    void getInvestAccounts() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(toAuthentication(authenticatedUser()));
+
+        given(cardApplicationInvestAccountService.getInvestAccounts(any(AuthenticatedUser.class)))
+                .willReturn(new CardApplicationInvestAccountsResponse(List.of(
+                        new CardApplicationInvestAccountsResponse.Account(
+                                INVEST_ACCOUNT_UUID,
+                                "123-***-***456",
+                                true
+                        )
+                )));
+
+        mockMvc.perform(get("/api/cards/applications/invest-accounts")
+                        .header("X-Transaction-ID", "TX-20260604-CARD-INVEST02"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("CARD_200_003"))
+                .andExpect(jsonPath("$.message").value("증권 계좌 목록 조회가 완료되었습니다."))
+                .andExpect(jsonPath("$.data.accounts[0].investAccountUuid").value(INVEST_ACCOUNT_UUID.toString()))
+                .andExpect(jsonPath("$.data.accounts[0].accountNoDisplay").value("123-***-***456"))
+                .andExpect(jsonPath("$.data.accounts[0].isLinked").value(true));
     }
 
     @Test
@@ -88,8 +133,6 @@ class CardApplicationApiTest {
 
         mockMvc.perform(post("/api/cards/applications")
                         .contentType(APPLICATION_JSON)
-                        .header("Authorization", "Bearer test-token")
-                        .header("X-Service-ID", "WOORI-WON-APP")
                         .header("X-Transaction-ID", "TX-20260528-CARD-APP01")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())

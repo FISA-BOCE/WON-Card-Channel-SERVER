@@ -41,13 +41,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 class CardApplicationServiceTest {
 
@@ -55,7 +55,6 @@ class CardApplicationServiceTest {
     private final UUID authUserUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private final UUID investAccountUuid = UUID.fromString("44444444-4444-4444-4444-444444444444");
     private final UUID cardUuid = UUID.fromString("55555555-5555-5555-5555-555555555555");
-
     private CardChnAuthUserRepository authUserRepository;
     private CardChnCardSummaryRepository cardSummaryRepository;
     private CardCoreCardApplicationApi cardCoreCardApplicationApi;
@@ -103,17 +102,30 @@ class CardApplicationServiceTest {
                         mappingResponse(userUuid, null, false,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                investAccountUuid, userUuid, "ACTIVE"
-                        )));
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
         given(investChannelAutoInvestApi.getEtf(1001L))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
         given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
-                .willReturn(ApiResponse.of(SuccessStatus.CARD_APPLICATION_CREATED,
-                        new CardCoreApplicationResponse(cardUuid, "****-****-****-1234",
-                                LocalDateTime.of(2026, 5, 28, 17, 0), "ACTIVE")));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.CARD_APPLICATION_CREATED,
+                        new CardCoreApplicationResponse(
+                                cardUuid,
+                                "****-****-****-1234",
+                                LocalDateTime.of(2026, 5, 28, 17, 0),
+                                "ACTIVE"
+                        )
+                ));
+
         CardApplicationCreateResponse response = service.applyCard(authenticatedUser(), request);
 
         assertThat(response.cardUuid()).isEqualTo(cardUuid);
@@ -140,17 +152,29 @@ class CardApplicationServiceTest {
                         mappingResponse(userUuid, null, false,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                investAccountUuid, userUuid, "ACTIVE"
-                        )));
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
         given(investChannelAutoInvestApi.getEtf(1001L))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
         given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
-                .willReturn(ApiResponse.of(SuccessStatus.CARD_APPLICATION_CREATED,
-                        new CardCoreApplicationResponse(cardUuid, "****-****-****-1234",
-                                LocalDateTime.of(2026, 5, 28, 17, 0), "ACTIVE")));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.CARD_APPLICATION_CREATED,
+                        new CardCoreApplicationResponse(
+                                cardUuid,
+                                "****-****-****-1234",
+                                LocalDateTime.of(2026, 5, 28, 17, 0),
+                                "ACTIVE"
+                        )
+                ));
         given(commonUserMappingApi.updateCardUserMapping(eq(userUuid), any(UpdateCardUserMappingRequest.class)))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         mappingResponse(
@@ -179,13 +203,19 @@ class CardApplicationServiceTest {
                         mappingResponse(userUuid, null, false,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                investAccountUuid, userUuid, "ACTIVE"
-                        )));
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
         given(investChannelAutoInvestApi.getEtf(1001L))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
         given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
                 .willThrow(feignException(409, "{\"code\":\"CARD_409_001\"}"));
 
@@ -212,7 +242,9 @@ class CardApplicationServiceTest {
                         "서울시 마포구 상암동",
                         "직장인"
                 ),
-                investAccountUuid, 1001L, "VOO",
+                investAccountUuid,
+                1001L,
+                "VOO",
                 false,
                 null
         );
@@ -234,13 +266,19 @@ class CardApplicationServiceTest {
                         mappingResponse(userUuid, null, false,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                investAccountUuid, userUuid, "ACTIVE"
-                        )));
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
         given(investChannelAutoInvestApi.getEtf(1001L))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
         given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
                 .willThrow(feignException(400, "{\"code\":\"CARD_400_001\"}"));
 
@@ -261,13 +299,19 @@ class CardApplicationServiceTest {
                         mappingResponse(userUuid, null, false,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                investAccountUuid, userUuid, "ACTIVE"
-                        )));
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
         given(investChannelAutoInvestApi.getEtf(1001L))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
         given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
                 .willThrow(feignException(400, "{\"code\":\"CARD_400_002\"}"));
 
@@ -297,17 +341,29 @@ class CardApplicationServiceTest {
                         mappingResponse(userUuid, null, false,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
         given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
                         new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
-                                investAccountUuid, userUuid, "ACTIVE"
-                        )));
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
         given(investChannelAutoInvestApi.getEtf(1001L))
-                .willReturn(ApiResponse.of(SuccessStatus.OK,
-                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
         given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
-                .willReturn(ApiResponse.of(SuccessStatus.CARD_APPLICATION_CREATED,
-                        new CardCoreApplicationResponse(cardUuid, "****-****-****-1234",
-                                LocalDateTime.of(2026, 5, 28, 17, 0), "ACTIVE")));
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.CARD_APPLICATION_CREATED,
+                        new CardCoreApplicationResponse(
+                                cardUuid,
+                                "****-****-****-1234",
+                                LocalDateTime.of(2026, 5, 28, 17, 0),
+                                "ACTIVE"
+                        )
+                ));
 
         service.applyCard(authenticatedUser(), request);
 

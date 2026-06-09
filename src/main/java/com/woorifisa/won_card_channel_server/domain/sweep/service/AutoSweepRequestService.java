@@ -1,0 +1,289 @@
+package com.woorifisa.won_card_channel_server.domain.sweep.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepTarget;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.ReservedSweepCreateCommand;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.event.SweepRequestedEvent;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.command.AutoSweepCreateCommand;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.dto.CardCoreSweepRequestResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.dto.response.SweepRequestCreateResponse;
+import com.woorifisa.won_card_channel_server.domain.sweep.external.CardCoreRewardSweepApi;
+import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
+import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
+import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
+import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
+import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional(readOnly = true)
+public class AutoSweepRequestService {
+
+    private static final String IDEMPOTENCY_KEY_PREFIX = "SWEEP:POINT_LEDGER:";
+    private static final String EVENT_ID_PREFIX = "CARD-SWEEP-";
+
+    private final CardCoreRewardSweepApi cardCoreRewardSweepApi;
+    private final SweepRepository sweepRepository;
+    private final SweepOutboxRepository sweepOutboxRepository;
+    private final ObjectMapper objectMapper;
+
+    private SweepRequestCreateResponse createSweepRequestForApi(AutoSweepTarget target) {
+
+        validateTarget(target);
+
+        String idempotencyKey = createIdempotencyKey(target.pointLedgerId());
+
+        validateNotDuplicated(target.pointLedgerId(), idempotencyKey);
+
+        String correlationId = UUID.randomUUID().toString();
+        String eventId = EVENT_ID_PREFIX + UUID.randomUUID();
+
+        try {
+            // 스윕 요청 발행
+            Sweep request = Sweep.createPendingPublish(target, correlationId, idempotencyKey);
+
+            // 스윕 요청 DB 저장
+            Sweep savedSweep = sweepRepository.save(request);
+
+            // 저장된 스윕 요청 기반으로 카드 -> 증권으로 보낼 이벤트 객체 생성
+            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweep, eventId);
+
+            // SweepRequestedEvent 객체 JSON 문자열로 바꿈
+            String payload = objectMapper.writeValueAsString(event);
+
+            // outbox에 pending 상태로 저장
+            SweepOutbox outbox = SweepOutbox.pending(
+                    savedSweep.getSweepRequestId(), eventId, SweepEventType.SWEEP_REQUESTED
+                    , payload, correlationId, idempotencyKey);
+
+            sweepOutboxRepository.save(outbox);
+
+            return SweepRequestCreateResponse.from(savedSweep);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_CREATE_FAILED, e);
+        }
+
+    }
+
+    @Transactional
+    public SweepRequestCreateResponse createSweepRequest(AutoSweepCreateCommand request) {
+        validateInternalRequest(request);
+
+        String idempotencyKey = createIdempotencyKey(request.pointLedgerId());
+
+        validateNotDuplicated(request.pointLedgerId(), idempotencyKey);
+
+        CardCoreSweepRequestResponse coreResponse = requestSweepFromCore(
+                request.cardUserUuid(),
+                request.pointLedgerId()
+        );
+
+        try {
+            AutoSweepTarget target = AutoSweepTarget.of(request, coreResponse);
+            validateTarget(target);
+
+            return createSweepRequestAndOutbox(target, idempotencyKey);
+        } catch (BusinessException e) {
+            compensateSweepRequest(request.cardUserUuid(), request.pointLedgerId());
+            throw e;
+        } catch (RuntimeException e) {
+            compensateSweepRequest(request.cardUserUuid(), request.pointLedgerId());
+            throw e;
+        }
+    }
+
+    @Transactional
+    public SweepRequestCreateResponse createSweepRequestFromReservedItem(ReservedSweepCreateCommand command) {
+        validateReservedCommand(command);
+        validateNotDuplicated(command.pointLedgerId(), command.idempotencyKey());
+
+        AutoSweepTarget target = AutoSweepTarget.of(command);
+        validateTarget(target);
+
+        return createSweepRequestAndOutbox(
+                target,
+                command.idempotencyKey(),
+                command.correlationId(),
+                command.eventId(),
+                command.requestedAt()
+        );
+    }
+
+    private void compensateSweepRequest(UUID cardUserUuid, Long pointLedgerId) {
+        try {
+            cardCoreRewardSweepApi.cancelSweepRequest(cardUserUuid, pointLedgerId);
+        } catch (Exception compensationException) {
+            log.warn(
+                    "Core 스윕 보상 호출에 실패했습니다. cardUserUuid={}, pointLedgerId={}",
+                    cardUserUuid,
+                    pointLedgerId,
+                    compensationException
+            );
+        }
+    }
+
+    private CardCoreSweepRequestResponse requestSweepFromCore(UUID cardUserUuid, Long pointLedgerId) {
+        try {
+            ApiResponse<CardCoreSweepRequestResponse> coreResponse =
+                    cardCoreRewardSweepApi.requestSweep(cardUserUuid, pointLedgerId);
+
+            if (coreResponse == null || coreResponse.data() == null) {
+                throw new BusinessException(SweepErrorCode.SWEEP_CORE_RESPONSE_INVALID);
+            }
+
+            return coreResponse.data();
+        } catch (BusinessException e) {
+            throw e;
+        } catch (FeignException.Conflict e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
+        } catch (FeignException.NotFound e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_REWARD_LEDGER_NOT_FOUND, e);
+        } catch (FeignException.Forbidden e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_REWARD_LEDGER_FORBIDDEN, e);
+        } catch (FeignException.UnprocessableEntity e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_REWARD_LEDGER_NOT_ELIGIBLE, e);
+        } catch (FeignException e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_CORE_UNAVAILABLE, e);
+        }
+    }
+
+    private SweepRequestCreateResponse createSweepRequestAndOutbox(
+            AutoSweepTarget target,
+            String idempotencyKey
+    ) {
+        String correlationId = UUID.randomUUID().toString();
+        String eventId = EVENT_ID_PREFIX + UUID.randomUUID();
+
+        return createSweepRequestAndOutbox(
+                target,
+                idempotencyKey,
+                correlationId,
+                eventId,
+                LocalDateTime.now()
+        );
+    }
+
+    private SweepRequestCreateResponse createSweepRequestAndOutbox(
+            AutoSweepTarget target,
+            String idempotencyKey,
+            String correlationId,
+            String eventId,
+            LocalDateTime requestedAt
+    ) {
+
+        try {
+            Sweep sweep = Sweep.createPendingPublish(
+                    target,
+                    correlationId,
+                    idempotencyKey,
+                    requestedAt
+            );
+
+            Sweep savedSweep = sweepRepository.save(sweep);
+
+            SweepRequestedEvent event = SweepRequestedEvent.from(savedSweep, eventId);
+            String payload = objectMapper.writeValueAsString(event);
+
+            SweepOutbox outbox = SweepOutbox.pending(
+                    savedSweep.getSweepRequestId(),
+                    eventId,
+                    SweepEventType.SWEEP_REQUESTED,
+                    payload,
+                    correlationId,
+                    idempotencyKey
+            );
+
+            sweepOutboxRepository.save(outbox);
+
+            return SweepRequestCreateResponse.from(savedSweep);
+        } catch (DataIntegrityViolationException e) {
+            if (isDuplicateAfterPreCheck(target.pointLedgerId(), idempotencyKey)) {
+                throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED, e);
+            }
+
+            throw new BusinessException(SweepErrorCode.SWEEP_REQUEST_SAVE_FAILED, e);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(SweepErrorCode.SWEEP_OUTBOX_CREATE_FAILED, e);
+        }
+    }
+
+    private boolean isDuplicateAfterPreCheck(Long pointLedgerId, String idempotencyKey) {
+        return sweepRepository.existsByPointLedgerId(pointLedgerId)
+                || sweepRepository.existsByIdempotencyKey(idempotencyKey);
+    }
+
+    private void validateTarget(AutoSweepTarget target) {
+        if (target == null
+                || target.userUuid() == null
+                || target.cardUserUuid() == null
+                || target.performanceId() == null
+                || target.pointLedgerId() == null
+                || target.baseMonth() == null || target.baseMonth().isBlank()
+                || target.pointAmount() == null
+                || target.krwAmount() == null
+                || target.etfId() == null) {
+            throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
+        }
+
+        if (target.pointAmount() <= 0 || target.krwAmount() <= 0) {
+            throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
+        }
+    }
+
+    private void validateInternalRequest(AutoSweepCreateCommand request) {
+        if (request == null
+                || request.userUuid() == null
+                || request.cardUserUuid() == null
+                || request.pointLedgerId() == null
+                || request.etfId() == null) {
+            throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
+        }
+    }
+
+    private void validateReservedCommand(ReservedSweepCreateCommand command) {
+        if (command == null
+                || command.userUuid() == null
+                || command.cardUserUuid() == null
+                || command.performanceId() == null
+                || command.pointLedgerId() == null
+                || command.baseMonth() == null || command.baseMonth().isBlank()
+                || command.pointAmount() == null
+                || command.krwAmount() == null
+                || command.etfId() == null
+                || command.eventId() == null || command.eventId().isBlank()
+                || command.correlationId() == null || command.correlationId().isBlank()
+                || command.idempotencyKey() == null || command.idempotencyKey().isBlank()
+                || command.requestedAt() == null) {
+            throw new BusinessException(SweepErrorCode.SWEEP_INVALID_REQUEST);
+        }
+    }
+
+    // 중복 확인
+    private void validateNotDuplicated(Long pointLedgerId, String idempotencyKey) {
+        if (sweepRepository.existsByPointLedgerId(pointLedgerId) ||
+                sweepRepository.existsByIdempotencyKey(idempotencyKey)) {
+            throw new BusinessException(SweepErrorCode.SWEEP_ALREADY_REQUESTED);
+        }
+    }
+
+    private String createIdempotencyKey(Long pointLedgerId) {
+        return IDEMPOTENCY_KEY_PREFIX + pointLedgerId;
+    }
+
+}

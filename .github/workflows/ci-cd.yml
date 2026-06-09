@@ -1,0 +1,155 @@
+name: CI and CD
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+
+jobs:
+  ci:
+    name: Test and build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: Build Docker image
+        env:
+          IMAGE_TAG: ci-${{ github.sha }}
+        run: docker build --platform linux/amd64 -t "$ECR_REPOSITORY:$IMAGE_TAG" .
+
+  cd:
+    name: Push image to ECR
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      image_tag: ${{ steps.image.outputs.tag }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419
+
+      - name: Set image tag
+        id: image
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "tag=main-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        env:
+          IMAGE_TAG: ${{ steps.image.outputs.tag }}
+        run: |
+          docker build --platform linux/amd64 -t "$ECR_REPOSITORY:$IMAGE_TAG" .
+          docker push "$ECR_REPOSITORY:$IMAGE_TAG"
+
+  update-gitops:
+    name: Update GitOps image tag
+    runs-on: ubuntu-latest
+    needs: cd
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: ${{ vars.GITOPS_REPOSITORY }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          ref: ${{ vars.GITOPS_TARGET_BRANCH }}
+          path: gitops
+
+      - name: Update image tag
+        working-directory: gitops
+        env:
+          GITOPS_VALUES_PATH: ${{ vars.GITOPS_VALUES_PATH }}
+          IMAGE_TAG: ${{ needs.cd.outputs.image_tag }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["GITOPS_VALUES_PATH"])
+          tag = os.environ["IMAGE_TAG"]
+
+          lines = path.read_text().splitlines()
+          in_image = False
+
+          for index, line in enumerate(lines):
+              stripped = line.strip()
+
+              if stripped == "image:":
+                  in_image = True
+                  continue
+
+              if in_image and line and not line.startswith(" "):
+                  in_image = False
+
+              if in_image and stripped.startswith("tag:"):
+                  indent = line[:len(line) - len(line.lstrip())]
+                  lines[index] = f"{indent}tag: {tag}"
+                  break
+          else:
+              raise SystemExit("image.tag not found")
+
+          path.write_text("\n".join(lines) + "\n")
+          PY
+
+      - name: Commit and push GitOps change
+        working-directory: gitops
+        env:
+          GITOPS_VALUES_PATH: ${{ vars.GITOPS_VALUES_PATH }}
+          IMAGE_TAG: ${{ needs.cd.outputs.image_tag }}
+          GITOPS_TARGET_BRANCH: ${{ vars.GITOPS_TARGET_BRANCH }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No GitOps changes to commit"
+            exit 0
+          fi
+
+          git add "$GITOPS_VALUES_PATH"
+          git commit -m "chore: deploy card-channel-server $IMAGE_TAG"
+          git push origin "HEAD:$GITOPS_TARGET_BRANCH"

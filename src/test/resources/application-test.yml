@@ -1,0 +1,88 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:won_common_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+internal:
+  service-id: test-card-channel
+  api-key: test-test-test-test
+  allowed-service-ids: won-test,won-test2
+  services:
+    card-core:
+      base-url: http://localhost:8082
+    invest-channel:
+      base-url: http://localhost:8083
+    common:
+      base-url: http://localhost:8080
+
+aws:
+  sqs:
+    region: ap-northeast-2
+    endpoint: http://localhost:4566
+    sweep-request-queue-url: http://localhost:4566/000000000000/won-test-test-test-queue.fifo
+    sweep-result-queue-url: http://localhost:4566/000000000000/won-test-test-test-queue.fifo
+
+sweep:
+  batch:
+    reservation-size: 500
+  outbox:
+    publisher:
+      enabled: false
+      batch-size: 20
+      max-retry-count: 5
+      fixed-delay-ms: 10000
+      message-group-shard-count: 64
+  result:
+    consumer:
+      enabled: false
+      fixed-delay-ms: 10000
+      max-messages: 10
+      wait-time-seconds: 5
+      processing-timeout-seconds: 300
+      worker-count: 8
+
+app:
+  security:
+    jwt-secret: test-card-channel-jwt-secret-for-ci-only-please-do-not-use
+    crypto-secret: eGVzaC1jYXJsLWNoYW5uZWwtYWVzLWtleS0zMmJ5dGU=
+    access-token-expiration-seconds: 3600
+    refresh-token-expiration-seconds: 1209600
+
+azure:
+  openai:
+    endpoint: http://localhost:9999
+    api-key: test-api-key
+    deployment-name: test-deployment
+    api-version: 2024-02-01
+
+datasource:
+  card-ai:
+    url: jdbc:h2:mem:won_card_ai_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  securities-ai:
+    url: jdbc:h2:mem:won_securities_ai_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+neo4j:
+  card:
+    uri: bolt://localhost:7687
+    username: test
+    password: test
+  securities:
+    uri: bolt://localhost:7688
+    username: test
+    password: test

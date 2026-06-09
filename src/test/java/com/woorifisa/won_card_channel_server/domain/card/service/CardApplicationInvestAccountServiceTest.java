@@ -82,7 +82,7 @@ class CardApplicationInvestAccountServiceTest {
         CardApplicationInvestAccountsResponse response = service.getInvestAccounts(authenticatedUser());
 
         assertThat(response.accounts()).hasSize(1);
-        assertThat(response.accounts().get(0).invstAccountUuid()).isEqualTo(activeAccountUuid);
+        assertThat(response.accounts().get(0).investAccountUuid()).isEqualTo(activeAccountUuid);
         assertThat(response.accounts().get(0).accountNoDisplay()).isEqualTo("123-***-***456");
         assertThat(response.accounts().get(0).isLinked()).isTrue();
     }

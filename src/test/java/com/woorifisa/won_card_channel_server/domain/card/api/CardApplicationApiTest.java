@@ -93,7 +93,7 @@ class CardApplicationApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("CARD_200_003"))
                 .andExpect(jsonPath("$.message").value("증권 계좌 목록 조회가 완료되었습니다."))
-                .andExpect(jsonPath("$.data.accounts[0].invstAccountUuid").value(INVEST_ACCOUNT_UUID.toString()))
+                .andExpect(jsonPath("$.data.accounts[0].investAccountUuid").value(INVEST_ACCOUNT_UUID.toString()))
                 .andExpect(jsonPath("$.data.accounts[0].accountNoDisplay").value("123-***-***456"))
                 .andExpect(jsonPath("$.data.accounts[0].isLinked").value(true));
     }

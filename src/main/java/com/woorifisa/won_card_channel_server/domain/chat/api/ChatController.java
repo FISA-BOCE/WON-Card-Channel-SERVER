@@ -35,8 +35,7 @@ public class ChatController {
             @RequestHeader(value = "X-Transaction-ID", required = false) String transactionId,
             @Valid @RequestBody ChatRequest request
     ) {
-        String userUuid = authenticatedUser.userUuid().toString();
-        ChatResponse response = chatService.processChat(userUuid, transactionId, request);
+        ChatResponse response = chatService.processChat(authenticatedUser.userUuid(), transactionId, request);
         return ResponseEntity
                 .status(SuccessStatus.CHAT_SUCCESS.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.CHAT_SUCCESS, response));

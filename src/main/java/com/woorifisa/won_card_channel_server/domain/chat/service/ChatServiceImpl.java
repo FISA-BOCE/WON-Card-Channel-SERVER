@@ -6,6 +6,8 @@ import com.woorifisa.won_card_channel_server.domain.chat.external.CommonWasClien
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
@@ -13,7 +15,7 @@ public class ChatServiceImpl implements ChatService {
     private final CommonWasClient commonWasClient;
 
     @Override
-    public ChatResponse processChat(String userUuid, String transactionId, ChatRequest request) {
+    public ChatResponse processChat(UUID userUuid, String transactionId, ChatRequest request) {
         return commonWasClient.sendChat(userUuid, transactionId, request);
     }
 }

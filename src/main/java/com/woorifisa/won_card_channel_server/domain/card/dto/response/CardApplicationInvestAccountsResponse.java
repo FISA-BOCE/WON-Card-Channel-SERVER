@@ -8,7 +8,7 @@ public record CardApplicationInvestAccountsResponse(
 ) {
 
     public record Account(
-            UUID invstAccountUuid,
+            UUID investAccountUuid,
             String accountNoDisplay,
             boolean isLinked
     ) {

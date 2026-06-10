@@ -6,6 +6,7 @@ import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminOutb
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
+import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
 import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
@@ -65,6 +66,23 @@ public class AdminOutboxEventService {
         SweepOutbox outbox = sweepOutboxRepository.findById(outboxEventId)
                 .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
 
+        return AdminOutboxEventItemResponse.from(outbox);
+    }
+
+    @Transactional
+    public AdminOutboxEventItemResponse retryOutboxEvent(Long outboxEventId) {
+        SweepOutbox outbox = sweepOutboxRepository.findById(outboxEventId)
+                .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
+        AdminOutboxEventItemResponse response = AdminOutboxEventItemResponse.from(outbox);
+
+        if (!response.retryable()) {
+            throw new BusinessException(
+                    SweepErrorCode.SWEEP_OUTBOX_RETRY_NOT_ALLOWED,
+                    response.retryDisabledReason()
+            );
+        }
+
+        outbox.markRetryRequested();
         return AdminOutboxEventItemResponse.from(outbox);
     }
 

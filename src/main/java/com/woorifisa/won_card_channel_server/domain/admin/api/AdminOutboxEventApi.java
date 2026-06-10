@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,5 +65,20 @@ public class AdminOutboxEventApi {
         return ResponseEntity
                 .status(SuccessStatus.ADMIN_OUTBOX_EVENT_DETAIL_FOUND.getHttpStatus())
                 .body(ApiResponse.of(SuccessStatus.ADMIN_OUTBOX_EVENT_DETAIL_FOUND, response));
+    }
+
+    @Operation(
+            summary = "Outbox 이벤트 재처리 요청",
+            description = "SQS 발행 실패 등 운영/전달 실패로 멈춘 Outbox 이벤트를 RETRY 상태로 되돌립니다. 새 스윕 요청을 생성하지 않고 기존 Publisher 스케줄러가 재발행하도록 nextRetryAt을 현재 시각으로 갱신합니다."
+    )
+    @PostMapping("/{outboxEventId}/retry")
+    public ResponseEntity<ApiResponse<AdminOutboxEventItemResponse>> retryOutboxEvent(
+            @PathVariable Long outboxEventId
+    ) {
+        AdminOutboxEventItemResponse response = adminOutboxEventService.retryOutboxEvent(outboxEventId);
+
+        return ResponseEntity
+                .status(SuccessStatus.ADMIN_OUTBOX_EVENT_RETRY_REQUESTED.getHttpStatus())
+                .body(ApiResponse.of(SuccessStatus.ADMIN_OUTBOX_EVENT_RETRY_REQUESTED, response));
     }
 }

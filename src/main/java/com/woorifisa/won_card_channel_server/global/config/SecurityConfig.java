@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .requestMatchers(HttpMethod.GET, "/api/admin/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/admin/outbox-events/*/retry").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/applications/invest-accounts").authenticated()

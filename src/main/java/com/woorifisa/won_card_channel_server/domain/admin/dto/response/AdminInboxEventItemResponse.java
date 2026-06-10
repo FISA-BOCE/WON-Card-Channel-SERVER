@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.admin.dto.response;
 
+import com.woorifisa.won_card_channel_server.domain.admin.support.AdminSystemType;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public record AdminInboxEventItemResponse(
     public static AdminInboxEventItemResponse from(SweepResultInbox inbox) {
         return new AdminInboxEventItemResponse(
                 inbox.getInboxEventId(),
-                "CARD",
+                AdminSystemType.CARD,
                 inbox.getSweepRequestId(),
                 inbox.getSourceEventId(),
                 inbox.getEventType().name(),

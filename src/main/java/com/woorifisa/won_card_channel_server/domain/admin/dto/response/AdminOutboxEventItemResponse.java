@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.admin.dto.response;
 
+import com.woorifisa.won_card_channel_server.domain.admin.support.AdminSystemType;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 
@@ -23,7 +24,7 @@ public record AdminOutboxEventItemResponse(
     public static AdminOutboxEventItemResponse from(SweepOutbox outbox) {
         return new AdminOutboxEventItemResponse(
                 outbox.getOutboxEventId(),
-                "CARD",
+                AdminSystemType.CARD,
                 outbox.getSweepRequestId(),
                 outbox.getEventType().name(),
                 mapPublishStatus(outbox.getPublishStatus()),

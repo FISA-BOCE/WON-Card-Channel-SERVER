@@ -3,6 +3,7 @@ package com.woorifisa.won_card_channel_server.domain.admin.service;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminInboxEventItemResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminInboxEventListResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminInboxEventSummaryResponse;
+import com.woorifisa.won_card_channel_server.domain.admin.support.AdminSystemType;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.InboxProcessStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
@@ -111,11 +112,11 @@ public class AdminInboxEventService {
     }
 
     private void validateSystemType(String systemType) {
-        if (systemType == null || systemType.isBlank() || "ALL".equalsIgnoreCase(systemType)) {
+        if (systemType == null || systemType.isBlank() || AdminSystemType.ALL.equalsIgnoreCase(systemType)) {
             return;
         }
 
-        if (!"CARD".equalsIgnoreCase(systemType)) {
+        if (!AdminSystemType.CARD.equalsIgnoreCase(systemType)) {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE);
         }
     }

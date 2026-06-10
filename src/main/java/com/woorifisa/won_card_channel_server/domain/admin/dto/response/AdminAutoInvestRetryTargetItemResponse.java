@@ -24,6 +24,10 @@ public record AdminAutoInvestRetryTargetItemResponse(
         LocalDateTime updatedAt
 ) {
 
+    private static final String FAILED_STEP_AUTO_INVEST = "AUTO_INVEST";
+    private static final String STATUS_NOT_PROVIDED = "NOT_PROVIDED";
+    private static final String FAILED_REQUEST_STATUS = "FAILED";
+
     public static AdminAutoInvestRetryTargetItemResponse from(AdminSweepRequestItemResponse item) {
         return new AdminAutoInvestRetryTargetItemResponse(
                 item.sweepRequestId(),
@@ -36,11 +40,11 @@ public record AdminAutoInvestRetryTargetItemResponse(
                 item.krwAmount(),
                 item.etfId(),
                 item.ticker(),
-                "AUTO_INVEST",
-                "FAILED",
-                "UNKNOWN",
+                FAILED_STEP_AUTO_INVEST,
+                STATUS_NOT_PROVIDED,
+                STATUS_NOT_PROVIDED,
                 item.failReason(),
-                "FAILED".equals(item.requestStatus()),
+                FAILED_REQUEST_STATUS.equals(item.requestStatus()),
                 item.requestedAt(),
                 item.completedAt(),
                 item.updatedAt()

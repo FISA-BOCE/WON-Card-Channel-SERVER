@@ -3,7 +3,8 @@ package com.woorifisa.won_card_channel_server.domain.admin.service;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminOutboxEventItemResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminOutboxEventListResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminOutboxEventSummaryResponse;
-import com.woorifisa.won_card_channel_server.domain.admin.support.AdminSystemType;
+import com.woorifisa.won_card_channel_server.domain.admin.policy.AdminOutboxRetryPolicy;
+import com.woorifisa.won_card_channel_server.domain.admin.support.AdminRequestSupport;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
@@ -25,9 +26,8 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class AdminOutboxEventService {
 
-    private static final int MAX_PAGE_SIZE = 100;
-
     private final SweepOutboxRepository sweepOutboxRepository;
+    private final AdminOutboxRetryPolicy retryPolicy;
 
     public AdminOutboxEventListResponse getOutboxEvents(
             String systemType,
@@ -37,10 +37,13 @@ public class AdminOutboxEventService {
             int page,
             int size
     ) {
-        validateSystemType(systemType);
+        AdminRequestSupport.validateCardSystemType(systemType);
 
         OutboxPublishStatus publishStatus = mapStatus(status);
-        Pageable pageable = PageRequest.of(normalizePage(page), normalizeSize(size));
+        Pageable pageable = PageRequest.of(
+                AdminRequestSupport.normalizePage(page),
+                AdminRequestSupport.normalizeSize(size)
+        );
         Page<SweepOutbox> outboxEvents = sweepOutboxRepository.findAdminOutboxEvents(
                 publishStatus,
                 eventType,
@@ -54,7 +57,7 @@ public class AdminOutboxEventService {
                 getSummary(eventType, sweepRequestId),
                 outboxEvents.getContent()
                         .stream()
-                        .map(AdminOutboxEventItemResponse::from)
+                        .map(outbox -> AdminOutboxEventItemResponse.from(outbox, retryPolicy))
                         .toList(),
                 outboxEvents.getNumber(),
                 outboxEvents.getSize(),
@@ -67,24 +70,23 @@ public class AdminOutboxEventService {
         SweepOutbox outbox = sweepOutboxRepository.findById(outboxEventId)
                 .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
 
-        return AdminOutboxEventItemResponse.from(outbox);
+        return AdminOutboxEventItemResponse.from(outbox, retryPolicy);
     }
 
     @Transactional
     public AdminOutboxEventItemResponse retryOutboxEvent(Long outboxEventId) {
         SweepOutbox outbox = sweepOutboxRepository.findById(outboxEventId)
                 .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
-        AdminOutboxEventItemResponse response = AdminOutboxEventItemResponse.from(outbox);
 
-        if (!response.retryable()) {
+        if (!retryPolicy.isRetryable(outbox)) {
             throw new BusinessException(
                     SweepErrorCode.SWEEP_OUTBOX_RETRY_NOT_ALLOWED,
-                    response.retryDisabledReason()
+                    retryPolicy.getDisabledReason(outbox)
             );
         }
 
         outbox.markRetryRequested();
-        return AdminOutboxEventItemResponse.from(outbox);
+        return AdminOutboxEventItemResponse.from(outbox, retryPolicy);
     }
 
     public AdminOutboxEventSummaryResponse getSummary(
@@ -135,18 +137,8 @@ public class AdminOutboxEventService {
         );
     }
 
-    private void validateSystemType(String systemType) {
-        if (systemType == null || systemType.isBlank() || AdminSystemType.ALL.equalsIgnoreCase(systemType)) {
-            return;
-        }
-
-        if (!AdminSystemType.CARD.equalsIgnoreCase(systemType)) {
-            throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE);
-        }
-    }
-
     private OutboxPublishStatus mapStatus(String status) {
-        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
+        if (AdminRequestSupport.isAll(status)) {
             return null;
         }
 
@@ -159,17 +151,5 @@ public class AdminOutboxEventService {
             case "FAILED" -> OutboxPublishStatus.FAILED;
             default -> throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE);
         };
-    }
-
-    private int normalizePage(int page) {
-        return Math.max(page, 0);
-    }
-
-    private int normalizeSize(int size) {
-        if (size <= 0) {
-            return 20;
-        }
-
-        return Math.min(size, MAX_PAGE_SIZE);
     }
 }

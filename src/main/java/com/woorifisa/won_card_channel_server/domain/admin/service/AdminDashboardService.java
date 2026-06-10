@@ -8,6 +8,7 @@ import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminOutb
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminOutboxEventSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminSweepRequestListResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminSweepRequestSummaryResponse;
+import com.woorifisa.won_card_channel_server.domain.admin.policy.AdminOutboxRetryPolicy;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.InboxProcessStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
@@ -36,6 +37,7 @@ public class AdminDashboardService {
     private final SweepOutboxRepository sweepOutboxRepository;
     private final SweepResultInboxRepository sweepResultInboxRepository;
     private final Clock clock;
+    private final AdminOutboxRetryPolicy outboxRetryPolicy;
 
     public AdminDashboardSummaryResponse getSummary(String baseMonth) {
         YearMonth yearMonth = resolveBaseMonth(baseMonth);
@@ -186,7 +188,7 @@ public class AdminDashboardService {
                 )
                 .getContent()
                 .stream()
-                .map(AdminOutboxEventItemResponse::from)
+                .map(outbox -> AdminOutboxEventItemResponse.from(outbox, outboxRetryPolicy))
                 .toList();
     }
 

@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.admin.service;
 
+import com.woorifisa.won_card_channel_server.domain.admin.policy.AdminOutboxRetryPolicy;
 import com.woorifisa.won_card_channel_server.domain.sweep.exception.code.SweepErrorCode;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepOutbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
@@ -25,7 +26,7 @@ class AdminOutboxEventServiceTest {
     @BeforeEach
     void setUp() {
         sweepOutboxRepository = mock(SweepOutboxRepository.class);
-        service = new AdminOutboxEventService(sweepOutboxRepository);
+        service = new AdminOutboxEventService(sweepOutboxRepository, new AdminOutboxRetryPolicy());
     }
 
     @Test

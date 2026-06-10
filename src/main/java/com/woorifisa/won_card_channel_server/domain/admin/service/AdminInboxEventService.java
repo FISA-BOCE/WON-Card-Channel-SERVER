@@ -3,7 +3,7 @@ package com.woorifisa.won_card_channel_server.domain.admin.service;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminInboxEventItemResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminInboxEventListResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.dto.response.AdminInboxEventSummaryResponse;
-import com.woorifisa.won_card_channel_server.domain.admin.support.AdminSystemType;
+import com.woorifisa.won_card_channel_server.domain.admin.support.AdminRequestSupport;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.InboxProcessStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.SweepEventType;
@@ -24,8 +24,6 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class AdminInboxEventService {
 
-    private static final int MAX_PAGE_SIZE = 100;
-
     private final SweepResultInboxRepository sweepResultInboxRepository;
 
     public AdminInboxEventListResponse getInboxEvents(
@@ -36,10 +34,13 @@ public class AdminInboxEventService {
             int page,
             int size
     ) {
-        validateSystemType(systemType);
+        AdminRequestSupport.validateCardSystemType(systemType);
 
         InboxProcessStatus processStatus = mapStatus(status);
-        Pageable pageable = PageRequest.of(normalizePage(page), normalizeSize(size));
+        Pageable pageable = PageRequest.of(
+                AdminRequestSupport.normalizePage(page),
+                AdminRequestSupport.normalizeSize(size)
+        );
         Page<SweepResultInbox> inboxEvents = sweepResultInboxRepository.findAdminInboxEvents(
                 processStatus,
                 eventType,
@@ -111,18 +112,8 @@ public class AdminInboxEventService {
         );
     }
 
-    private void validateSystemType(String systemType) {
-        if (systemType == null || systemType.isBlank() || AdminSystemType.ALL.equalsIgnoreCase(systemType)) {
-            return;
-        }
-
-        if (!AdminSystemType.CARD.equalsIgnoreCase(systemType)) {
-            throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE);
-        }
-    }
-
     private InboxProcessStatus mapStatus(String status) {
-        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
+        if (AdminRequestSupport.isAll(status)) {
             return null;
         }
 
@@ -134,17 +125,5 @@ public class AdminInboxEventService {
             case "FAILED" -> InboxProcessStatus.FAILED;
             default -> throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE);
         };
-    }
-
-    private int normalizePage(int page) {
-        return Math.max(page, 0);
-    }
-
-    private int normalizeSize(int size) {
-        if (size <= 0) {
-            return 20;
-        }
-
-        return Math.min(size, MAX_PAGE_SIZE);
     }
 }

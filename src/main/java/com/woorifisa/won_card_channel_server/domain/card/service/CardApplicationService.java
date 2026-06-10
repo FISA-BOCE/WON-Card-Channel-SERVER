@@ -90,8 +90,9 @@ public class CardApplicationService {
                 coreRequest
         );
 
-        syncCardUserMappingIfPossible(userUuid, authUser);
-        saveCardSummaryIfPossible(userUuid, authUser, cardResponse, request.etfId());
+        authUser.updateCardUserUuid(cardResponse.cardUserUuid());
+        syncCardUserMapping(userUuid, cardResponse.cardUserUuid());
+        saveCardSummary(userUuid, cardResponse, request.etfId());
 
         autoInvestSubscriptionService.createInitialSubscription(
                 userUuid,
@@ -196,17 +197,11 @@ public class CardApplicationService {
         return textEncryptor.encrypt(value.trim());
     }
 
-    private void syncCardUserMappingIfPossible(UUID userUuid, CardChnAuthUser authUser) {
-
-        if (authUser.getCardUserUuid() == null) {
-            // TODO: 카드 코어 쪽 수정 후 반영 필요
-            return;
-        }
-
+    private void syncCardUserMapping(UUID userUuid, UUID cardUserUuid) {
         try {
             commonUserMappingApi.updateCardUserMapping(
                     userUuid,
-                    new UpdateCardUserMappingRequest(authUser.getCardUserUuid())
+                    new UpdateCardUserMappingRequest(cardUserUuid)
             );
 
         } catch (FeignException e) {
@@ -239,7 +234,10 @@ public class CardApplicationService {
     private CardCoreApplicationResponse extractCardApplicationData(
             ApiResponse<CardCoreApplicationResponse> coreResponse
     ) {
-        if (coreResponse == null || coreResponse.data() == null || coreResponse.data().cardUuid() == null) {
+        if (coreResponse == null
+                || coreResponse.data() == null
+                || coreResponse.data().cardUuid() == null
+                || coreResponse.data().cardUserUuid() == null) {
             throw new BusinessException(CardErrorCode.INVALID_CARD_RESPONSE);
         }
 
@@ -286,20 +284,14 @@ public class CardApplicationService {
         }
     }
 
-    private void saveCardSummaryIfPossible(
+    private void saveCardSummary(
             UUID userUuid,
-            CardChnAuthUser authUser,
             CardCoreApplicationResponse cardResponse,
             Long selectedEtfId
     ) {
-        if (authUser.getCardUserUuid() == null) {
-            // TODO: 카드 코어 쪽 수정 후 반영 필요
-            return;
-        }
-
         CardChnCardSummary summary = CardChnCardSummary.builder()
                 .userUuid(userUuid)
-                .cardUserUuid(authUser.getCardUserUuid())
+                .cardUserUuid(cardResponse.cardUserUuid())
                 .cardUuid(cardResponse.cardUuid())
                 .cardName(DEFAULT_CARD_NAME)
                 .cardNoDisplay(cardResponse.cardNoDisplay())

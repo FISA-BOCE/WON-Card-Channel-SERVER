@@ -75,6 +75,10 @@ public class CardChnAuthUser extends BaseTimeEntity {
         this.emailEnc = emailEnc;
     }
 
+    public void updateCardUserUuid(UUID cardUserUuid) {
+        this.cardUserUuid = cardUserUuid;
+    }
+
     public void changePassword(String passwordHash) {
         this.passwordHash = passwordHash;
     }

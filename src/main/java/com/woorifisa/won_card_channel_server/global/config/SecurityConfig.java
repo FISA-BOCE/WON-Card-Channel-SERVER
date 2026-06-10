@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/applications/invest-accounts").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/cards/info").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/spend-summary").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/rewards/monthly").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/rewards/ledger", "/api/cards/rewards/ledger/**").authenticated()

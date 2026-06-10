@@ -7,6 +7,7 @@ public record CardInfoResponse(
 ) {
 
     public record CardInfo(
+            String cardUuid,
             String cardName,
             String cardNoDisplay
     ) {

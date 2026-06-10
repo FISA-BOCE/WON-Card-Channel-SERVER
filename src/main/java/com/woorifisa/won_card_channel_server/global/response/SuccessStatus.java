@@ -28,6 +28,8 @@ public enum SuccessStatus {
     ADMIN_SWEEP_REQUEST_DETAIL_FOUND(HttpStatus.OK, "ADMIN_SWEEP_200_002", "관리자 스윕 요청 상세 조회가 완료되었습니다."),
     ADMIN_OUTBOX_EVENTS_FOUND(HttpStatus.OK, "ADMIN_OUTBOX_200_001", "관리자 Outbox 이벤트 목록 조회가 완료되었습니다."),
     ADMIN_OUTBOX_EVENT_DETAIL_FOUND(HttpStatus.OK, "ADMIN_OUTBOX_200_002", "관리자 Outbox 이벤트 상세 조회가 완료되었습니다."),
+    ADMIN_INBOX_EVENTS_FOUND(HttpStatus.OK, "ADMIN_INBOX_200_001", "관리자 Inbox 이벤트 목록 조회가 완료되었습니다."),
+    ADMIN_INBOX_EVENT_DETAIL_FOUND(HttpStatus.OK, "ADMIN_INBOX_200_002", "관리자 Inbox 이벤트 상세 조회가 완료되었습니다."),
 
     
     // 자동투자

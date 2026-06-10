@@ -7,6 +7,7 @@ import com.woorifisa.won_card_channel_server.domain.admin.external.CardCoreAdmin
 import com.woorifisa.won_card_channel_server.domain.admin.external.dto.CardCoreAdminSweepRequestItemResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.external.dto.CardCoreAdminSweepRequestListResponse;
 import com.woorifisa.won_card_channel_server.domain.admin.external.dto.CardCoreAdminSweepRequestSummaryResponse;
+import com.woorifisa.won_card_channel_server.domain.admin.support.AdminRequestSupport;
 import com.woorifisa.won_card_channel_server.domain.sweep.model.Sweep;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepRepository;
 import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
@@ -28,6 +29,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminSweepService {
+
+    private static final String REQUEST_STATUS_CREATED = "CREATED";
+    private static final String REQUEST_STATUS_PROCESSING = "PROCESSING";
+    private static final String CORE_SWEEP_STATUS_NONE = "NONE";
+    private static final String CORE_SWEEP_STATUS_REQUESTED = "REQUESTED";
 
     private final CardCoreAdminSweepApi cardCoreAdminSweepApi;
     private final SweepRepository sweepRepository;
@@ -98,13 +104,13 @@ public class AdminSweepService {
     }
 
     private String mapRequestStatusToCoreStatus(String status) {
-        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
+        if (AdminRequestSupport.isAll(status)) {
             return null;
         }
 
         return switch (status) {
-            case "CREATED" -> "NONE";
-            case "PROCESSING" -> "REQUESTED";
+            case REQUEST_STATUS_CREATED -> CORE_SWEEP_STATUS_NONE;
+            case REQUEST_STATUS_PROCESSING -> CORE_SWEEP_STATUS_REQUESTED;
             default -> status;
         };
     }

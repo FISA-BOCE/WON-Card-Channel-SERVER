@@ -43,6 +43,8 @@ public class AdminOutboxEventService {
                 publishStatus,
                 eventType,
                 sweepRequestId,
+                null,
+                null,
                 pageable
         );
 
@@ -73,26 +75,36 @@ public class AdminOutboxEventService {
         long publishedCount = sweepOutboxRepository.countAdminOutboxEvents(
                 OutboxPublishStatus.PUBLISHED,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
         long failedCount = sweepOutboxRepository.countAdminOutboxEvents(
                 OutboxPublishStatus.FAILED,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
         long retryingCount = sweepOutboxRepository.countAdminOutboxEvents(
                 OutboxPublishStatus.RETRY,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
         long pendingCount = sweepOutboxRepository.countAdminOutboxEvents(
                 OutboxPublishStatus.PENDING,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         ) + sweepOutboxRepository.countAdminOutboxEvents(
                 OutboxPublishStatus.PROCESSING,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
 
         return new AdminOutboxEventSummaryResponse(

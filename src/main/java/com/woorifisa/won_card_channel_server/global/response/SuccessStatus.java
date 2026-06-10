@@ -24,14 +24,16 @@ public enum SuccessStatus {
 
     SWEEP_REQUEST_CREATED(HttpStatus.CREATED, "SWEEP_201_001", "스윕 요청이 생성되었습니다."),
     SWEEP_REQUEST_BATCH_CREATED(HttpStatus.CREATED, "SWEEP_201_002", "자동 스윕 요청 배치가 완료되었습니다."),
-    ADMIN_SWEEP_REQUESTS_FOUND(HttpStatus.OK, "ADMIN_SWEEP_200_001", "관리자 스윕 요청 목록 조회가 완료되었습니다."),
-    ADMIN_SWEEP_REQUEST_DETAIL_FOUND(HttpStatus.OK, "ADMIN_SWEEP_200_002", "관리자 스윕 요청 상세 조회가 완료되었습니다."),
-    ADMIN_OUTBOX_EVENTS_FOUND(HttpStatus.OK, "ADMIN_OUTBOX_200_001", "관리자 Outbox 이벤트 목록 조회가 완료되었습니다."),
-    ADMIN_OUTBOX_EVENT_DETAIL_FOUND(HttpStatus.OK, "ADMIN_OUTBOX_200_002", "관리자 Outbox 이벤트 상세 조회가 완료되었습니다."),
-    ADMIN_INBOX_EVENTS_FOUND(HttpStatus.OK, "ADMIN_INBOX_200_001", "관리자 Inbox 이벤트 목록 조회가 완료되었습니다."),
-    ADMIN_INBOX_EVENT_DETAIL_FOUND(HttpStatus.OK, "ADMIN_INBOX_200_002", "관리자 Inbox 이벤트 상세 조회가 완료되었습니다."),
 
-    
+    // 관리자
+    ADMIN_DASHBOARD_SUMMARY_FOUND(HttpStatus.OK, "ADMIN_200_001", "관리자 대시보드 월간 요약 조회가 완료되었습니다."),
+    ADMIN_SWEEP_REQUESTS_FOUND(HttpStatus.OK, "ADMIN_200_002", "관리자 스윕 요청 목록 조회가 완료되었습니다."),
+    ADMIN_SWEEP_REQUEST_DETAIL_FOUND(HttpStatus.OK, "ADMIN_200_003", "관리자 스윕 요청 상세 조회가 완료되었습니다."),
+    ADMIN_OUTBOX_EVENTS_FOUND(HttpStatus.OK, "ADMIN_200_004", "관리자 Outbox 이벤트 목록 조회가 완료되었습니다."),
+    ADMIN_OUTBOX_EVENT_DETAIL_FOUND(HttpStatus.OK, "ADMIN_200_005", "관리자 Outbox 이벤트 상세 조회가 완료되었습니다."),
+    ADMIN_INBOX_EVENTS_FOUND(HttpStatus.OK, "ADMIN_200_006", "관리자 Inbox 이벤트 목록 조회가 완료되었습니다."),
+    ADMIN_INBOX_EVENT_DETAIL_FOUND(HttpStatus.OK, "ADMIN_200_007", "관리자 Inbox 이벤트 상세 조회가 완료되었습니다."),
+
     // 자동투자
     AUTO_INVEST_SUBSCRIPTION_CREATED(HttpStatus.CREATED, "AUTO_201_001", "자동투자 신청이 완료되었습니다."),
     AUTO_INVEST_SUBSCRIPTION_FOUND(HttpStatus.OK, "AUTO_200_001", "자동투자 설정 조회가 완료되었습니다."),

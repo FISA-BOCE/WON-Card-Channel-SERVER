@@ -36,12 +36,16 @@ public interface SweepOutboxRepository extends JpaRepository<SweepOutbox, Long> 
             where (:publishStatus is null or o.publishStatus = :publishStatus)
               and (:eventType is null or o.eventType = :eventType)
               and (:sweepRequestId is null or o.sweepRequestId = :sweepRequestId)
+              and (:createdFrom is null or o.createdAt >= :createdFrom)
+              and (:createdTo is null or o.createdAt < :createdTo)
             order by o.createdAt desc, o.outboxEventId desc
             """)
     Page<SweepOutbox> findAdminOutboxEvents(
             @Param("publishStatus") OutboxPublishStatus publishStatus,
             @Param("eventType") SweepEventType eventType,
             @Param("sweepRequestId") Long sweepRequestId,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo,
             Pageable pageable
     );
 
@@ -51,10 +55,14 @@ public interface SweepOutboxRepository extends JpaRepository<SweepOutbox, Long> 
             where (:publishStatus is null or o.publishStatus = :publishStatus)
               and (:eventType is null or o.eventType = :eventType)
               and (:sweepRequestId is null or o.sweepRequestId = :sweepRequestId)
+              and (:createdFrom is null or o.createdAt >= :createdFrom)
+              and (:createdTo is null or o.createdAt < :createdTo)
             """)
     long countAdminOutboxEvents(
             @Param("publishStatus") OutboxPublishStatus publishStatus,
             @Param("eventType") SweepEventType eventType,
-            @Param("sweepRequestId") Long sweepRequestId
+            @Param("sweepRequestId") Long sweepRequestId,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo
     );
 }

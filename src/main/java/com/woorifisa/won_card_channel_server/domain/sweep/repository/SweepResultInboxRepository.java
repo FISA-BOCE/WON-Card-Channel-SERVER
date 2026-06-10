@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface SweepResultInboxRepository extends JpaRepository<SweepResultInbox, Long> {
@@ -29,12 +30,16 @@ public interface SweepResultInboxRepository extends JpaRepository<SweepResultInb
             where (:processStatus is null or i.processStatus = :processStatus)
               and (:eventType is null or i.eventType = :eventType)
               and (:sweepRequestId is null or i.sweepRequestId = :sweepRequestId)
+              and (:createdFrom is null or i.createdAt >= :createdFrom)
+              and (:createdTo is null or i.createdAt < :createdTo)
             order by i.createdAt desc, i.inboxEventId desc
             """)
     Page<SweepResultInbox> findAdminInboxEvents(
             @Param("processStatus") InboxProcessStatus processStatus,
             @Param("eventType") SweepEventType eventType,
             @Param("sweepRequestId") Long sweepRequestId,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo,
             Pageable pageable
     );
 
@@ -44,10 +49,14 @@ public interface SweepResultInboxRepository extends JpaRepository<SweepResultInb
             where (:processStatus is null or i.processStatus = :processStatus)
               and (:eventType is null or i.eventType = :eventType)
               and (:sweepRequestId is null or i.sweepRequestId = :sweepRequestId)
+              and (:createdFrom is null or i.createdAt >= :createdFrom)
+              and (:createdTo is null or i.createdAt < :createdTo)
             """)
     long countAdminInboxEvents(
             @Param("processStatus") InboxProcessStatus processStatus,
             @Param("eventType") SweepEventType eventType,
-            @Param("sweepRequestId") Long sweepRequestId
+            @Param("sweepRequestId") Long sweepRequestId,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo
     );
 }

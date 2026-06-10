@@ -43,6 +43,8 @@ public class AdminInboxEventService {
                 processStatus,
                 eventType,
                 sweepRequestId,
+                null,
+                null,
                 pageable
         );
 
@@ -73,22 +75,30 @@ public class AdminInboxEventService {
         long processedCount = sweepResultInboxRepository.countAdminInboxEvents(
                 InboxProcessStatus.PROCESSED,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
         long failedCount = sweepResultInboxRepository.countAdminInboxEvents(
                 InboxProcessStatus.FAILED,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
         long processingCount = sweepResultInboxRepository.countAdminInboxEvents(
                 InboxProcessStatus.PROCESSING,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
         long receivedCount = sweepResultInboxRepository.countAdminInboxEvents(
                 InboxProcessStatus.RECEIVED,
                 eventType,
-                sweepRequestId
+                sweepRequestId,
+                null,
+                null
         );
 
         return new AdminInboxEventSummaryResponse(

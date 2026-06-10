@@ -6,14 +6,17 @@ import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/dashboard")
 @Tag(name = "Admin Dashboard API", description = "관리자 대시보드 홈 화면의 월간 운영 요약 정보를 조회하는 API")
@@ -27,7 +30,9 @@ public class AdminDashboardApi {
     )
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<AdminDashboardSummaryResponse>> getSummary(
-            @RequestParam(required = false) String baseMonth
+            @RequestParam(required = false)
+            @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])$")
+            String baseMonth
     ) {
         AdminDashboardSummaryResponse response = adminDashboardService.getSummary(baseMonth);
 

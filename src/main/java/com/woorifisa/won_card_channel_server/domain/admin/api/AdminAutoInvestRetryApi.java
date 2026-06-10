@@ -6,8 +6,12 @@ import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
 import com.woorifisa.won_card_channel_server.global.response.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/auto-invest")
 @Tag(name = "Admin Auto Invest Retry API", description = "관리자 대시보드의 자동투자 재처리 대상을 조회하는 API")
@@ -29,11 +34,13 @@ public class AdminAutoInvestRetryApi {
     )
     @GetMapping("/retry-targets")
     public ResponseEntity<ApiResponse<AdminAutoInvestRetryTargetListResponse>> getRetryTargets(
-            @RequestParam(required = false) String baseMonth,
+            @RequestParam(required = false)
+            @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])$")
+            String baseMonth,
             @RequestParam(required = false) UUID cardUserUuid,
             @RequestParam(required = false) Long sweepRequestId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         AdminAutoInvestRetryTargetListResponse response = adminAutoInvestRetryService.getRetryTargets(
                 baseMonth,

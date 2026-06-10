@@ -12,11 +12,15 @@ import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.InboxProce
 import com.woorifisa.won_card_channel_server.domain.sweep.model.enums.OutboxPublishStatus;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepOutboxRepository;
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepResultInboxRepository;
+import com.woorifisa.won_card_channel_server.global.exception.code.CommonErrorCode;
+import com.woorifisa.won_card_channel_server.global.exception.handler.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -31,6 +35,7 @@ public class AdminDashboardService {
     private final AdminSweepService adminSweepService;
     private final SweepOutboxRepository sweepOutboxRepository;
     private final SweepResultInboxRepository sweepResultInboxRepository;
+    private final Clock clock;
 
     public AdminDashboardSummaryResponse getSummary(String baseMonth) {
         YearMonth yearMonth = resolveBaseMonth(baseMonth);
@@ -205,9 +210,13 @@ public class AdminDashboardService {
 
     private YearMonth resolveBaseMonth(String baseMonth) {
         if (baseMonth == null || baseMonth.isBlank()) {
-            return YearMonth.from(LocalDate.now());
+            return YearMonth.from(LocalDate.now(clock));
         }
 
-        return YearMonth.parse(baseMonth);
+        try {
+            return YearMonth.parse(baseMonth);
+        } catch (DateTimeException e) {
+            throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE, e);
+        }
     }
 }

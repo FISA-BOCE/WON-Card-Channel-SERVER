@@ -85,6 +85,7 @@ class CardApiTest {
         given(cardSummaryService.getCardInfo(any(AuthenticatedUser.class)))
                 .willReturn(new CardInfoResponse(List.of(
                         new CardInfoResponse.CardInfo(
+                                "55555555-5555-5555-5555-555555555555",
                                 "WON 자동투자 카드",
                                 "**** **** **** 1234"
                         )
@@ -94,6 +95,7 @@ class CardApiTest {
                         .header("X-Transaction-ID", "TX-20260610-CARD-INFO03"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("CARD_200_001"))
+                .andExpect(jsonPath("$.data.cards[0].cardUuid").value("55555555-5555-5555-5555-555555555555"))
                 .andExpect(jsonPath("$.data.cards[0].cardName").value("WON 자동투자 카드"))
                 .andExpect(jsonPath("$.data.cards[0].cardNoDisplay").value("**** **** **** 1234"));
     }

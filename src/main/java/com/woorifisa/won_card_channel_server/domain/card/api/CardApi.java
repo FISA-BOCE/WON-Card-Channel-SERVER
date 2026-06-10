@@ -36,7 +36,7 @@ public class CardApi {
                 .body(ApiResponse.of(successStatus, response));
     }
 
-    @Operation(summary = "메인화면 카드 정보 조회", description = "발급된 카드의 카드명과 마스킹 카드 번호를 조회합니다.")
+    @Operation(summary = "메인화면 카드 정보 조회", description = "발급된 카드의 카드 UUID, 카드명, 마스킹 카드 번호를 조회합니다.")
     @GetMapping("/api/cards/info")
     public ResponseEntity<ApiResponse<CardInfoResponse>> getCardInfo(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser

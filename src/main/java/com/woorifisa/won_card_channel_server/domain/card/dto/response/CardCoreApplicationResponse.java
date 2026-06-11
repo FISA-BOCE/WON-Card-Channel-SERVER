@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record CardCoreApplicationResponse(
         UUID cardUuid,
+        UUID cardUserUuid,
         String cardNoDisplay,
         LocalDateTime issuedAt,
         String cardStatus

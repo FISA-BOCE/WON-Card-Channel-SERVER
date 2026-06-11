@@ -20,10 +20,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,prometheus
   health:
     neo4j:
       enabled: false
+
+logging:
+  structured:
+    format:
+      console: logstash
 
 features:
   aidb:

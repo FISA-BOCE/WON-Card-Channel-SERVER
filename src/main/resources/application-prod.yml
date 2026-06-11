@@ -43,6 +43,9 @@ internal:
     common:
       base-url: ${COMMON_BASE_URL:http://dummy-common:8080}
 
+admin:
+  api-token: ${ADMIN_API_TOKEN}
+
 aws:
   sqs:
     region: ${AWS_REGION:ap-northeast-2}

@@ -25,6 +25,9 @@ management:
     neo4j:
       enabled: false
 
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL}
+
 logging:
   structured:
     format:

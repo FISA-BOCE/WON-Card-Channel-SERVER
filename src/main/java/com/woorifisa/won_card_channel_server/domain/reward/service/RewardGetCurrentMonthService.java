@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 public class RewardGetCurrentMonthService {
 
     private static final ZoneId SEOUL_ZONE_ID = ZoneId.of("Asia/Seoul");
+    private static final BigDecimal MINIMUM_REWARD_SATISFIED_AMOUNT = new BigDecimal("1000");
     private static final String REWARD_STATUS_SATISFIED = "기준 충족";
     private static final String REWARD_STATUS_NOT_SATISFIED = "기준 미달";
 
@@ -51,7 +52,7 @@ public class RewardGetCurrentMonthService {
                 throw new BusinessException(RewardErrorCode.INVALID_REWARD_RESPONSE);
             }
 
-            return coreData;
+            return normalizeRewardStatus(coreData);
         } catch (FeignException.BadRequest | FeignException.NotFound e) {
             throw new BusinessException(RewardErrorCode.REWARD_LEDGER_NOT_FOUND, e);
         } catch (FeignException e) {
@@ -60,7 +61,7 @@ public class RewardGetCurrentMonthService {
     }
 
     private RewardGetCurrentResponse toResponse(CardChnPerformanceSummary performanceSummary) {
-        String rewardStatus = getRewardStatus(performanceSummary);
+        String rewardStatus = getRewardStatus(performanceSummary.getPreviousMonthSpendAmount());
 
         return new RewardGetCurrentResponse(
                 performanceSummary.getBaseMonth(),
@@ -72,13 +73,25 @@ public class RewardGetCurrentMonthService {
         );
     }
 
-    private String getRewardStatus(CardChnPerformanceSummary performanceSummary) {
-        BigDecimal previousMonthSpendAmount = performanceSummary.getPreviousMonthSpendAmount();
+    private RewardGetCurrentResponse normalizeRewardStatus(RewardGetCurrentResponse response) {
+        String rewardStatus = getRewardStatus(toBigDecimal(response.previousMonthSpendAmount()));
+
+        return new RewardGetCurrentResponse(
+                response.baseMonth(),
+                rewardStatus,
+                response.previousMonthSpendAmount(),
+                response.rewardPointAmount(),
+                response.rewardRate(),
+                response.performanceStatus()
+        );
+    }
+
+    private String getRewardStatus(BigDecimal previousMonthSpendAmount) {
         if (previousMonthSpendAmount == null || previousMonthSpendAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new BusinessException(PerformanceErrorCode.INVALID_PERFORMANCE_AMOUNT);
         }
 
-        if (BigDecimal.ZERO.compareTo(previousMonthSpendAmount) == 0) {
+        if (previousMonthSpendAmount.compareTo(MINIMUM_REWARD_SATISFIED_AMOUNT) < 0) {
             return REWARD_STATUS_NOT_SATISFIED;
         }
 
@@ -99,5 +112,13 @@ public class RewardGetCurrentMonthService {
         }
 
         return amount.setScale(0, RoundingMode.DOWN).longValue();
+    }
+
+    private BigDecimal toBigDecimal(Long amount) {
+        if (amount == null) {
+            return null;
+        }
+
+        return BigDecimal.valueOf(amount);
     }
 }

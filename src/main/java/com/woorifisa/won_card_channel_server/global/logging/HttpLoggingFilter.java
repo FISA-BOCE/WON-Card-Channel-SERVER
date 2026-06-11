@@ -31,7 +31,7 @@ public class HttpLoggingFilter extends OncePerRequestFilter {
                 MDC.put("http.uri", request.getRequestURI());
                 MDC.put("http.status", String.valueOf(response.getStatus()));
                 MDC.put("elapsed_ms", String.valueOf(elapsed));
-                log.info("http access method={} uri={} status={} elapsed_ms={}ms",
+                log.info("http access method={} uri={} status={} elapsed_ms={}",
                         request.getMethod(), request.getRequestURI(), response.getStatus(), elapsed);
             } finally {
                 MDC.remove("http.method");

@@ -194,6 +194,7 @@ class CardSummaryServiceTest {
 
         // then
         assertThat(result.cards()).hasSize(1);
+        assertThat(result.cards().get(0).cardUuid()).isEqualTo(CARD_UUID.toString());
         assertThat(result.cards().get(0).cardName()).isEqualTo("WON 자동투자 카드");
         assertThat(result.cards().get(0).cardNoDisplay()).isEqualTo("**** **** **** 1234");
 

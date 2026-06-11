@@ -50,6 +50,7 @@ public class CardSummaryService {
         return cardSummaryRepository.findByUserUuid(userUuid)
                 .map(cardSummary -> new CardInfoResponse(List.of(
                         new CardInfoResponse.CardInfo(
+                                cardSummary.getCardUuid().toString(),
                                 cardSummary.getCardName(),
                                 cardSummary.getCardNoDisplay()
                         )

@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.then;
 
 import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardCoreCardsResponse;
+import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardInfoResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.ExistingCardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.NoCardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.exception.code.CardErrorCode;
@@ -176,6 +177,60 @@ class CardSummaryServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(CardErrorCode.INVALID_CARD_RESPONSE);
+    }
+
+    @Test
+    @DisplayName("카드 정보 조회 시 DB에 카드가 있으면 카드명과 마스킹 카드 번호를 반환한다")
+    void getCardInfoFromChannelDb() {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnCardSummary cardSummary = cardSummary(BigDecimal.valueOf(1_245_000L));
+
+        given(cardSummaryRepository.findByUserUuid(USER_UUID))
+                .willReturn(Optional.of(cardSummary));
+
+        // when
+        CardInfoResponse result = cardSummaryService.getCardInfo(authenticatedUser);
+
+        // then
+        assertThat(result.cards()).hasSize(1);
+        assertThat(result.cards().get(0).cardUuid()).isEqualTo(CARD_UUID.toString());
+        assertThat(result.cards().get(0).cardName()).isEqualTo("WON 자동투자 카드");
+        assertThat(result.cards().get(0).cardNoDisplay()).isEqualTo("**** **** **** 1234");
+
+        then(cardSummaryRepository).should().findByUserUuid(USER_UUID);
+        then(cardCoreCardApi).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("카드 정보 조회 시 DB에 카드가 없으면 빈 배열을 반환한다")
+    void getCardInfoWithoutIssuedCard() {
+        // given
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+
+        given(cardSummaryRepository.findByUserUuid(USER_UUID))
+                .willReturn(Optional.empty());
+
+        // when
+        CardInfoResponse result = cardSummaryService.getCardInfo(authenticatedUser);
+
+        // then
+        assertThat(result.cards()).isEmpty();
+
+        then(cardSummaryRepository).should().findByUserUuid(USER_UUID);
+        then(cardCoreCardApi).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("카드 정보 조회 시 인증 사용자 정보가 없으면 인증 필요 예외를 던진다")
+    void getCardInfoWithoutAuthenticatedUser() {
+        assertThatThrownBy(() -> cardSummaryService.getCardInfo(null))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(AuthErrorCode.AUTHENTICATION_REQUIRED);
+
+        then(cardSummaryRepository).shouldHaveNoInteractions();
+        then(cardCoreCardApi).shouldHaveNoInteractions();
     }
 
     private AuthenticatedUser authenticatedUser() {

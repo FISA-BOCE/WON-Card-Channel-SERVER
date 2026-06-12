@@ -1,5 +1,6 @@
 package com.woorifisa.won_card_channel_server.domain.card.api;
 
+import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardInfoResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.service.CardSummaryService;
 import com.woorifisa.won_card_channel_server.global.response.ApiResponse;
@@ -33,5 +34,17 @@ public class CardApi {
         return ResponseEntity
                 .status(successStatus.getHttpStatus())
                 .body(ApiResponse.of(successStatus, response));
+    }
+
+    @Operation(summary = "메인화면 카드 정보 조회", description = "발급된 카드의 카드 UUID, 카드명, 마스킹 카드 번호를 조회합니다.")
+    @GetMapping("/api/cards/info")
+    public ResponseEntity<ApiResponse<CardInfoResponse>> getCardInfo(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        CardInfoResponse response = cardSummaryService.getCardInfo(authenticatedUser);
+
+        return ResponseEntity
+                .status(SuccessStatus.CARD_SUMMARY_FOUND.getHttpStatus())
+                .body(ApiResponse.of(SuccessStatus.CARD_SUMMARY_FOUND, response));
     }
 }

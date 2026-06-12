@@ -17,6 +17,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties(SecurityProperties.class)
@@ -38,18 +43,22 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health", "/actuator/metrics/**", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/cards/applications/invest-accounts").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/cards/info").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/spend-summary").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/rewards/monthly").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/rewards/ledger", "/api/cards/rewards/ledger/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/*/auto-invest").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/cards/*/auto-invest").authenticated()
                         .requestMatchers("/api/users", "/api/users/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/ai/chat").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/chats").authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
@@ -70,5 +79,19 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

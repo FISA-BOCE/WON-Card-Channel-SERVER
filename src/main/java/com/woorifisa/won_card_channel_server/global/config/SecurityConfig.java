@@ -1,6 +1,7 @@
 package com.woorifisa.won_card_channel_server.global.config;
 
 import com.woorifisa.won_card_channel_server.domain.auth.service.TokenBlacklistService;
+import com.woorifisa.won_card_channel_server.global.security.AdminApiAuthFilter;
 import com.woorifisa.won_card_channel_server.global.security.InternalApiAuthFilter;
 import com.woorifisa.won_card_channel_server.global.security.JwtAuthenticationFilter;
 import com.woorifisa.won_card_channel_server.global.security.JwtTokenProvider;
@@ -32,6 +33,7 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtTokenProvider jwtTokenProvider,
             TokenBlacklistService tokenBlacklistService,
+            AdminApiAuthFilter adminApiAuthFilter,
             InternalApiAuthFilter internalApiAuthFilter,
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler
@@ -47,6 +49,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/internal/**").hasRole("INTERNAL")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/outbox-events/*/retry").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cards/applications").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cards/applications/invest-accounts").authenticated()
@@ -70,6 +74,7 @@ public class SecurityConfig {
                         ),
                         UsernamePasswordAuthenticationFilter.class
                 )
+                .addFilterBefore(adminApiAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalApiAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults());
 

@@ -25,7 +25,7 @@ public class ErrorLogApi {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ErrorLogResponse>>> getErrorLogs(
             @RequestParam(required = false) Integer status,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<ErrorLogResponse> result = status != null
                 ? errorLogService.findByStatus(status, pageable).map(ErrorLogResponse::from)

@@ -127,18 +127,8 @@ public class SweepOutbox extends BaseTimeEntity {
         this.nextRetryAt = null;
     }
 
-    public void markRetryRequested() {
-        this.publishStatus = OutboxPublishStatus.RETRY;
-        this.nextRetryAt = LocalDateTime.now();
-    }
-
     public boolean isProcessing() {
         return this.publishStatus == OutboxPublishStatus.PROCESSING;
-    }
-
-    public boolean isRetryRequestable() {
-        return this.publishStatus == OutboxPublishStatus.FAILED
-                || this.publishStatus == OutboxPublishStatus.RETRY;
     }
 
     public boolean isPublishTarget() {

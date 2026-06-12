@@ -1,7 +1,13 @@
 server:
   port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 spring:
+  application:
+    name: won-card-channel-server
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${MYSQL_USER}
@@ -20,6 +26,16 @@ management:
   endpoints:
     web:
       exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+
         include: health,prometheus
   health:
     neo4j:

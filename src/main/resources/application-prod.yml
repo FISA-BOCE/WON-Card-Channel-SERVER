@@ -36,9 +36,18 @@ management:
       percentiles:
         http.server.requests: 0.5, 0.95, 0.99
 
+        include: health,prometheus
   health:
     neo4j:
       enabled: false
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL}
+
+logging:
+  structured:
+    format:
+      console: logstash
 
 features:
   aidb:

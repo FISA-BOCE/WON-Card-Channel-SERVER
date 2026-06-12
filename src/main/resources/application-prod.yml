@@ -67,26 +67,29 @@ internal:
     common:
       base-url: ${COMMON_BASE_URL:http://dummy-common:8080}
 
+admin:
+  api-token: ${ADMIN_API_TOKEN}
+
 aws:
   sqs:
     region: ${AWS_REGION:ap-northeast-2}
     endpoint: ${AWS_SQS_ENDPOINT:}
-    sweep-request-queue-url: ${SQS_SWEEP_REQUEST_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/000000000000/dummy-request.fifo}
-    sweep-result-queue-url: ${SQS_SWEEP_RESULT_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/000000000000/dummy-result.fifo}
+    sweep-request-queue-url: ${SQS_SWEEP_REQUEST_QUEUE_URL}
+    sweep-result-queue-url: ${SQS_SWEEP_RESULT_QUEUE_URL}
 
 sweep:
   result:
     consumer:
-      enabled: false
+      enabled: ${SWEEP_RESULT_CONSUMER_ENABLED:false}
       fixed-delay-ms: 10000
       max-messages: 10
-      wait-time-seconds: 1
+      wait-time-seconds: ${SWEEP_RESULT_CONSUMER_WAIT_TIME_SECONDS:10}
       processing-timeout-seconds: 300
       worker-count: 8
 
   outbox:
     publisher:
-      enabled: false
+      enabled: ${SWEEP_OUTBOX_PUBLISHER_ENABLED:false}
       batch-size: 500
       max-retry-count: 5
       fixed-delay-ms: 10000

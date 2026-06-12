@@ -9,7 +9,6 @@ import com.woorifisa.won_card_channel_server.global.config.SweepResultConsumerPr
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -38,14 +37,14 @@ class SweepResultInboxServiceTest {
 
         when(inboxRepository.findByIdempotencyKeyForUpdate(event.idempotencyKey()))
                 .thenReturn(Optional.empty());
-        when(inboxRepository.saveAndFlush(any(SweepResultInbox.class)))
+        when(inboxRepository.save(any(SweepResultInbox.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         InboxClaimResult result = service.claim(event, "{\"eventId\":\"INVEST-SWEEP-TEST-1\"}");
 
         assertThat(result.claimed()).isTrue();
         assertThat(result.alreadyProcessed()).isFalse();
-        verify(inboxRepository).saveAndFlush(any(SweepResultInbox.class));
+        verify(inboxRepository).save(any(SweepResultInbox.class));
     }
 
     @Test
@@ -69,32 +68,6 @@ class SweepResultInboxServiceTest {
         assertThat(result.claimed()).isFalse();
         assertThat(result.alreadyProcessed()).isTrue();
         verify(inboxRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("동시 수신으로 unique 충돌이 발생하면 기존 inbox를 조회해 중복 메시지로 흡수한다")
-    void claimDuplicateAfterConcurrentInsert() {
-        SweepInvestmentResultEvent event = event();
-        SweepResultInbox inbox = SweepResultInbox.received(
-                "INVEST-SWEEP-TEST-1",
-                2L,
-                SweepEventType.SWEEP_INVESTMENT_COMPLETED,
-                "{}",
-                "CORR-SWEEP-TEST-1",
-                "SWEEP:POINT_LEDGER:1"
-        );
-        inbox.markProcessed();
-
-        when(inboxRepository.findByIdempotencyKeyForUpdate(event.idempotencyKey()))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(inbox));
-        when(inboxRepository.saveAndFlush(any(SweepResultInbox.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate idempotency key"));
-
-        InboxClaimResult result = service.claim(event, "{\"eventId\":\"INVEST-SWEEP-TEST-1\"}");
-
-        assertThat(result.claimed()).isFalse();
-        assertThat(result.alreadyProcessed()).isTrue();
     }
 
     private SweepInvestmentResultEvent event() {

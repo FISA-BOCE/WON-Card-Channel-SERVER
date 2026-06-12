@@ -17,7 +17,6 @@ public enum SweepErrorCode implements ErrorCode {
 
     SWEEP_ALREADY_REQUESTED(HttpStatus.CONFLICT, "SWEEP_409_001", "이미 스윕 요청된 포인트 원장입니다."),
     SWEEP_OUTBOX_INVALID_PUBLISH_STATE(HttpStatus.CONFLICT, "SWEEP_409_002", "스윕 Outbox 이벤트가 발행 가능한 상태가 아닙니다."),
-    SWEEP_OUTBOX_RETRY_NOT_ALLOWED(HttpStatus.CONFLICT, "SWEEP_409_003", "재처리할 수 없는 스윕 Outbox 이벤트입니다."),
 
     SWEEP_REQUEST_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SWEEP_500_001", "스윕 요청 저장 중 오류가 발생했습니다."),
     SWEEP_OUTBOX_INVALID_BATCH_SIZE(HttpStatus.INTERNAL_SERVER_ERROR, "SWEEP_500_002", "스윕 Outbox 발행 배치 설정값이 올바르지 않습니다."),

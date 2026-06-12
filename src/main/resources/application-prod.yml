@@ -35,8 +35,6 @@ management:
         http.server.requests: true
       percentiles:
         http.server.requests: 0.5, 0.95, 0.99
-
-        include: health,prometheus
   health:
     neo4j:
       enabled: false

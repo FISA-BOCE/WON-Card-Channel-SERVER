@@ -2,6 +2,7 @@ package com.woorifisa.won_card_channel_server.domain.card.service;
 
 import com.woorifisa.won_card_channel_server.domain.auth.exception.code.AuthErrorCode;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardCoreCardsResponse;
+import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardInfoResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.CardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.ExistingCardSummaryResponse;
 import com.woorifisa.won_card_channel_server.domain.card.dto.response.NoCardSummaryResponse;
@@ -15,6 +16,7 @@ import com.woorifisa.won_card_channel_server.global.security.AuthenticatedUser;
 import feign.FeignException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Collections;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,20 @@ public class CardSummaryService {
         return cardSummaryRepository.findByUserUuid(userUuid)
                 .<CardSummaryResponse>map(this::toExistingCardResponse)
                 .orElseGet(() -> getCardsFromCardCore(userUuid));
+    }
+
+    public CardInfoResponse getCardInfo(AuthenticatedUser authenticatedUser) {
+        UUID userUuid = extractUserUuid(authenticatedUser);
+
+        return cardSummaryRepository.findByUserUuid(userUuid)
+                .map(cardSummary -> new CardInfoResponse(List.of(
+                        new CardInfoResponse.CardInfo(
+                                cardSummary.getCardUuid().toString(),
+                                cardSummary.getCardName(),
+                                cardSummary.getCardNoDisplay()
+                        )
+                )))
+                .orElseGet(() -> new CardInfoResponse(Collections.emptyList()));
     }
 
     private CardSummaryResponse getCardsFromCardCore(UUID userUuid) {

@@ -1,7 +1,13 @@
 server:
   port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 spring:
+  application:
+    name: won-card-channel-server
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${MYSQL_USER}
@@ -20,10 +26,28 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+
+        include: health,prometheus
   health:
     neo4j:
       enabled: false
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL}
+
+logging:
+  structured:
+    format:
+      console: logstash
 
 features:
   aidb:
@@ -43,26 +67,29 @@ internal:
     common:
       base-url: ${COMMON_BASE_URL:http://dummy-common:8080}
 
+admin:
+  api-token: ${ADMIN_API_TOKEN}
+
 aws:
   sqs:
     region: ${AWS_REGION:ap-northeast-2}
     endpoint: ${AWS_SQS_ENDPOINT:}
-    sweep-request-queue-url: ${SQS_SWEEP_REQUEST_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/000000000000/dummy-request.fifo}
-    sweep-result-queue-url: ${SQS_SWEEP_RESULT_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/000000000000/dummy-result.fifo}
+    sweep-request-queue-url: ${SQS_SWEEP_REQUEST_QUEUE_URL}
+    sweep-result-queue-url: ${SQS_SWEEP_RESULT_QUEUE_URL}
 
 sweep:
   result:
     consumer:
-      enabled: false
+      enabled: ${SWEEP_RESULT_CONSUMER_ENABLED:false}
       fixed-delay-ms: 10000
       max-messages: 10
-      wait-time-seconds: 1
+      wait-time-seconds: ${SWEEP_RESULT_CONSUMER_WAIT_TIME_SECONDS:10}
       processing-timeout-seconds: 300
       worker-count: 8
 
   outbox:
     publisher:
-      enabled: false
+      enabled: ${SWEEP_OUTBOX_PUBLISHER_ENABLED:false}
       batch-size: 500
       max-retry-count: 5
       fixed-delay-ms: 10000

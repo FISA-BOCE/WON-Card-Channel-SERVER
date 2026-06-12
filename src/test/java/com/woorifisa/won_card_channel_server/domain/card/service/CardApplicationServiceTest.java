@@ -55,6 +55,7 @@ class CardApplicationServiceTest {
     private final UUID authUserUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private final UUID investAccountUuid = UUID.fromString("44444444-4444-4444-4444-444444444444");
     private final UUID cardUuid = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private final UUID cardUserUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
     private CardChnAuthUserRepository authUserRepository;
     private CardChnCardSummaryRepository cardSummaryRepository;
     private CardCoreCardApplicationApi cardCoreCardApplicationApi;
@@ -120,6 +121,7 @@ class CardApplicationServiceTest {
                         SuccessStatus.CARD_APPLICATION_CREATED,
                         new CardCoreApplicationResponse(
                                 cardUuid,
+                                cardUserUuid,
                                 "****-****-****-1234",
                                 LocalDateTime.of(2026, 5, 28, 17, 0),
                                 "ACTIVE"
@@ -170,6 +172,7 @@ class CardApplicationServiceTest {
                         SuccessStatus.CARD_APPLICATION_CREATED,
                         new CardCoreApplicationResponse(
                                 cardUuid,
+                                cardUserUuid,
                                 "****-****-****-1234",
                                 LocalDateTime.of(2026, 5, 28, 17, 0),
                                 "ACTIVE"
@@ -179,7 +182,7 @@ class CardApplicationServiceTest {
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
                         mappingResponse(
                                 userUuid,
-                                UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                                cardUserUuid,
                                 true,
                                 UUID.fromString("66666666-6666-6666-6666-666666666666"),
                                 true
@@ -188,7 +191,9 @@ class CardApplicationServiceTest {
 
         verify(commonUserMappingApi).updateCardUserMapping(eq(userUuid), any(UpdateCardUserMappingRequest.class));
         verify(cardSummaryRepository).save(argThat(summary ->
-                summary.getSelectedEtfId() != null && summary.getSelectedEtfId().equals(1001L)
+                summary.getSelectedEtfId() != null
+                        && summary.getSelectedEtfId().equals(1001L)
+                        && summary.getCardUserUuid().equals(cardUserUuid)
         ));
     }
 
@@ -331,10 +336,64 @@ class CardApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("cardUserUuid가 없으면 common server 카드 매핑 PATCH는 호출하지 않는다")
-    void applyCardSkipsCardMappingPatchWhenCardUserUuidMissing() {
+    @DisplayName("카드 신청 성공 시 카드 사용자 UUID를 auth user와 공통 매핑에 즉시 반영한다")
+    void applyCardUpdatesCardUserMappingImmediately() {
         CardApplicationCreateRequest request = request();
+        CardChnAuthUser authUser = activeAuthUser();
 
+        given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(authUser));
+        given(commonUserMappingApi.getMappingStatus(userUuid))
+                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                        mappingResponse(userUuid, null, false,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"), true)));
+        given(investChannelAutoInvestApi.getInvestmentAccount(userUuid, investAccountUuid))
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new com.woorifisa.won_card_channel_server.domain.autoinvest.dto.response.InvestAccountDetailsResponse(
+                                investAccountUuid,
+                                userUuid,
+                                "ACTIVE"
+                        )
+                ));
+        given(investChannelAutoInvestApi.getEtf(1001L))
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.OK,
+                        new InvestEtfDetailsResponse(1001L, "S&P 500 ETF", "VOO", true, true)
+                ));
+        given(cardCoreCardApplicationApi.applyCard(eq(userUuid), any(CardCoreApplicationRequest.class)))
+                .willReturn(ApiResponse.of(
+                        SuccessStatus.CARD_APPLICATION_CREATED,
+                        new CardCoreApplicationResponse(
+                                cardUuid,
+                                cardUserUuid,
+                                "****-****-****-1234",
+                                LocalDateTime.of(2026, 5, 28, 17, 0),
+                                "ACTIVE"
+                        )
+                ));
+        given(commonUserMappingApi.updateCardUserMapping(eq(userUuid), any(UpdateCardUserMappingRequest.class)))
+                .willReturn(ApiResponse.of(SuccessStatus.OK,
+                        mappingResponse(
+                                userUuid,
+                                cardUserUuid,
+                                true,
+                                UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                                true
+                        )));
+
+        service.applyCard(authenticatedUser(), request);
+
+        assertThat(authUser.getCardUserUuid()).isEqualTo(cardUserUuid);
+        verify(commonUserMappingApi).updateCardUserMapping(
+                eq(userUuid),
+                argThat(mappingRequest -> mappingRequest.cardUserUuid().equals(cardUserUuid))
+        );
+        verify(cardSummaryRepository).save(argThat(summary -> summary.getCardUserUuid().equals(cardUserUuid)));
+    }
+
+    @Test
+    @DisplayName("카드 코어 응답에 cardUserUuid가 없으면 잘못된 카드 응답 예외를 반환한다")
+    void applyCardWhenCoreResponseMissingCardUserUuid() {
         given(authUserRepository.findByUserUuid(userUuid)).willReturn(Optional.of(activeAuthUser()));
         given(commonUserMappingApi.getMappingStatus(userUuid))
                 .willReturn(ApiResponse.of(SuccessStatus.OK,
@@ -359,15 +418,20 @@ class CardApplicationServiceTest {
                         SuccessStatus.CARD_APPLICATION_CREATED,
                         new CardCoreApplicationResponse(
                                 cardUuid,
+                                null,
                                 "****-****-****-1234",
                                 LocalDateTime.of(2026, 5, 28, 17, 0),
                                 "ACTIVE"
                         )
                 ));
 
-        service.applyCard(authenticatedUser(), request);
+        assertThatThrownBy(() -> service.applyCard(authenticatedUser(), request()))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(CardErrorCode.INVALID_CARD_RESPONSE);
 
         verify(commonUserMappingApi, never()).updateCardUserMapping(any(), any());
+        verify(cardSummaryRepository, never()).save(any());
     }
 
     @Test
@@ -430,7 +494,7 @@ class CardApplicationServiceTest {
     private CardChnAuthUser activeAuthUserWithCardUser() {
         return CardChnAuthUser.builder()
                 .authUserUuid(authUserUuid)
-                .cardUserUuid(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+                .cardUserUuid(cardUserUuid)
                 .userUuid(userUuid)
                 .loginId("login")
                 .passwordHash("pw")

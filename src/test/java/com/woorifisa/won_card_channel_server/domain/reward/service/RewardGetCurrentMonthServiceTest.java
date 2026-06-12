@@ -101,6 +101,46 @@ class RewardGetCurrentMonthServiceTest {
     }
 
     @Test
+    @DisplayName("전월 이용 금액이 1000원 미만이면 기준 미달로 응답한다")
+    void getCurrentMonthRewardFromDbWithAmountUnderThreshold() {
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnPerformanceSummary performanceSummary = performanceSummary(
+                new BigDecimal("999.9999"),
+                BigDecimal.ZERO,
+                new BigDecimal("0.000000"),
+                "1"
+        );
+        given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
+                .willReturn(Optional.of(performanceSummary));
+
+        RewardGetCurrentResponse response = rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser);
+
+        assertThat(response.rewardStatus()).isEqualTo("기준 미달");
+        assertThat(response.previousMonthSpendAmount()).isEqualTo(999L);
+        then(cardCoreRewardApi).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("전월 이용 금액이 1000원이면 기준 충족으로 응답한다")
+    void getCurrentMonthRewardFromDbWithThresholdAmount() {
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        CardChnPerformanceSummary performanceSummary = performanceSummary(
+                new BigDecimal("1000.0000"),
+                BigDecimal.ZERO,
+                new BigDecimal("0.000000"),
+                "2"
+        );
+        given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
+                .willReturn(Optional.of(performanceSummary));
+
+        RewardGetCurrentResponse response = rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser);
+
+        assertThat(response.rewardStatus()).isEqualTo("기준 충족");
+        assertThat(response.previousMonthSpendAmount()).isEqualTo(1_000L);
+        then(cardCoreRewardApi).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("DB에 당월 리워드 정보가 없으면 계정계 응답 data를 반환한다")
     void getCurrentMonthRewardFromCardCoreWhenDbEmpty() {
         AuthenticatedUser authenticatedUser = authenticatedUser();
@@ -112,7 +152,7 @@ class RewardGetCurrentMonthServiceTest {
 
         RewardGetCurrentResponse response = rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser);
 
-        assertThat(response).isSameAs(coreData);
+        assertThat(response).isNotSameAs(coreData);
         assertThat(response.baseMonth()).isEqualTo(BASE_MONTH);
         assertThat(response.rewardStatus()).isEqualTo("기준 충족");
         assertThat(response.previousMonthSpendAmount()).isEqualTo(1_000_000L);
@@ -120,6 +160,30 @@ class RewardGetCurrentMonthServiceTest {
         assertThat(response.rewardRate()).isEqualByComparingTo("0.010000");
         assertThat(response.performanceStatus()).isEqualTo("2");
         then(performanceSummaryRepository).should().findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH);
+        then(cardCoreRewardApi).should().getCurrentMonthReward(USER_UUID);
+    }
+
+    @Test
+    @DisplayName("DB에 당월 리워드 정보가 없으면 계정계 응답도 1000원 기준으로 상태를 보정한다")
+    void getCurrentMonthRewardFromCardCoreNormalizesStatus() {
+        AuthenticatedUser authenticatedUser = authenticatedUser();
+        RewardGetCurrentResponse coreData = new RewardGetCurrentResponse(
+                BASE_MONTH,
+                "기준 충족",
+                999L,
+                0L,
+                new BigDecimal("0.000000"),
+                "1"
+        );
+        given(performanceSummaryRepository.findByUserUuidAndBaseMonth(USER_UUID, BASE_MONTH))
+                .willReturn(Optional.empty());
+        given(cardCoreRewardApi.getCurrentMonthReward(USER_UUID))
+                .willReturn(ApiResponse.of(SuccessStatus.OK, coreData));
+
+        RewardGetCurrentResponse response = rewardGetCurrentMonthService.getCurrentMonthReward(authenticatedUser);
+
+        assertThat(response.rewardStatus()).isEqualTo("기준 미달");
+        assertThat(response.previousMonthSpendAmount()).isEqualTo(999L);
         then(cardCoreRewardApi).should().getCurrentMonthReward(USER_UUID);
     }
 

@@ -6,6 +6,7 @@ import com.woorifisa.won_card_channel_server.domain.sweep.model.SweepResultInbox
 import com.woorifisa.won_card_channel_server.domain.sweep.repository.SweepResultInboxRepository;
 import com.woorifisa.won_card_channel_server.global.config.SweepResultConsumerProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,18 +60,24 @@ public class SweepResultInboxService {
     }
 
     private InboxClaimResult claimNew(SweepInvestmentResultEvent event, String payload) {
-        SweepResultInbox inbox = SweepResultInbox.received(
-                event.eventId(),
-                event.sweepRequestId(),
-                event.eventType(),
-                payload,
-                event.correlationId(),
-                event.idempotencyKey()
-        );
+        try {
+            SweepResultInbox inbox = SweepResultInbox.received(
+                    event.eventId(),
+                    event.sweepRequestId(),
+                    event.eventType(),
+                    payload,
+                    event.correlationId(),
+                    event.idempotencyKey()
+            );
 
-        inbox.markProcessing();
-        SweepResultInbox saved = inboxRepository.save(inbox);
+            inbox.markProcessing();
+            SweepResultInbox saved = inboxRepository.saveAndFlush(inbox);
 
-        return InboxClaimResult.claimed(saved.getInboxEventId());
+            return InboxClaimResult.claimed(saved.getInboxEventId());
+        } catch (DataIntegrityViolationException e) {
+            SweepResultInbox existing = inboxRepository.findByIdempotencyKeyForUpdate(event.idempotencyKey())
+                    .orElseThrow(() -> e);
+            return claimExisting(existing);
+        }
     }
 }
